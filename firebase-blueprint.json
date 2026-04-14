@@ -1,0 +1,94 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Stores user basic information",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "email"]
+    },
+    "Expense": {
+      "title": "Expense",
+      "description": "Stores individual expense entries",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "amount": { "type": "number" },
+        "category": { "type": "string" },
+        "date": { "type": "string", "format": "date" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "amount", "category", "date"]
+    },
+    "Due": {
+      "title": "Due",
+      "description": "Stores upcoming bills and dues",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "amount": { "type": "number" },
+        "dueDate": { "type": "string", "format": "date" },
+        "category": { "type": "string" },
+        "description": { "type": "string" },
+        "isRecurring": { "type": "boolean" },
+        "isPaid": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "amount", "dueDate", "category"]
+    },
+    "Salary": {
+      "title": "Salary",
+      "description": "Stores income entries",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "amount": { "type": "number" },
+        "date": { "type": "string", "format": "date" },
+        "isRecurring": { "type": "boolean" },
+        "description": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "amount", "date"]
+    },
+    "Budget": {
+      "title": "Budget",
+      "description": "Stores category-wise budget limits",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "category": { "type": "string" },
+        "limit": { "type": "number" },
+        "month": { "type": "string" }
+      },
+      "required": ["uid", "category", "limit", "month"]
+    },
+    "Goal": {
+      "title": "Goal",
+      "description": "Stores savings goals",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "name": { "type": "string" },
+        "targetAmount": { "type": "number" },
+        "currentAmount": { "type": "number" },
+        "deadline": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "name", "targetAmount", "deadline"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": { "schema": "UserProfile", "description": "User profiles" },
+    "/expenses/{expenseId}": { "schema": "Expense", "description": "User expenses" },
+    "/dues/{dueId}": { "schema": "Due", "description": "Upcoming dues" },
+    "/salaries/{salaryId}": { "schema": "Salary", "description": "Income entries" },
+    "/budgets/{budgetId}": { "schema": "Budget", "description": "Budget limits" },
+    "/goals/{goalId}": { "schema": "Goal", "description": "Savings goals" }
+  }
+}
