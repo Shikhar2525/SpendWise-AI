@@ -1,18 +1,18 @@
-import { useState, useEffect } from 'react';
+import * as React from 'react';
 import { db, collection, query, where, onSnapshot, OperationType, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { Expense, Due, Salary, Budget, Goal } from '../types';
 
 export function useFinancialData() {
   const { user } = useAuth();
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [dues, setDues] = useState<Due[]>([]);
-  const [salaries, setSalaries] = useState<Salary[]>([]);
-  const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [goals, setGoals] = useState<Goal[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [expenses, setExpenses] = React.useState<Expense[]>([]);
+  const [dues, setDues] = React.useState<Due[]>([]);
+  const [salaries, setSalaries] = React.useState<Salary[]>([]);
+  const [budgets, setBudgets] = React.useState<Budget[]>([]);
+  const [goals, setGoals] = React.useState<Goal[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!user) {
       setExpenses([]);
       setDues([]);

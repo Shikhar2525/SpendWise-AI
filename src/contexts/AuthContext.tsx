@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import * as React from 'react';
 import { auth, googleProvider, signInWithPopup, signOut, db, doc, getDoc, setDoc, getDocFromServer } from '../lib/firebase';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { UserProfile } from '../types';
@@ -12,15 +12,15 @@ interface AuthContextType {
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isConnected, setIsConnected] = useState(true);
+  const [user, setUser] = React.useState<User | null>(null);
+  const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [isConnected, setIsConnected] = React.useState(true);
 
-  useEffect(() => {
+  React.useEffect(() => {
     const checkConnection = async () => {
       try {
         // We just need to see if we can reach the server
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = React.useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');
   }

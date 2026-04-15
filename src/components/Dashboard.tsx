@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { 
   TrendingUp, 
@@ -47,7 +47,7 @@ export default function Dashboard({ data }: DashboardProps) {
   const monthStart = startOfMonth(new Date());
   const monthEnd = endOfMonth(new Date());
 
-  const currentMonthStats = useMemo(() => {
+  const currentMonthStats = React.useMemo(() => {
     const monthExpenses = expenses.filter(e => 
       isWithinInterval(parseISO(e.date), { start: monthStart, end: monthEnd })
     );
@@ -67,7 +67,7 @@ export default function Dashboard({ data }: DashboardProps) {
     return { totalExpenses, totalIncome, balance };
   }, [expenses, salaries, monthStart, monthEnd, convert, preferredCurrency.code]);
 
-  const categoryData = useMemo(() => {
+  const categoryData = React.useMemo(() => {
     const categories: Record<string, number> = {};
     expenses.forEach(e => {
       if (isWithinInterval(parseISO(e.date), { start: monthStart, end: monthEnd })) {
@@ -78,7 +78,7 @@ export default function Dashboard({ data }: DashboardProps) {
     return Object.entries(categories).map(([name, value]) => ({ name, value }));
   }, [expenses, monthStart, monthEnd, convert, preferredCurrency.code]);
 
-  const upcomingDues = useMemo(() => {
+  const upcomingDues = React.useMemo(() => {
     return dues
       .filter(d => !d.isPaid && parseISO(d.dueDate) >= new Date())
       .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())

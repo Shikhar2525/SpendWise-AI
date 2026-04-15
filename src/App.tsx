@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import * as React from 'react';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useFinancialData } from './hooks/useFinancialData';
-import { Toaster } from 'sonner';
 import { 
   LayoutDashboard, 
   Receipt, 
@@ -48,8 +47,8 @@ function AppContent() {
   const { user, userProfile, loading, isConnected, signIn, logout } = useAuth();
   const { preferredCurrency, setPreferredCurrency } = useCurrency();
   const financialData = useFinancialData();
-  const [activeTab, setActiveTab] = useState('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [activeTab, setActiveTab] = React.useState('dashboard');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   if (loading) {
     return (
@@ -186,7 +185,14 @@ function AppContent() {
             <span className="text-lg font-bold">SpendWise AI</span>
           </div>
           <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger render={<Button variant="ghost" size="icon"><Menu className="h-6 w-6" /></Button>} />
+            <SheetTrigger 
+              className="lg:hidden"
+              render={
+                <button className="p-2 text-zinc-500 hover:bg-zinc-100 rounded-lg transition-colors">
+                  <Menu className="h-6 w-6" />
+                </button>
+              } 
+            />
             <SheetContent side="left" className="w-64 p-0">
               <div className="flex h-16 items-center gap-2 px-6 border-b">
                 <Wallet className="h-6 w-6" />
@@ -238,7 +244,6 @@ function AppContent() {
           </div>
         </main>
       </div>
-      <Toaster position="top-right" richColors />
     </div>
   );
 }

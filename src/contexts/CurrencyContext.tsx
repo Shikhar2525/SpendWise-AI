@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import * as React from 'react';
 import { CURRENCIES, Currency } from '../types';
 import { useAuth } from './AuthContext';
 import { db, doc, updateDoc, onSnapshot } from '../lib/firebase';
@@ -10,13 +10,13 @@ interface CurrencyContextType {
   formatAmount: (amount: number, code?: string) => string;
 }
 
-const CurrencyContext = createContext<CurrencyContextType | undefined>(undefined);
+const CurrencyContext = React.createContext<CurrencyContextType | undefined>(undefined);
 
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  const [preferredCode, setPreferredCode] = useState('USD');
+  const [preferredCode, setPreferredCode] = React.useState('USD');
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (!user) return;
 
     const unsubscribe = onSnapshot(doc(db, 'users', user.uid), (doc) => {
@@ -71,7 +71,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useCurrency() {
-  const context = useContext(CurrencyContext);
+  const context = React.useContext(CurrencyContext);
   if (context === undefined) {
     throw new Error('useCurrency must be used within a CurrencyProvider');
   }
