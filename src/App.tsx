@@ -15,7 +15,8 @@ import {
   Calendar as CalendarIcon,
   TrendingUp,
   TrendingDown,
-  AlertTriangle
+  AlertTriangle,
+  PiggyBank
 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './components/ui/card';
@@ -32,6 +33,8 @@ import BudgetsView from './components/BudgetsView';
 import GoalsView from './components/GoalsView';
 import CalendarView from './components/CalendarView';
 import AIChatbot from './components/AIChatbot';
+import SavingsView from './components/SavingsView';
+import { Toaster } from 'sonner';
 
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import { CURRENCIES } from './types';
@@ -90,6 +93,7 @@ function AppContent() {
     { id: 'expenses', label: 'Expenses', icon: Receipt },
     { id: 'dues', label: 'Upcoming Dues', icon: CalendarClock },
     { id: 'salaries', label: 'Income', icon: Wallet },
+    { id: 'savings', label: 'Savings', icon: PiggyBank },
     { id: 'budgets', label: 'Budgets', icon: PieChart },
     { id: 'goals', label: 'Savings Goals', icon: Target },
     { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
@@ -98,15 +102,16 @@ function AppContent() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'dashboard': return <Dashboard data={financialData} />;
+      case 'dashboard': return <Dashboard data={financialData} setActiveTab={setActiveTab} />;
       case 'expenses': return <ExpensesView data={financialData} />;
       case 'dues': return <DuesView data={financialData} />;
       case 'salaries': return <SalariesView data={financialData} />;
+      case 'savings': return <SavingsView data={financialData} />;
       case 'budgets': return <BudgetsView data={financialData} />;
       case 'goals': return <GoalsView data={financialData} />;
       case 'calendar': return <CalendarView data={financialData} />;
       case 'ai': return <AIChatbot data={financialData} />;
-      default: return <Dashboard data={financialData} />;
+      default: return <Dashboard data={financialData} setActiveTab={setActiveTab} />;
     }
   };
 
@@ -180,51 +185,67 @@ function AppContent() {
       {/* Mobile Header */}
       <div className="flex flex-1 flex-col overflow-hidden">
         <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 lg:hidden">
-          <div className="flex items-center gap-2">
-            <Wallet className="h-6 w-6" />
-            <span className="text-lg font-bold">SpendWise AI</span>
-          </div>
-          <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-            <SheetTrigger 
-              className="lg:hidden"
-              render={
-                <button className="p-2 text-zinc-500 hover:bg-zinc-100 rounded-lg transition-colors">
-                  <Menu className="h-6 w-6" />
-                </button>
-              } 
-            />
-            <SheetContent side="left" className="w-64 p-0">
-              <div className="flex h-16 items-center gap-2 px-6 border-b">
-                <Wallet className="h-6 w-6" />
-                <span className="text-xl font-bold">SpendWise AI</span>
-              </div>
-              <nav className="space-y-1 p-4">
-                {navItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      setIsMobileMenuOpen(false);
-                    }}
-                    className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                      activeTab === item.id 
-                        ? 'bg-zinc-900 text-white shadow-md' 
-                        : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
-                    }`}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
+          <div className="flex items-center gap-4">
+            <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+              <SheetTrigger 
+                className="lg:hidden"
+                render={
+                  <button className="p-2 text-zinc-500 hover:bg-zinc-100 rounded-lg transition-colors">
+                    <Menu className="h-6 w-6" />
                   </button>
-                ))}
-              </nav>
-              <div className="absolute bottom-0 w-full border-t border-zinc-200 p-4">
-                <Button variant="ghost" className="w-full justify-start gap-3 text-zinc-500" onClick={logout}>
-                  <LogOut className="h-4 w-4" />
-                  Logout
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
+                } 
+              />
+              <SheetContent side="left" className="w-64 p-0 flex flex-col">
+                <div className="flex h-16 items-center gap-2 px-6 border-b">
+                  <Wallet className="h-6 w-6" />
+                  <span className="text-xl font-bold">SpendWise AI</span>
+                </div>
+                <ScrollArea className="flex-1">
+                  <nav className="space-y-1 p-4">
+                    {navItems.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                          activeTab === item.id 
+                            ? 'bg-zinc-900 text-white shadow-md' 
+                            : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+                        }`}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        {item.label}
+                      </button>
+                    ))}
+                  </nav>
+                </ScrollArea>
+                <div className="border-t border-zinc-200 p-4 space-y-4">
+                  <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
+                    <SelectTrigger className="w-full h-9 text-xs border-zinc-200">
+                      <SelectValue placeholder="Currency" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CURRENCIES.map(c => (
+                        <SelectItem key={c.code} value={c.code}>
+                          {c.symbol} {c.code} - {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" className="w-full justify-start gap-3 text-zinc-500 hover:text-red-600" onClick={logout}>
+                    <LogOut className="h-4 w-4" />
+                    Logout
+                  </Button>
+                </div>
+              </SheetContent>
+            </Sheet>
+            <div className="flex items-center gap-2">
+              <Wallet className="h-6 w-6" />
+              <span className="text-lg font-bold">SpendWise AI</span>
+            </div>
+          </div>
         </header>
 
         {/* Main Content Area */}
@@ -253,6 +274,7 @@ export default function App() {
     <AuthProvider>
       <CurrencyProvider>
         <AppContent />
+        <Toaster position="top-right" richColors />
       </CurrencyProvider>
     </AuthProvider>
   );

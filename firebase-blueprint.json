@@ -81,6 +81,18 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["uid", "name", "targetAmount", "deadline"]
+    },
+    "ChatMessage": {
+      "title": "Chat Message",
+      "description": "Stores AI assistant chat history",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "role": { "type": "string", "enum": ["user", "model"] },
+        "content": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "role", "content", "createdAt"]
     }
   },
   "firestore": {
@@ -89,6 +101,7 @@
     "/dues/{dueId}": { "schema": "Due", "description": "Upcoming dues" },
     "/salaries/{salaryId}": { "schema": "Salary", "description": "Income entries" },
     "/budgets/{budgetId}": { "schema": "Budget", "description": "Budget limits" },
-    "/goals/{goalId}": { "schema": "Goal", "description": "Savings goals" }
+    "/goals/{goalId}": { "schema": "Goal", "description": "Savings goals" },
+    "/chats/{chatId}": { "schema": "ChatMessage", "description": "Chat history" }
   }
 }

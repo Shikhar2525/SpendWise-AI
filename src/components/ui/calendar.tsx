@@ -37,6 +37,8 @@ function Calendar({
         className
       )}
       captionLayout={captionLayout}
+      startMonth={new Date(2020, 0)}
+      endMonth={new Date(2030, 11)}
       locale={locale}
       formatters={{
         formatMonthDropdown: (date) =>
@@ -44,9 +46,9 @@ function Calendar({
         ...formatters,
       }}
       classNames={{
-        root: cn("w-fit", defaultClassNames.root),
+        root: cn("w-full", defaultClassNames.root),
         months: cn(
-          "relative flex flex-col gap-4 md:flex-row",
+          "relative flex flex-col gap-4 md:flex-row w-full",
           defaultClassNames.months
         ),
         month: cn("flex w-full flex-col gap-4", defaultClassNames.month),

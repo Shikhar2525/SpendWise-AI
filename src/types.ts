@@ -26,6 +26,7 @@ export interface Due {
   category: string;
   description: string;
   isRecurring: boolean;
+  repeatUntil?: string;
   isPaid: boolean;
   createdAt: string;
 }
@@ -37,7 +38,21 @@ export interface Salary {
   currency: string;
   date: string;
   isRecurring: boolean;
+  repeatUntil?: string;
   description: string;
+  createdAt: string;
+}
+
+export interface Saving {
+  id: string;
+  uid: string;
+  amount: number;
+  currency: string;
+  type: 'RD' | 'FD' | 'Mutual Fund' | 'Stocks' | 'Crypto' | 'Gold' | 'Provident Fund' | 'Other';
+  description: string;
+  isRecurring: boolean;
+  startDate: string;
+  endDate?: string;
   createdAt: string;
 }
 
@@ -86,6 +101,37 @@ export type Category =
   | 'Utilities' 
   | 'Health' 
   | 'Shopping' 
+  | 'Education'
+  | 'Travel'
+  | 'Insurance'
+  | 'Gifts'
+  | 'Investment'
+  | 'Subscriptions'
+  | 'Personal Care'
+  | 'Pets'
+  | 'Maintenance'
+  | 'Taxes'
+  | 'Charity'
+  | 'Debt'
+  | 'Work'
+  | 'Electronics'
+  | 'Home Decor'
+  | 'Groceries'
+  | 'Dining Out'
+  | 'Fitness'
+  | 'Beauty'
+  | 'Books'
+  | 'Clothing'
+  | 'Fuel'
+  | 'Public Transit'
+  | 'Coffee Shops'
+  | 'Streaming Services'
+  | 'Gym'
+  | 'Pharmacy'
+  | 'Office Supplies'
+  | 'Hobbies'
+  | 'Rent'
+  | 'Mortgage'
   | 'Other';
 
 export const CATEGORIES: Category[] = [
@@ -96,5 +142,36 @@ export const CATEGORIES: Category[] = [
   'Utilities',
   'Health',
   'Shopping',
+  'Education',
+  'Travel',
+  'Insurance',
+  'Gifts',
+  'Investment',
+  'Subscriptions',
+  'Personal Care',
+  'Pets',
+  'Maintenance',
+  'Taxes',
+  'Charity',
+  'Debt',
+  'Work',
+  'Electronics',
+  'Home Decor',
+  'Groceries',
+  'Dining Out',
+  'Fitness',
+  'Beauty',
+  'Books',
+  'Clothing',
+  'Fuel',
+  'Public Transit',
+  'Coffee Shops',
+  'Streaming Services',
+  'Gym',
+  'Pharmacy',
+  'Office Supplies',
+  'Hobbies',
+  'Rent',
+  'Mortgage',
   'Other'
 ];

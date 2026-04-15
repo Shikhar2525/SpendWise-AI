@@ -99,6 +99,22 @@ export default function GoalsView({ data }: GoalsViewProps) {
     }
   };
 
+  const [customAmounts, setCustomAmounts] = useState<Record<string, string>>({});
+
+  const handleCustomAmountChange = (goalId: string, value: string) => {
+    setCustomAmounts(prev => ({ ...prev, [goalId]: value }));
+  };
+
+  const handleAddCustomAmount = (goal) => {
+    const amount = parseFloat(customAmounts[goal.id] || '0');
+    if (isNaN(amount) || amount <= 0) {
+      toast.error('Please enter a valid amount');
+      return;
+    }
+    handleUpdateProgress(goal, amount);
+    setCustomAmounts(prev => ({ ...prev, [goal.id]: '' }));
+  };
+
   const handleUpdateProgress = async (goal: Goal, amount: number) => {
     try {
       await updateDoc(doc(db, 'goals', goal.id), {
@@ -246,16 +262,33 @@ export default function GoalsView({ data }: GoalsViewProps) {
                         <p className="text-sm text-zinc-500">Saved of {formatAmount(goal.targetAmount, goal.currency)}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-lg font-bold text-zinc-900">{Math.round(progress)}%</p>
-                        <p className="text-xs text-zinc-500">{formatAmount(goal.targetAmount - goal.currentAmount, goal.currency)} left</p>
+                        <p className={`text-lg font-bold ${progress >= 100 ? 'text-emerald-600' : 'text-zinc-900'}`}>{Math.round(progress)}%</p>
+                        <p className="text-xs text-zinc-500">
+                          {goal.currentAmount >= goal.targetAmount 
+                            ? 'Goal reached!' 
+                            : `${formatAmount(goal.targetAmount - goal.currentAmount, goal.currency)} left`}
+                        </p>
                       </div>
                     </div>
-                    <Progress value={Math.min(100, progress)} className="h-3" />
-                    <div className="flex gap-2 pt-2">
+                    <div className="space-y-2">
+                      <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
+                        <div 
+                          className={`h-full transition-all duration-500 ${progress >= 100 ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                          style={{ width: `${Math.min(100, progress)}%` }}
+                        />
+                      </div>
+                      {goal.currentAmount > goal.targetAmount && (
+                        <p className="text-[10px] font-medium text-emerald-600 flex items-center gap-1 animate-pulse">
+                          <TrendingUp className="h-3 w-3" />
+                          You have over-saved for this goal!
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2 pt-2">
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 min-w-[80px]"
                         onClick={() => handleUpdateProgress(goal, 100)}
                       >
                         + {formatAmount(100, goal.currency)}
@@ -263,7 +296,7 @@ export default function GoalsView({ data }: GoalsViewProps) {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 min-w-[80px]"
                         onClick={() => handleUpdateProgress(goal, 500)}
                       >
                         + {formatAmount(500, goal.currency)}
@@ -271,10 +304,26 @@ export default function GoalsView({ data }: GoalsViewProps) {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        className="flex-1"
+                        className="flex-1 min-w-[80px]"
                         onClick={() => handleUpdateProgress(goal, 1000)}
                       >
                         + {formatAmount(1000, goal.currency)}
+                      </Button>
+                    </div>
+                    <div className="flex gap-2">
+                      <Input 
+                        type="number" 
+                        placeholder="Custom amount" 
+                        className="h-8 text-xs"
+                        value={customAmounts[goal.id] || ''}
+                        onChange={(e) => handleCustomAmountChange(goal.id, e.target.value)}
+                      />
+                      <Button 
+                        size="sm" 
+                        className="h-8 bg-zinc-900 text-white"
+                        onClick={() => handleAddCustomAmount(goal)}
+                      >
+                        Add
                       </Button>
                     </div>
                   </div>

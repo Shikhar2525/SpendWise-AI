@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -11,9 +11,12 @@ import { db, collection, addDoc, deleteDoc, doc, updateDoc, OperationType, handl
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { format, parseISO } from 'date-fns';
-import { Trash2, Edit, Plus, Search, Download } from 'lucide-react';
+import { Trash2, Edit, Plus, Search, Download, Sparkles, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
+import { suggestCategory } from '../services/geminiService';
+import { motion, AnimatePresence } from 'motion/react';
+import debounce from 'lodash/debounce';
 
 interface ExpensesViewProps {
   data: {
@@ -29,6 +32,7 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isAutoAssigning, setIsAutoAssigning] = useState(false);
   const [formData, setFormData] = useState({
     amount: '',
     currency: preferredCurrency.code,
@@ -43,6 +47,30 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
       setFormData(prev => ({ ...prev, currency: preferredCurrency.code }));
     }
   }, [preferredCurrency, editingExpense]);
+
+  const debouncedSuggest = useCallback(
+    debounce(async (desc: string) => {
+      if (desc.length < 3 || editingExpense) return;
+      setIsAutoAssigning(true);
+      try {
+        const category = await suggestCategory(desc);
+        if (CATEGORIES.includes(category as any)) {
+          setFormData(prev => ({ ...prev, category }));
+        }
+      } catch (error) {
+        console.error('Auto-suggest error:', error);
+      } finally {
+        setIsAutoAssigning(false);
+      }
+    }, 1000),
+    [editingExpense]
+  );
+
+  useEffect(() => {
+    if (formData.description && !editingExpense) {
+      debouncedSuggest(formData.description);
+    }
+  }, [formData.description, debouncedSuggest, editingExpense]);
 
   const openAddDialog = () => {
     setEditingExpense(null);
@@ -96,6 +124,25 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
     link.click();
     document.body.removeChild(link);
     toast.success('Expenses exported to CSV');
+  };
+
+  const [isSuggesting, setIsSuggesting] = useState(false);
+
+  const handleSuggestCategory = async () => {
+    if (!formData.description) {
+      toast.error('Please enter a description first');
+      return;
+    }
+    setIsSuggesting(true);
+    try {
+      const category = await suggestCategory(formData.description);
+      setFormData(prev => ({ ...prev, category }));
+      toast.success(`AI suggested: ${category}`);
+    } catch (error) {
+      toast.error('Failed to suggest category');
+    } finally {
+      setIsSuggesting(false);
+    }
   };
 
   const handleSaveExpense = async () => {
@@ -170,6 +217,30 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
               <DialogTitle>{editingExpense ? 'Edit Expense' : 'Add New Expense'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <div className="flex gap-2">
+                  <Input 
+                    id="description" 
+                    placeholder="e.g. Grocery shopping" 
+                    className="flex-1"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  />
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="icon"
+                    className="shrink-0 text-indigo-600 border-indigo-100 hover:bg-indigo-50"
+                    onClick={handleSuggestCategory}
+                    disabled={isSuggesting}
+                    title="Suggest category with AI"
+                  >
+                    <Sparkles className={`h-4 w-4 ${isSuggesting ? 'animate-pulse' : ''}`} />
+                  </Button>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="amount">Amount</Label>
@@ -198,22 +269,41 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
                   </Select>
                 </div>
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={formData.category} 
-                  onValueChange={(v) => setFormData({...formData, category: v})}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="relative">
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(v) => setFormData({...formData, category: v})}
+                  >
+                    <SelectTrigger className={isAutoAssigning ? "border-indigo-500 ring-1 ring-indigo-500" : ""}>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <AnimatePresence>
+                    {isAutoAssigning && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute -right-2 -top-2"
+                      >
+                        <Badge className="bg-indigo-600 text-white flex items-center gap-1 text-[10px] px-1.5 py-0.5">
+                          <Sparkles className="h-2.5 w-2.5 animate-pulse" />
+                          AI Auto-assigning...
+                        </Badge>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </div>
+
               <div className="grid gap-2">
                 <Label htmlFor="date">Date</Label>
                 <Input 
@@ -221,15 +311,6 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
                   type="date" 
                   value={formData.date}
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
-                />
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Input 
-                  id="description" 
-                  placeholder="e.g. Grocery shopping" 
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
                 />
               </div>
             </div>

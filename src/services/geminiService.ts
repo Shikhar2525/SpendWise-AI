@@ -43,23 +43,53 @@ export async function getFinancialInsights(data: any, preferredCurrency: string)
   }
 }
 
-export async function chatWithFinanceAI(message: string, preferredCurrency: string, history: { role: 'user' | 'model', parts: { text: string }[] }[]) {
+export async function chatWithFinanceAI(message: string, preferredCurrency: string, data: any, history: { role: 'user' | 'model', content: string }[]) {
   try {
-    const chat = ai.chats.create({
+    // Convert history to the format expected by the SDK
+    const formattedHistory = history.map(msg => ({
+      role: msg.role,
+      parts: [{ text: msg.content }]
+    }));
+
+    const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
+      contents: [
+        ...formattedHistory,
+        { role: 'user', parts: [{ text: message }] }
+      ],
       config: {
         systemInstruction: `You are SpendWise AI, a helpful financial advisor. You help users manage their expenses, plan budgets, and save money. 
         The user's preferred currency is ${preferredCurrency}. Always use this currency for your responses unless asked otherwise.
-        Be concise, professional, and encouraging.`
+        Be concise, professional, and encouraging.
+        
+        Current Financial Data:
+        ${JSON.stringify(data)}
+        
+        Use this data to answer specific questions about the user's finances. If they ask about their spending, budgets, or goals, refer to this data.`
       }
     });
 
-    // Note: In a real app, you'd pass the history correctly. 
-    // For simplicity, we'll just send the current message with context.
-    const response = await chat.sendMessage({ message });
-    return response.text;
+    return response.text || "I'm sorry, I couldn't generate a response.";
   } catch (error) {
     console.error('Chat error:', error);
     return "I'm sorry, I'm having trouble connecting to my brain right now. Please try again later.";
+  }
+}
+
+export async function suggestCategory(description: string): Promise<string> {
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-3-flash-preview",
+      contents: `Based on this expense description: "${description}", suggest the most appropriate category from this list: Housing, Food, Transport, Entertainment, Utilities, Health, Shopping, Other. Return ONLY the category name.`,
+      config: {
+        temperature: 0.1,
+      }
+    });
+
+    const category = response.text?.trim() || 'Other';
+    return category;
+  } catch (error) {
+    console.error('Category suggestion error:', error);
+    return 'Other';
   }
 }

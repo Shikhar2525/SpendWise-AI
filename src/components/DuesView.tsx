@@ -34,7 +34,8 @@ export default function DuesView({ data }: DuesViewProps) {
     category: 'Utilities',
     dueDate: format(new Date(), 'yyyy-MM-dd'),
     description: '',
-    isRecurring: false
+    isRecurring: false,
+    repeatUntil: ''
   });
 
   useEffect(() => {
@@ -51,7 +52,8 @@ export default function DuesView({ data }: DuesViewProps) {
       category: 'Utilities',
       dueDate: format(new Date(), 'yyyy-MM-dd'),
       description: '',
-      isRecurring: false
+      isRecurring: false,
+      repeatUntil: ''
     });
     setIsDialogOpen(true);
   };
@@ -64,7 +66,8 @@ export default function DuesView({ data }: DuesViewProps) {
       category: due.category,
       dueDate: due.dueDate,
       description: due.description,
-      isRecurring: due.isRecurring
+      isRecurring: due.isRecurring,
+      repeatUntil: due.repeatUntil || ''
     });
     setIsDialogOpen(true);
   };
@@ -85,6 +88,7 @@ export default function DuesView({ data }: DuesViewProps) {
         dueDate: formData.dueDate,
         description: formData.description,
         isRecurring: formData.isRecurring,
+        repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
         updatedAt: new Date().toISOString()
       };
 
@@ -214,6 +218,17 @@ export default function DuesView({ data }: DuesViewProps) {
                 />
                 <Label htmlFor="isRecurring">Recurring Monthly</Label>
               </div>
+              {formData.isRecurring && (
+                <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
+                  <Label htmlFor="repeatUntil">Repeat Until (Optional)</Label>
+                  <Input 
+                    id="repeatUntil" 
+                    type="date" 
+                    value={formData.repeatUntil}
+                    onChange={(e) => setFormData({...formData, repeatUntil: e.target.value})}
+                  />
+                </div>
+              )}
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>

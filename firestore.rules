@@ -1,39 +1,7 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // ===============================================================
-    // Assumed Data Model
-    // ===============================================================
-    //
-    // Collection: users
-    // Document ID: {uid}
-    // Fields: uid, email, displayName, createdAt, preferredCurrency, role
-    //
-    // Collection: expenses
-    // Document ID: {expenseId}
-    // Fields: uid, amount, category, date, description, createdAt
-    //
-    // Collection: dues
-    // Document ID: {dueId}
-    // Fields: uid, amount, dueDate, category, description, isRecurring, isPaid, createdAt
-    //
-    // Collection: salaries
-    // Document ID: {salaryId}
-    // Fields: uid, amount, date, isRecurring, description, createdAt
-    //
-    // Collection: budgets
-    // Document ID: {budgetId}
-    // Fields: uid, category, limit, month
-    //
-    // Collection: goals
-    // Document ID: {goalId}
-    // Fields: uid, name, targetAmount, currentAmount, deadline, createdAt
-    //
-    // ===============================================================
-
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
+    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -52,94 +20,47 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        (
-          (request.auth.token.email == "shikhar.mandloi@gmail.com" && request.auth.token.email_verified == true) ||
-          (exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
-           get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin')
-        );
+        (request.auth.token.email == "shikhar.mandloi@gmail.com" && request.auth.token.email_verified == true);
     }
 
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'email', 'displayName', 'createdAt']) &&
-             data.uid is string && data.email is string && data.displayName is string;
-    }
-
-    function isValidExpense(data) {
-      return data.keys().hasAll(['uid', 'amount', 'category', 'date']) &&
-             data.uid is string && data.amount is number &&
-             data.category is string && data.date is string;
-    }
-
-    function isValidDue(data) {
-      return data.keys().hasAll(['uid', 'amount', 'dueDate', 'category']) &&
-             data.uid is string && data.amount is number && data.dueDate is string;
-    }
-
-    function isValidSalary(data) {
-      return data.keys().hasAll(['uid', 'amount', 'date']) &&
-             data.uid is string && data.amount is number && data.date is string;
-    }
-
-    function isValidBudget(data) {
-      return data.keys().hasAll(['uid', 'category', 'limit', 'month']) &&
-             data.uid is string && data.limit is number && data.month is string;
-    }
-
-    function isValidGoal(data) {
-      return data.keys().hasAll(['uid', 'name', 'targetAmount', 'deadline']) &&
-             data.uid is string && data.name is string && data.targetAmount is number;
-    }
-
-    // ===============================================================
-    // Rules
-    // ===============================================================
-
+    // Rules for each collection
     match /users/{userId} {
-      allow read: if isOwner(userId) || (isAuthenticated() && (request.auth.token.email == "shikhar.mandloi@gmail.com" && request.auth.token.email_verified == true));
-      allow create: if isOwner(userId) && isValidUser(request.resource.data);
-      allow update: if isOwner(userId) && isValidUser(request.resource.data);
+      allow read: if isOwner(userId) || isAdmin();
+      allow write: if isOwner(userId);
     }
 
-    match /expenses/{expenseId} {
+    match /expenses/{id} {
       allow list: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow get: if isDocOwner() || isAdmin();
-      allow create: if isNewDocOwner() && isValidExpense(request.resource.data);
-      allow update: if isDocOwner() && isNewDocOwner() && isValidExpense(request.resource.data);
-      allow delete: if isDocOwner() || isAdmin();
+      allow get, write: if isDocOwner() || isNewDocOwner() || isAdmin();
     }
 
-    match /dues/{dueId} {
+    match /dues/{id} {
       allow list: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow get: if isDocOwner() || isAdmin();
-      allow create: if isNewDocOwner() && isValidDue(request.resource.data);
-      allow update: if isDocOwner() && isNewDocOwner() && isValidDue(request.resource.data);
-      allow delete: if isDocOwner() || isAdmin();
+      allow get, write: if isDocOwner() || isNewDocOwner() || isAdmin();
     }
 
-    match /salaries/{salaryId} {
+    match /salaries/{id} {
       allow list: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow get: if isDocOwner() || isAdmin();
-      allow create: if isNewDocOwner() && isValidSalary(request.resource.data);
-      allow update: if isDocOwner() && isNewDocOwner() && isValidSalary(request.resource.data);
-      allow delete: if isDocOwner() || isAdmin();
+      allow get, write: if isDocOwner() || isNewDocOwner() || isAdmin();
     }
 
-    match /budgets/{budgetId} {
+    match /budgets/{id} {
       allow list: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow get: if isDocOwner() || isAdmin();
-      allow create: if isNewDocOwner() && isValidBudget(request.resource.data);
-      allow update: if isDocOwner() && isNewDocOwner() && isValidBudget(request.resource.data);
-      allow delete: if isDocOwner() || isAdmin();
+      allow get, write: if isDocOwner() || isNewDocOwner() || isAdmin();
     }
 
-    match /goals/{goalId} {
+    match /goals/{id} {
       allow list: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
-      allow get: if isDocOwner() || isAdmin();
-      allow create: if isNewDocOwner() && isValidGoal(request.resource.data);
-      allow update: if isDocOwner() && isNewDocOwner() && isValidGoal(request.resource.data);
-      allow delete: if isDocOwner() || isAdmin();
+      allow get, write: if isDocOwner() || isNewDocOwner() || isAdmin();
     }
 
+    // AI Chat History
+    match /chats/{id} {
+      allow list: if isAuthenticated() && (resource.data.uid == request.auth.uid || isAdmin());
+      allow get, write: if isDocOwner() || isNewDocOwner() || isAdmin();
+    }
+
+    // Allow the app to check connection status
     match /_connection_test_/{docId} {
       allow read: if true;
     }

@@ -12,21 +12,17 @@ import {
   deleteDoc, 
   query, 
   where, 
+  orderBy,
   onSnapshot,
   getDocFromServer
 } from 'firebase/firestore';
-const firebaseConfig = {
-  apiKey: "AIzaSyAddU7C_mT14Rsml5eHiI2JhsK5Kl3HWxk",
-  authDomain: "spendwise-ai-83b2d.firebaseapp.com",
-  projectId: "spendwise-ai-83b2d",
-  storageBucket: "spendwise-ai-83b2d.firebasestorage.app",
-  messagingSenderId: "114446834962",
-  appId: "1:114446834962:web:b61dae27647ef1bcc527cb"
-};
+import firebaseConfig from '../../firebase-applet-config.json';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+export const db = firebaseConfig.firestoreDatabaseId && firebaseConfig.firestoreDatabaseId !== '(default)'
+  ? getFirestore(app, firebaseConfig.firestoreDatabaseId)
+  : getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
 export let isFirebaseConnected = false;
@@ -114,6 +110,7 @@ export {
   deleteDoc, 
   query, 
   where, 
+  orderBy,
   onSnapshot,
   signInWithPopup,
   signOut,
