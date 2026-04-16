@@ -99,11 +99,31 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
   }, [expenses, monthDate, convert, preferredCurrency.code]);
 
   const upcomingDues = React.useMemo(() => {
-    return expandedDues
-      .filter(d => !d.isPaid)
-      .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
-      .slice(0, 5);
-  }, [expandedDues]);
+    // If we have dues in the selected month, show them
+    const currentMonthUnpaid = expandedDues.filter(d => !d.isPaid);
+    if (currentMonthUnpaid.length > 0) {
+      return currentMonthUnpaid
+        .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
+        .slice(0, 5);
+    }
+
+    // Otherwise, find the next month that has dues
+    // We'll search up to 12 months ahead
+    for (let i = 1; i <= 12; i++) {
+      const nextMonth = new Date(monthDate);
+      nextMonth.setMonth(nextMonth.getMonth() + i);
+      const futureDues = expandRecurringItems(dues, nextMonth)
+        .filter(d => !d.isPaid);
+
+      if (futureDues.length > 0) {
+        return futureDues
+          .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
+          .slice(0, 5);
+      }
+    }
+
+    return [];
+  }, [expandedDues, dues, monthDate]);
 
   const COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff', '#f5f3ff'];
 

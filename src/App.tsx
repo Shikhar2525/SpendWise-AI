@@ -35,6 +35,8 @@ import CalendarView from './components/CalendarView';
 import AIInsights from './components/AIInsights';
 import FloatingChat from './components/FloatingChat';
 import SavingsView from './components/SavingsView';
+import LandingPage from './components/LandingPage';
+import { Logo } from './components/Logo';
 import { Toaster } from 'sonner';
 import { MonthFilter } from './components/MonthFilter';
 import { getMonthSuggestions } from './lib/utils/monthUtils';
@@ -70,37 +72,17 @@ function AppContent() {
   }
 
   if (!user) {
-    return (
-      <div className="flex h-screen flex-col items-center justify-center bg-zinc-50 p-4">
-        <div className="w-full max-w-md space-y-8 text-center">
-          <div className="space-y-2">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-zinc-900 text-white shadow-xl">
-              <Wallet className="h-8 w-8" />
-            </div>
-            <h1 className="text-4xl font-bold tracking-tight text-zinc-900">SpendWise AI</h1>
-            <p className="text-zinc-500">Your smart monthly expense planner with AI-powered insights.</p>
-          </div>
-          <Card className="border-zinc-200 shadow-lg">
-            <CardContent className="pt-6">
-              <Button onClick={signIn} className="w-full bg-zinc-900 hover:bg-zinc-800 text-white py-6 text-lg rounded-xl transition-all hover:scale-[1.02]">
-                Sign in with Google
-              </Button>
-            </CardContent>
-          </Card>
-          <p className="text-xs text-zinc-400">Secure authentication powered by Firebase</p>
-        </div>
-      </div>
-    );
+    return <LandingPage />;
   }
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'insights', label: 'AI Insights', icon: Sparkles },
     { id: 'expenses', label: 'Expenses', icon: Receipt },
-    { id: 'dues', label: 'Upcoming Dues', icon: CalendarClock },
+    { id: 'dues', label: 'Bills & Dues', icon: CalendarClock },
     { id: 'salaries', label: 'Income', icon: Wallet },
     { id: 'savings', label: 'Savings', icon: PiggyBank },
     { id: 'budgets', label: 'Budgets', icon: PieChart },
-    { id: 'insights', label: 'AI Insights', icon: Sparkles },
     { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
   ];
 
@@ -133,10 +115,8 @@ function AppContent() {
       {/* Desktop Sidebar */}
       <aside className="hidden w-64 flex-col border-r border-zinc-200 bg-white lg:flex">
         <div className="flex h-16 items-center gap-2 px-6 border-b border-zinc-100">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-600 text-white shadow-lg shadow-indigo-200">
-            <Wallet className="h-5 w-5" />
-          </div>
-          <span className="text-xl font-bold tracking-tight text-zinc-900">SpendWise AI</span>
+          <Logo className="h-8 w-8" />
+          <span className="text-xl font-bold tracking-tight text-zinc-900 line-clamp-1">SpendWise AI</span>
         </div>
         <ScrollArea className="flex-1 px-4 py-4">
           <nav className="space-y-1">
@@ -202,7 +182,7 @@ function AppContent() {
               />
               <SheetContent side="left" className="w-64 p-0 flex flex-col">
                 <div className="flex h-16 items-center gap-2 px-6 border-b">
-                  <Wallet className="h-6 w-6" />
+                  <Logo className="h-8 w-8" />
                   <span className="text-xl font-bold">SpendWise AI</span>
                 </div>
                 <ScrollArea className="flex-1">
@@ -247,7 +227,7 @@ function AppContent() {
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-2">
-              <Wallet className="h-6 w-6" />
+              <Logo className="h-8 w-8" />
               <span className="text-lg font-bold">SpendWise AI</span>
             </div>
           </div>
