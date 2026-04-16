@@ -10,13 +10,15 @@ import { Expense, CATEGORIES, CURRENCIES } from '../types';
 import { db, collection, addDoc, deleteDoc, doc, updateDoc, OperationType, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { format, parseISO } from 'date-fns';
-import { Trash2, Edit, Plus, Search, Download, Sparkles, CheckCircle2 } from 'lucide-react';
+import { format, parseISO, isSameMonth } from 'date-fns';
+import { Trash2, Edit, Plus, Search, Download, Sparkles, CheckCircle2, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
+import { ConfirmDialog } from './ui/confirm-dialog';
 import { suggestCategory } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import debounce from 'lodash/debounce';
+import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 
 interface ExpensesViewProps {
   data: {
@@ -28,6 +30,7 @@ interface ExpensesViewProps {
 export default function ExpensesView({ data }: ExpensesViewProps) {
   const { user } = useAuth();
   const { preferredCurrency, formatAmount } = useCurrency();
+  const { selectedMonth } = useFinancialPeriod();
   const { expenses } = data;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
@@ -127,6 +130,9 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
   };
 
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  const monthDate = parseISO(`${selectedMonth}-01`);
 
   const handleSuggestCategory = async () => {
     if (!formData.description) {
@@ -179,18 +185,24 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
     }
   };
 
-  const handleDeleteExpense = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this expense?')) return;
+  const handleDeleteExpense = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await deleteDoc(doc(db, 'expenses', id));
+      await deleteDoc(doc(db, 'expenses', deleteConfirmId));
       toast.success('Expense deleted');
+      setDeleteConfirmId(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'expenses');
     }
   };
 
   const filteredExpenses = expenses
-    .filter(e => e.description.toLowerCase().includes(searchTerm.toLowerCase()) || e.category.toLowerCase().includes(searchTerm.toLowerCase()))
+    .filter(e => {
+      const matchesSearch = e.description.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           e.category.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesMonth = isSameMonth(parseISO(e.date), monthDate);
+      return matchesSearch && matchesMonth;
+    })
     .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
 
   return (
@@ -231,13 +243,47 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
                     type="button" 
                     variant="outline" 
                     size="icon"
-                    className="shrink-0 text-indigo-600 border-indigo-100 hover:bg-indigo-50"
+                    className="shrink-0 text-zinc-900 border-zinc-200 hover:bg-zinc-50"
                     onClick={handleSuggestCategory}
                     disabled={isSuggesting}
                     title="Suggest category with AI"
                   >
                     <Sparkles className={`h-4 w-4 ${isSuggesting ? 'animate-pulse' : ''}`} />
                   </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="category">Category</Label>
+                <div className="relative">
+                  <Select 
+                    value={formData.category} 
+                    onValueChange={(v) => setFormData({...formData, category: v})}
+                  >
+                    <SelectTrigger className={isAutoAssigning ? "border-zinc-900 ring-1 ring-zinc-900" : "border-zinc-200"}>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {CATEGORIES.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <AnimatePresence>
+                    {isAutoAssigning && (
+                      <motion.div 
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        className="absolute -right-2 -top-2"
+                      >
+                        <Badge className="bg-zinc-900 text-white flex items-center gap-1 text-[10px] px-1.5 py-0.5">
+                          <Sparkles className="h-2.5 w-2.5 animate-pulse" />
+                          AI Auto-assigning...
+                        </Badge>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               </div>
 
@@ -267,40 +313,6 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
-                <div className="relative">
-                  <Select 
-                    value={formData.category} 
-                    onValueChange={(v) => setFormData({...formData, category: v})}
-                  >
-                    <SelectTrigger className={isAutoAssigning ? "border-indigo-500 ring-1 ring-indigo-500" : ""}>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <AnimatePresence>
-                    {isAutoAssigning && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute -right-2 -top-2"
-                      >
-                        <Badge className="bg-indigo-600 text-white flex items-center gap-1 text-[10px] px-1.5 py-0.5">
-                          <Sparkles className="h-2.5 w-2.5 animate-pulse" />
-                          AI Auto-assigning...
-                        </Badge>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
                 </div>
               </div>
 
@@ -367,7 +379,7 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 text-zinc-400 hover:text-red-600"
-                          onClick={() => handleDeleteExpense(expense.id)}
+                          onClick={() => setDeleteConfirmId(expense.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -386,6 +398,14 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDialog 
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Delete Expense"
+        description="Are you sure you want to delete this expense? This action cannot be undone."
+        onConfirm={handleDeleteExpense}
+      />
     </div>
   );
 }

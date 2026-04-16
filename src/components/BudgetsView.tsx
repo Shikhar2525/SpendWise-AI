@@ -12,6 +12,7 @@ import { useCurrency } from '../contexts/CurrencyContext';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
 import { Trash2, Edit, Plus, PieChart, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { ConfirmDialog } from './ui/confirm-dialog';
 
 interface BudgetsViewProps {
   data: {
@@ -26,6 +27,7 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
   const { preferredCurrency, formatAmount, convert } = useCurrency();
   const { budgets, expenses } = data;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [formData, setFormData] = useState({
     category: 'Food',
@@ -113,11 +115,12 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
     }
   };
 
-  const handleDeleteBudget = async (id: string) => {
-    if (!window.confirm('Are you sure you want to remove this budget?')) return;
+  const handleDeleteBudget = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await deleteDoc(doc(db, 'budgets', id));
+      await deleteDoc(doc(db, 'budgets', deleteConfirmId));
       toast.success('Budget removed');
+      setDeleteConfirmId(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'budgets');
     }
@@ -218,7 +221,7 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
                       variant="ghost" 
                       size="icon" 
                       className="h-8 w-8 text-zinc-400 hover:text-red-600"
-                      onClick={() => handleDeleteBudget(budget.id)}
+                      onClick={() => setDeleteConfirmId(budget.id)}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -258,6 +261,14 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
           </div>
         )}
       </div>
+
+      <ConfirmDialog 
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Delete Budget"
+        description="Are you sure you want to remove this budget limit? This action cannot be undone."
+        onConfirm={handleDeleteBudget}
+      />
     </div>
   );
 }

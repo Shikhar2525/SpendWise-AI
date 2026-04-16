@@ -9,10 +9,13 @@ import { Salary, CURRENCIES } from '../types';
 import { db, collection, addDoc, deleteDoc, doc, updateDoc, OperationType, handleFirestoreError } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { format, parseISO } from 'date-fns';
-import { Trash2, Edit, Plus, Wallet, TrendingUp } from 'lucide-react';
+import { format, parseISO, isSameMonth } from 'date-fns';
+import { Trash2, Edit, Plus, Wallet, TrendingUp, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { ConfirmDialog } from './ui/confirm-dialog';
+import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
+import { expandRecurringItems } from '../lib/utils/recurringUtils';
 
 interface SalariesViewProps {
   data: {
@@ -24,9 +27,13 @@ interface SalariesViewProps {
 export default function SalariesView({ data }: SalariesViewProps) {
   const { user } = useAuth();
   const { preferredCurrency, formatAmount } = useCurrency();
+  const { selectedMonth } = useFinancialPeriod();
   const { salaries } = data;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingSalary, setEditingSalary] = useState<Salary | null>(null);
+
+  const monthDate = parseISO(`${selectedMonth}-01`);
   const [formData, setFormData] = useState({
     amount: '',
     currency: preferredCurrency.code,
@@ -103,15 +110,19 @@ export default function SalariesView({ data }: SalariesViewProps) {
     }
   };
 
-  const handleDeleteSalary = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this income entry?')) return;
+  const handleDeleteSalary = async () => {
+    if (!deleteConfirmId) return;
     try {
-      await deleteDoc(doc(db, 'salaries', id));
+      await deleteDoc(doc(db, 'salaries', deleteConfirmId));
       toast.success('Income entry deleted');
+      setDeleteConfirmId(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'salaries');
     }
   };
+
+  const filteredSalaries = expandRecurringItems(salaries, monthDate)
+    .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
 
   return (
     <div className="space-y-6">
@@ -123,6 +134,15 @@ export default function SalariesView({ data }: SalariesViewProps) {
               <DialogTitle>{editingSalary ? 'Edit Income' : 'Add New Income'}</DialogTitle>
             </DialogHeader>
             <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="description">Description</Label>
+                <Input 
+                  id="description" 
+                  placeholder="e.g. Monthly Salary" 
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="amount">Amount</Label>
@@ -160,16 +180,7 @@ export default function SalariesView({ data }: SalariesViewProps) {
                   onChange={(e) => setFormData({...formData, date: e.target.value})}
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Input 
-                  id="description" 
-                  placeholder="e.g. Monthly Salary" 
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                />
-              </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 pt-2">
                 <input 
                   type="checkbox" 
                   id="isRecurring" 
@@ -177,7 +188,7 @@ export default function SalariesView({ data }: SalariesViewProps) {
                   onChange={(e) => setFormData({...formData, isRecurring: e.target.checked})}
                   className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
                 />
-                <Label htmlFor="isRecurring">Recurring Monthly</Label>
+                <Label htmlFor="isRecurring" className="text-sm font-medium">Recurring Monthly</Label>
               </div>
               {formData.isRecurring && (
                 <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
@@ -214,8 +225,8 @@ export default function SalariesView({ data }: SalariesViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {salaries.length > 0 ? (
-                salaries.map((salary) => (
+              {filteredSalaries.length > 0 ? (
+                filteredSalaries.map((salary) => (
                   <TableRow key={salary.id} className="hover:bg-zinc-50/50 transition-colors">
                     <TableCell className="font-medium">
                       {format(parseISO(salary.date), 'MMM dd, yyyy')}
@@ -249,7 +260,7 @@ export default function SalariesView({ data }: SalariesViewProps) {
                           variant="ghost" 
                           size="icon" 
                           className="h-8 w-8 text-zinc-400 hover:text-red-600"
-                          onClick={() => handleDeleteSalary(salary.id)}
+                          onClick={() => setDeleteConfirmId(salary.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
@@ -268,6 +279,14 @@ export default function SalariesView({ data }: SalariesViewProps) {
           </Table>
         </CardContent>
       </Card>
+
+      <ConfirmDialog 
+        open={deleteConfirmId !== null}
+        onOpenChange={(open) => !open && setDeleteConfirmId(null)}
+        title="Delete Income"
+        description="Are you sure you want to delete this income entry? This action cannot be undone."
+        onConfirm={handleDeleteSalary}
+      />
     </div>
   );
 }

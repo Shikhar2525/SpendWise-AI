@@ -16,7 +16,8 @@ import {
   TrendingUp,
   TrendingDown,
   AlertTriangle,
-  PiggyBank
+  PiggyBank,
+  Sparkles
 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './components/ui/card';
@@ -30,11 +31,14 @@ import ExpensesView from './components/ExpensesView';
 import DuesView from './components/DuesView';
 import SalariesView from './components/SalariesView';
 import BudgetsView from './components/BudgetsView';
-import GoalsView from './components/GoalsView';
 import CalendarView from './components/CalendarView';
-import AIChatbot from './components/AIChatbot';
+import AIInsights from './components/AIInsights';
+import FloatingChat from './components/FloatingChat';
 import SavingsView from './components/SavingsView';
 import { Toaster } from 'sonner';
+import { MonthFilter } from './components/MonthFilter';
+import { getMonthSuggestions } from './lib/utils/monthUtils';
+import { FinancialPeriodProvider, useFinancialPeriod } from './contexts/FinancialPeriodContext';
 
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import { CURRENCIES } from './types';
@@ -49,6 +53,7 @@ import {
 function AppContent() {
   const { user, userProfile, loading, isConnected, signIn, logout } = useAuth();
   const { preferredCurrency, setPreferredCurrency } = useCurrency();
+  const { selectedMonth, setSelectedMonth } = useFinancialPeriod();
   const financialData = useFinancialData();
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
@@ -95,10 +100,11 @@ function AppContent() {
     { id: 'salaries', label: 'Income', icon: Wallet },
     { id: 'savings', label: 'Savings', icon: PiggyBank },
     { id: 'budgets', label: 'Budgets', icon: PieChart },
-    { id: 'goals', label: 'Savings Goals', icon: Target },
+    { id: 'insights', label: 'AI Insights', icon: Sparkles },
     { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
-    { id: 'ai', label: 'AI Assistant', icon: MessageSquare },
   ];
+
+  const monthSuggestions = getMonthSuggestions(financialData);
 
   const renderContent = () => {
     switch (activeTab) {
@@ -108,9 +114,8 @@ function AppContent() {
       case 'salaries': return <SalariesView data={financialData} />;
       case 'savings': return <SavingsView data={financialData} />;
       case 'budgets': return <BudgetsView data={financialData} />;
-      case 'goals': return <GoalsView data={financialData} />;
+      case 'insights': return <AIInsights data={financialData} />;
       case 'calendar': return <CalendarView data={financialData} />;
-      case 'ai': return <AIChatbot data={financialData} />;
       default: return <Dashboard data={financialData} setActiveTab={setActiveTab} />;
     }
   };
@@ -261,10 +266,20 @@ function AppContent() {
                 </p>
               </div>
             </div>
+
+            {activeTab !== 'calendar' && activeTab !== 'insights' && (
+              <MonthFilter 
+                selectedMonth={selectedMonth} 
+                onMonthChange={setSelectedMonth} 
+                suggestions={monthSuggestions} 
+              />
+            )}
+            
             {renderContent()}
           </div>
         </main>
       </div>
+      <FloatingChat data={financialData} />
     </div>
   );
 }
@@ -273,8 +288,10 @@ export default function App() {
   return (
     <AuthProvider>
       <CurrencyProvider>
-        <AppContent />
-        <Toaster position="top-right" richColors />
+        <FinancialPeriodProvider>
+          <AppContent />
+          <Toaster position="top-right" richColors />
+        </FinancialPeriodProvider>
       </CurrencyProvider>
     </AuthProvider>
   );

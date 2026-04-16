@@ -28,6 +28,7 @@ export interface Due {
   isRecurring: boolean;
   repeatUntil?: string;
   isPaid: boolean;
+  settledExpenseId?: string | null;
   createdAt: string;
 }
 

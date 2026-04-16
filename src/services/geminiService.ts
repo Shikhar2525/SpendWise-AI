@@ -45,7 +45,6 @@ export async function getFinancialInsights(data: any, preferredCurrency: string)
 
 export async function chatWithFinanceAI(message: string, preferredCurrency: string, data: any, history: { role: 'user' | 'model', content: string }[]) {
   try {
-    // Convert history to the format expected by the SDK
     const formattedHistory = history.map(msg => ({
       role: msg.role,
       parts: [{ text: msg.content }]
@@ -65,7 +64,21 @@ export async function chatWithFinanceAI(message: string, preferredCurrency: stri
         Current Financial Data:
         ${JSON.stringify(data)}
         
-        Use this data to answer specific questions about the user's finances. If they ask about their spending, budgets, or goals, refer to this data.`
+        Use this data to answer specific questions about the user's finances. If they ask about their spending, budgets, or goals, refer to this data.
+        
+        You can also help users add new financial entries. If a user wants to add an expense, income, savings, or goal, you should identify the intent.
+        If any information is missing (e.g., amount, category, date), ask the user for it.
+        
+        When you have all the information to add an entry, you should respond with a special structured format that the UI can recognize.
+        Format: [ACTION:ADD_EXPENSE|{"amount": 100, "category": "Food", "description": "Lunch", "date": "2024-04-15"}]
+        Actions available: ADD_EXPENSE, ADD_INCOME, ADD_SAVING, ADD_GOAL.
+        
+        For ADD_EXPENSE: {amount, category, description, date}
+        For ADD_INCOME: {amount, source, date}
+        For ADD_SAVING: {amount, type, description, startDate, isRecurring}
+        For ADD_GOAL: {name, targetAmount, deadline}
+        
+        If the user provides incomplete info, ask for it clearly. For example: "I can add that expense for you. What was the amount and category?"`
       }
     });
 

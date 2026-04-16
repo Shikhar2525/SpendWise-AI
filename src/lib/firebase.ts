@@ -17,6 +17,7 @@ import {
   getDocFromServer
 } from 'firebase/firestore';
 import firebaseConfig from '../../firebase-applet-config.json';
+import { toast } from 'sonner';
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
@@ -56,8 +57,10 @@ export interface FirestoreErrorInfo {
 }
 
 export function handleFirestoreError(error: unknown, operationType: OperationType, path: string | null) {
+  const errorMessage = error instanceof Error ? error.message : String(error);
+  
   const errInfo: FirestoreErrorInfo = {
-    error: error instanceof Error ? error.message : String(error),
+    error: errorMessage,
     authInfo: {
       userId: auth.currentUser?.uid,
       email: auth.currentUser?.email,
@@ -74,7 +77,18 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   }
+  
   console.error('Firestore Error: ', JSON.stringify(errInfo));
+  
+  // Provide user-friendly toast feedback
+  if (errorMessage.includes('permission-denied')) {
+    toast.error('Access Denied: You do not have permission for this action.');
+  } else if (errorMessage.includes('not-found')) {
+    toast.error('Resource not found.');
+  } else {
+    toast.error(`Operation failed: ${operationType}. Please try again.`);
+  }
+
   throw new Error(JSON.stringify(errInfo));
 }
 

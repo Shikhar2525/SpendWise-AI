@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -8,7 +8,9 @@ import {
   AlertTriangle,
   ArrowUpRight,
   ArrowDownRight,
-  Target
+  Target,
+  Sparkles,
+  Bot
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { 
@@ -23,11 +25,14 @@ import {
   PieChart,
   Pie
 } from 'recharts';
-import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
+import { format, startOfMonth, endOfMonth, isSameMonth, parseISO } from 'date-fns';
 import { Expense, Due, Salary, Budget, Goal } from '../types';
 import { Badge } from './ui/badge';
 import { Progress } from './ui/progress';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
+import { VisionaryForecast } from './VisionaryForecast';
+import { expandRecurringItems } from '../lib/utils/recurringUtils';
 
 interface DashboardProps {
   data: {
@@ -44,19 +49,31 @@ interface DashboardProps {
 export default function Dashboard({ data, setActiveTab }: DashboardProps) {
   const { expenses, dues, salaries, budgets, goals } = data;
   const { preferredCurrency, formatAmount, convert } = useCurrency();
+  const { selectedMonth } = useFinancialPeriod();
 
-  const [selectedMonth, setSelectedMonth] = React.useState(format(new Date(), 'yyyy-MM'));
+  const monthDate = parseISO(`${selectedMonth}-01`);
 
-  const monthStart = startOfMonth(parseISO(`${selectedMonth}-01`));
-  const monthEnd = endOfMonth(parseISO(`${selectedMonth}-01`));
+  const expandedSalaries = React.useMemo(() => expandRecurringItems(salaries, monthDate), [salaries, monthDate]);
+  const expandedDues = React.useMemo(() => {
+    const expanded = expandRecurringItems(dues, monthDate);
+    // Apply the same settlement filtering as DuesView
+    return expanded.filter(d => {
+      if (d.isRecurring) {
+        const isAlreadySettled = dues.some(realDue => 
+          !realDue.isRecurring && 
+          realDue.isPaid && 
+          isSameMonth(parseISO(realDue.dueDate), monthDate) &&
+          realDue.description === d.description
+        );
+        return !isAlreadySettled;
+      }
+      return true;
+    });
+  }, [dues, monthDate]);
 
   const currentMonthStats = React.useMemo(() => {
-    const monthExpenses = expenses.filter(e => 
-      isWithinInterval(parseISO(e.date), { start: monthStart, end: monthEnd })
-    );
-    const monthSalaries = salaries.filter(s => 
-      isWithinInterval(parseISO(s.date), { start: monthStart, end: monthEnd })
-    );
+    const monthExpenses = expenses.filter(e => isSameMonth(parseISO(e.date), monthDate));
+    const monthSalaries = expandedSalaries;
 
     // Convert everything to preferred currency for summary
     const totalExpenses = monthExpenses.reduce((sum, e) => 
@@ -68,63 +85,34 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
     const balance = totalIncome - totalExpenses;
 
     return { totalExpenses, totalIncome, balance };
-  }, [expenses, salaries, monthStart, monthEnd, convert, preferredCurrency.code]);
+  }, [expenses, expandedSalaries, convert, preferredCurrency.code]);
 
   const categoryData = React.useMemo(() => {
     const categories: Record<string, number> = {};
     expenses.forEach(e => {
-      if (isWithinInterval(parseISO(e.date), { start: monthStart, end: monthEnd })) {
+      if (isSameMonth(parseISO(e.date), monthDate)) {
         const convertedAmount = convert(e.amount, e.currency || 'USD', preferredCurrency.code);
         categories[e.category] = (categories[e.category] || 0) + convertedAmount;
       }
     });
     return Object.entries(categories).map(([name, value]) => ({ name, value }));
-  }, [expenses, monthStart, monthEnd, convert, preferredCurrency.code]);
+  }, [expenses, monthDate, convert, preferredCurrency.code]);
 
   const upcomingDues = React.useMemo(() => {
-    return dues
-      .filter(d => !d.isPaid && parseISO(d.dueDate) >= new Date())
+    return expandedDues
+      .filter(d => !d.isPaid)
       .sort((a, b) => parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime())
       .slice(0, 5);
-  }, [dues]);
+  }, [expandedDues]);
 
   const COLORS = ['#6366f1', '#818cf8', '#a5b4fc', '#c7d2fe', '#e0e7ff', '#f5f3ff'];
 
-  const monthSuggestions = React.useMemo(() => {
-    const suggestions = [];
-    for (let i = -2; i <= 2; i++) {
-      const date = new Date();
-      date.setMonth(date.getMonth() + i);
-      suggestions.push(format(date, 'yyyy-MM'));
-    }
-    return suggestions;
-  }, []);
-
   return (
     <div className="space-y-6">
-      {/* Month Selection */}
-      <div className="flex flex-wrap items-center gap-3 bg-white p-4 rounded-xl border border-zinc-200 shadow-sm">
-        <span className="text-sm font-medium text-zinc-500">Viewing data for:</span>
-        <div className="flex flex-wrap gap-2">
-          {monthSuggestions.map(m => (
-            <Button
-              key={m}
-              variant={selectedMonth === m ? "default" : "outline"}
-              size="sm"
-              onClick={() => setSelectedMonth(m)}
-              className="rounded-full px-4"
-            >
-              {format(parseISO(`${m}-01`), 'MMM yyyy')}
-            </Button>
-          ))}
-          <input 
-            type="month" 
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            className="h-9 rounded-full border border-zinc-200 bg-transparent px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
-          />
-        </div>
-      </div>
+      <VisionaryForecast 
+        income={currentMonthStats.totalIncome} 
+        expenses={currentMonthStats.totalExpenses} 
+      />
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3">
@@ -143,7 +131,7 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-zinc-900">{formatAmount(currentMonthStats.totalIncome)}</div>
-            <p className="text-xs text-zinc-400 mt-1">For {format(monthStart, 'MMMM yyyy')}</p>
+            <p className="text-xs text-zinc-400 mt-1">For {format(monthDate, 'MMMM yyyy')}</p>
           </CardContent>
         </Card>
 
@@ -162,7 +150,7 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-zinc-900">{formatAmount(currentMonthStats.totalExpenses)}</div>
-            <p className="text-xs text-zinc-400 mt-1">For {format(monthStart, 'MMMM yyyy')}</p>
+            <p className="text-xs text-zinc-400 mt-1">For {format(monthDate, 'MMMM yyyy')}</p>
           </CardContent>
         </Card>
 
@@ -185,46 +173,6 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
           </CardContent>
         </Card>
       </div>
-
-      {/* AI Insights Section */}
-      <Card className="border-none shadow-xl bg-zinc-900 text-white overflow-hidden">
-        <CardHeader className="pb-2">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-indigo-500 flex items-center justify-center">
-              <TrendingUp className="h-4 w-4 text-white" />
-            </div>
-            <CardTitle className="text-lg font-bold">SpendWise AI Insights</CardTitle>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <h4 className="text-sm font-semibold text-indigo-300 mb-1">Spending Trend</h4>
-              <p className="text-sm text-zinc-300">
-                {currentMonthStats.totalExpenses > currentMonthStats.totalIncome * 0.7 
-                  ? "Your spending is high this month. Consider reviewing your non-essential expenses."
-                  : "Great job! Your spending is well within your income limits."}
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <h4 className="text-sm font-semibold text-indigo-300 mb-1">Top Category</h4>
-              <p className="text-sm text-zinc-300">
-                {categoryData.length > 0 
-                  ? `You've spent the most on ${categoryData.sort((a,b) => b.value - a.value)[0].name} this month.`
-                  : "No spending data available yet for this month."}
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-white/5 border border-white/10">
-              <h4 className="text-sm font-semibold text-indigo-300 mb-1">Savings Potential</h4>
-              <p className="text-sm text-zinc-300">
-                {currentMonthStats.balance > 0 
-                  ? `You can potentially save ${formatAmount(currentMonthStats.balance)} more this month.`
-                  : "Try to reduce expenses to start building your savings."}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-7">
         {/* Main Chart */}
@@ -270,7 +218,7 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
                     <AlertTriangle className="h-6 w-6" />
                   </div>
                   <p className="text-sm font-medium text-zinc-900">No expenses recorded</p>
-                  <p className="text-xs text-zinc-500">Add expenses for {format(monthStart, 'MMMM')} to see the breakdown.</p>
+                  <p className="text-xs text-zinc-500">Add expenses for {format(monthDate, 'MMMM')} to see the breakdown.</p>
                 </div>
               )}
             </div>
@@ -326,41 +274,134 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
           return (
             <Card 
               key={goal.id} 
-              className="border-zinc-200 shadow-sm cursor-pointer hover:border-indigo-200 transition-colors"
-              onClick={() => setActiveTab('goals')}
+              className="border-zinc-200 shadow-sm cursor-pointer hover:border-zinc-900 transition-all hover:shadow-md group"
+              onClick={() => setActiveTab('savings')}
             >
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-sm font-medium">{goal.name}</CardTitle>
-                  <Target className={`h-4 w-4 ${isCompleted ? 'text-emerald-500' : 'text-zinc-400'}`} />
+                  <CardTitle className="text-sm font-bold text-zinc-900">{goal.name}</CardTitle>
+                  <div className={`p-1.5 rounded-lg ${isCompleted ? 'bg-emerald-100 text-emerald-600' : 'bg-zinc-100 text-zinc-400'}`}>
+                    <Target className="h-4 w-4" />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex items-end justify-between mb-2">
-                  <div className="text-2xl font-bold">{formatAmount(goal.currentAmount, goal.currency)}</div>
-                  <div className="text-xs text-zinc-500">Target: {formatAmount(goal.targetAmount, goal.currency)}</div>
+                <div className="flex items-end justify-between mb-3">
+                  <div>
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Saved</p>
+                    <div className="text-2xl font-black text-zinc-900">{formatAmount(goal.currentAmount, goal.currency)}</div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider mb-1">Target</p>
+                    <div className="text-sm font-bold text-zinc-500">{formatAmount(goal.targetAmount, goal.currency)}</div>
+                  </div>
                 </div>
                 <div className="relative pt-1">
-                  <div className="h-2 w-full bg-zinc-100 rounded-full overflow-hidden">
+                  <div className="h-2.5 w-full bg-zinc-100 rounded-full overflow-hidden">
                     <div 
-                      className={`h-full transition-all duration-500 ${isCompleted ? 'bg-emerald-500' : 'bg-rose-500'}`}
+                      className={`h-full transition-all duration-1000 ease-out ${isCompleted ? 'bg-emerald-500' : 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.3)]'}`}
                       style={{ width: `${Math.min(100, progress)}%` }}
                     />
                   </div>
+                  <div className="flex justify-between mt-2">
+                    <span className={`text-[10px] font-bold ${isCompleted ? 'text-emerald-600' : 'text-rose-500'}`}>
+                      {Math.round(progress)}% Complete
+                    </span>
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                      {format(parseISO(goal.deadline), 'MMM yyyy')}
+                    </span>
+                  </div>
                   {isOverSaved && (
-                    <p className="text-[10px] text-emerald-600 font-medium mt-1">
-                      🎉 You have over saved for this {goal.name} goal!
-                    </p>
+                    <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center gap-2">
+                      <Sparkles className="h-3 w-3 text-emerald-600" />
+                      <p className="text-[10px] text-emerald-700 font-bold">
+                        Excellent! You have over-saved for {goal.name} with {formatAmount(goal.currentAmount - goal.targetAmount, goal.currency)} extra.
+                      </p>
+                    </div>
                   )}
                 </div>
-                <p className="text-[10px] text-zinc-400 mt-2 uppercase tracking-widest">
-                  Deadline: {format(parseISO(goal.deadline), 'MMM yyyy')}
-                </p>
               </CardContent>
             </Card>
           );
         })}
       </div>
+
+      {/* AI Financial Insights Section */}
+      <Card className="border-none shadow-2xl bg-zinc-950 text-white overflow-hidden mt-12 relative group">
+        <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/10 via-transparent to-purple-500/10 opacity-30 pointer-events-none" />
+        <CardHeader className="pb-8 relative z-10 border-b border-white/5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center justify-center shadow-2xl">
+                <Bot className="h-7 w-7 text-indigo-400" />
+              </div>
+              <div>
+                <CardTitle className="text-xl font-bold tracking-tight italic">AI Financial Insights</CardTitle>
+                <CardDescription className="text-zinc-500 text-[10px] font-bold tracking-widest mt-1">Real-time Analysis Active</CardDescription>
+              </div>
+            </div>
+            <Badge className="bg-indigo-500/20 text-indigo-400 border-indigo-500/30 text-[9px] uppercase tracking-widest px-3 py-1">Smart</Badge>
+          </div>
+        </CardHeader>
+        <CardContent className="relative z-10 pt-8">
+          <div className="grid gap-8 md:grid-cols-3">
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-300">Spending Habit</h4>
+              </div>
+              <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                {currentMonthStats.totalExpenses > currentMonthStats.totalIncome * 0.7 
+                  ? "You've spent over 70% of your income this month. Consider slowing down on non-essential purchases."
+                  : "Your spending is at a healthy level. You're successfully living within your means."}
+              </p>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
+                  <PieChart className="h-4 w-4" />
+                </div>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-300">Top Categories</h4>
+              </div>
+              <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                {categoryData.length > 0 
+                  ? `Your highest spending is in ${categoryData.sort((a,b) => b.value - a.value)[0].name}. Keeping an eye on this could save you more.`
+                  : "Not enough data yet to analyze your spending categories. Add some expenses to get started."}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <Wallet className="h-4 w-4" />
+                </div>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-300">Available Funds</h4>
+              </div>
+              <p className="text-xs text-zinc-500 leading-relaxed font-medium">
+                {currentMonthStats.balance > 0 
+                  ? `You have a surplus of ${formatAmount(currentMonthStats.balance)}. We suggest allocating some to your savings goals.`
+                  : "You've spent more than your income. Try prioritizing essential dues and reducing extra costs."}
+              </p>
+            </div>
+          </div>
+          
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 py-6 border-t border-white/5">
+            <div className="flex items-center gap-4 text-zinc-600">
+              <div className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="text-[9px] font-bold tracking-wider">Status: Ready</span>
+            </div>
+            <Button 
+              onClick={() => setActiveTab('insights')}
+              className="bg-white text-black hover:bg-zinc-200 rounded-xl px-10 h-12 text-[10px] font-bold tracking-widest shadow-[0_0_30px_rgba(255,255,255,0.05)]"
+            >
+              Analyze Full Insights
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
