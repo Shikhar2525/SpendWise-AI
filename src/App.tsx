@@ -41,6 +41,7 @@ import { Toaster } from 'sonner';
 import { MonthFilter } from './components/MonthFilter';
 import { getMonthSuggestions } from './lib/utils/monthUtils';
 import { FinancialPeriodProvider, useFinancialPeriod } from './contexts/FinancialPeriodContext';
+import { TooltipProvider } from './components/ui/tooltip';
 
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import { CURRENCIES } from './types';
@@ -269,8 +270,10 @@ export default function App() {
     <AuthProvider>
       <CurrencyProvider>
         <FinancialPeriodProvider>
-          <AppContent />
-          <Toaster position="top-right" richColors />
+          <TooltipProvider>
+            <AppContent />
+            <Toaster position="top-right" richColors />
+          </TooltipProvider>
         </FinancialPeriodProvider>
       </CurrencyProvider>
     </AuthProvider>

@@ -10,7 +10,8 @@ import { db, collection, addDoc, deleteDoc, doc, updateDoc, OperationType, handl
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { format, startOfMonth, endOfMonth, isWithinInterval, parseISO } from 'date-fns';
-import { Trash2, Edit, Plus, PieChart, AlertCircle } from 'lucide-react';
+import { Logo } from './Logo';
+import { Trash2, Edit, Plus, PieChart, AlertCircle, Target } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from './ui/confirm-dialog';
 
@@ -128,11 +129,27 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Button onClick={openAddDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2">
-          <Plus className="h-4 w-4" />
-          Set Budget Limit
-        </Button>
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100/50">
+            <Target className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Budgets</h2>
+              <Logo className="h-5 w-5" />
+            </div>
+            <p className="text-sm text-zinc-500 font-medium">Set limits and track your categorical spending</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          {!isDialogOpen && (
+            <Button onClick={openAddDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2 h-10 rounded-xl shadow-lg shadow-zinc-200">
+              <Plus className="h-4 w-4" />
+              Set Budget Limit
+            </Button>
+          )}
+        </div>
       </div>
 
       {isDialogOpen && (

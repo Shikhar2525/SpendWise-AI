@@ -4,7 +4,8 @@ import { db, collection, addDoc, deleteDoc, doc, updateDoc, OperationType, handl
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { format, parseISO, isSameMonth } from 'date-fns';
-import { Trash2, Edit, Plus, PiggyBank, TrendingUp, CalendarClock, Target, Calendar, Sparkles } from 'lucide-react';
+import { Logo } from './Logo';
+import { Trash2, Edit, Plus, PiggyBank, TrendingUp, CalendarClock, Target, Calendar, Sparkles, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { ConfirmDialog } from './ui/confirm-dialog';
@@ -252,8 +253,29 @@ export default function SavingsView({ data }: SavingsViewProps) {
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100/50">
+            <PiggyBank className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Savings & Wealth</h2>
+              <Logo className="h-5 w-5" />
+            </div>
+            <p className="text-sm text-zinc-500 font-medium">Build your future and track long-term growth</p>
+          </div>
+        </div>
+        <div className="hidden md:flex items-center gap-4">
+           <div className="flex flex-col items-end">
+             <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Growth Phase</span>
+             <span className="text-sm font-black text-emerald-600 flex items-center gap-1">Active <TrendingUp className="h-3 w-3" /></span>
+           </div>
+        </div>
+      </div>
+
       <Tabs defaultValue="entries" className="w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-zinc-50/50 p-2 rounded-2xl border border-zinc-100/50">
           <TabsList className="bg-zinc-100 p-1 rounded-xl">
             <TabsTrigger value="entries" className="rounded-lg px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
               Savings Entries

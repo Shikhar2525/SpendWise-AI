@@ -11,7 +11,8 @@ import { db, collection, addDoc, deleteDoc, doc, updateDoc, OperationType, handl
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { format, parseISO, isSameMonth } from 'date-fns';
-import { Trash2, Edit, Plus, CheckCircle2, Circle, CalendarClock, Sparkles, Calendar } from 'lucide-react';
+import { Logo } from './Logo';
+import { Trash2, Edit, Plus, CheckCircle2, Circle, CalendarClock, Sparkles, Calendar, Receipt, Search, Filter } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { ConfirmDialog } from './ui/confirm-dialog';
@@ -271,140 +272,156 @@ export default function DuesView({ data }: DuesViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger render={<Button onClick={openAddDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2"><Plus className="h-4 w-4" />Add Due</Button>} />
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>{editingDue ? 'Edit Due' : 'Add New Due'}</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <div className="flex gap-2">
-                  <Input 
-                    id="description" 
-                    placeholder="e.g. Monthly Rent" 
-                    className="flex-1"
-                    value={formData.description}
-                    onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  />
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="icon"
-                    className="shrink-0 text-zinc-900 border-zinc-200 hover:bg-zinc-50"
-                    onClick={handleSuggestCategory}
-                    disabled={isSuggesting}
-                    title="Suggest category with AI"
-                  >
-                    <Sparkles className={`h-4 w-4 ${isSuggesting ? 'animate-pulse' : ''}`} />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="category">Category</Label>
-                <div className="relative">
-                  <Select 
-                    value={formData.category} 
-                    onValueChange={(v) => setFormData({...formData, category: v})}
-                  >
-                    <SelectTrigger className={isAutoAssigning ? "border-zinc-900 ring-1 ring-zinc-900" : "border-zinc-200"}>
-                      <SelectValue placeholder="Select category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CATEGORIES.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <AnimatePresence>
-                    {isAutoAssigning && (
-                      <motion.div 
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        className="absolute -right-2 -top-2"
-                      >
-                        <Badge className="bg-zinc-900 text-white flex items-center gap-1 text-[10px] px-1.5 py-0.5">
-                          <Sparkles className="h-2.5 w-2.5 animate-pulse" />
-                          AI Auto-assigning...
-                        </Badge>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input 
-                    id="amount" 
-                    type="number" 
-                    placeholder="0.00" 
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select 
-                    value={formData.currency} 
-                    onValueChange={(v) => setFormData({...formData, currency: v})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map(c => (
-                        <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="dueDate">Due Date</Label>
-                <Input 
-                  id="dueDate" 
-                  type="date" 
-                  value={formData.dueDate}
-                  onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
-                />
-              </div>
-              <div className="flex items-center gap-2 pt-2">
-                <input 
-                  type="checkbox" 
-                  id="isRecurring" 
-                  checked={formData.isRecurring}
-                  onChange={(e) => setFormData({...formData, isRecurring: e.target.checked})}
-                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
-                />
-                <Label htmlFor="isRecurring" className="text-sm font-medium">Recurring Monthly</Label>
-              </div>
-              {formData.isRecurring && (
-                <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
-                  <Label htmlFor="repeatUntil">Repeat Until (Optional)</Label>
-                  <Input 
-                    id="repeatUntil" 
-                    type="date" 
-                    value={formData.repeatUntil}
-                    onChange={(e) => setFormData({...formData, repeatUntil: e.target.value})}
-                  />
-                </div>
-              )}
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100/50">
+            <CalendarClock className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Bills & Dues</h2>
+              <Logo className="h-5 w-5" />
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button className="bg-zinc-900 text-white" onClick={handleSaveDue}>
-                {editingDue ? 'Update Due' : 'Save Due'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <p className="text-sm text-zinc-500 font-medium">Track and settle your recurring commitments</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger render={<Button onClick={openAddDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2 h-10 rounded-xl shadow-lg shadow-zinc-200">
+              <Plus className="h-4 w-4" /> Add Bill
+            </Button>} />
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>{editingDue ? 'Edit Due' : 'Add New Due'}</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="description">Description</Label>
+                  <div className="flex gap-2">
+                    <Input 
+                      id="description" 
+                      placeholder="e.g. Monthly Rent" 
+                      className="flex-1"
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="icon"
+                      className="shrink-0 text-zinc-900 border-zinc-200 hover:bg-zinc-50"
+                      onClick={handleSuggestCategory}
+                      disabled={isSuggesting}
+                      title="Suggest category with AI"
+                    >
+                      <Sparkles className={`h-4 w-4 ${isSuggesting ? 'animate-pulse' : ''}`} />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="category">Category</Label>
+                  <div className="relative">
+                    <Select 
+                      value={formData.category} 
+                      onValueChange={(v) => setFormData({...formData, category: v})}
+                    >
+                      <SelectTrigger className={isAutoAssigning ? "border-zinc-900 ring-1 ring-zinc-900" : "border-zinc-200"}>
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CATEGORIES.map(cat => (
+                          <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <AnimatePresence>
+                      {isAutoAssigning && (
+                        <motion.div 
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.8 }}
+                          className="absolute -right-2 -top-2"
+                        >
+                          <Badge className="bg-zinc-900 text-white flex items-center gap-1 text-[10px] px-1.5 py-0.5">
+                            <Sparkles className="h-2.5 w-2.5 animate-pulse" />
+                            AI Auto-assigning...
+                          </Badge>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="amount">Amount</Label>
+                    <Input 
+                      id="amount" 
+                      type="number" 
+                      placeholder="0.00" 
+                      value={formData.amount}
+                      onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="currency">Currency</Label>
+                    <Select 
+                      value={formData.currency} 
+                      onValueChange={(v) => setFormData({...formData, currency: v})}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Currency" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {CURRENCIES.map(c => (
+                          <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="dueDate">Due Date</Label>
+                  <Input 
+                    id="dueDate" 
+                    type="date" 
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                  />
+                </div>
+                <div className="flex items-center gap-2 pt-2">
+                  <input 
+                    type="checkbox" 
+                    id="isRecurring" 
+                    checked={formData.isRecurring}
+                    onChange={(e) => setFormData({...formData, isRecurring: e.target.checked})}
+                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                  />
+                  <Label htmlFor="isRecurring" className="text-sm font-medium">Recurring Monthly</Label>
+                </div>
+                {formData.isRecurring && (
+                  <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
+                    <Label htmlFor="repeatUntil">Repeat Until (Optional)</Label>
+                    <Input 
+                      id="repeatUntil" 
+                      type="date" 
+                      value={formData.repeatUntil}
+                      onChange={(e) => setFormData({...formData, repeatUntil: e.target.value})}
+                    />
+                  </div>
+                )}
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button className="bg-zinc-900 text-white" onClick={handleSaveDue}>
+                  {editingDue ? 'Update Due' : 'Save Due'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       <div className="grid gap-6">

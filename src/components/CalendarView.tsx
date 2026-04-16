@@ -1,12 +1,25 @@
 import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Calendar } from './ui/calendar';
 import { Expense, Due, Salary } from '../types';
-import { format, parseISO, isSameDay } from 'date-fns';
+import { format, parseISO, isSameDay, addDays } from 'date-fns';
 import { Badge } from './ui/badge';
 import { ScrollArea } from './ui/scroll-area';
-import { Wallet, Receipt, CalendarClock, Calendar as CalendarIcon } from 'lucide-react';
+import { Wallet, Receipt, CalendarClock, Calendar as CalendarIcon, Filter, ArrowRight, Settings2, Info } from 'lucide-react';
 import { useCurrency } from '../contexts/CurrencyContext';
+import { Logo } from './Logo';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from './ui/select';
+import { Input } from './ui/input';
+import { cn } from '../lib/utils';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { Button } from './ui/button';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface CalendarViewProps {
   data: {
@@ -22,6 +35,15 @@ export default function CalendarView({ data }: CalendarViewProps) {
   const { formatAmount } = useCurrency();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [month, setMonth] = useState<Date>(new Date());
+  const [rangeDays, setRangeDays] = useState('30');
+  const [customRange, setCustomRange] = useState('');
+
+  const displayRange = useMemo(() => {
+    if (rangeDays === 'custom') {
+      return parseInt(customRange) || 30;
+    }
+    return parseInt(rangeDays);
+  }, [rangeDays, customRange]);
 
   const dayEvents = useMemo(() => {
     if (!selectedDate) return { expenses: [], dues: [], salaries: [] };
@@ -124,15 +146,15 @@ export default function CalendarView({ data }: CalendarViewProps) {
 
   const upcomingEvents = useMemo(() => {
     const today = new Date();
-    const thirtyDaysFromNow = new Date();
-    thirtyDaysFromNow.setDate(today.getDate() + 30);
+    today.setHours(0, 0, 0, 0);
+    const rangeEnd = addDays(today, displayRange);
 
-    const events: { date: Date, type: 'expense' | 'due' | 'salary', description: string, amount: number, currency: string, category?: string }[] = [];
+    const events: { date: Date, type: 'expense' | 'due' | 'salary', description: string, amount: number, currency: string, category?: string, isRecurring?: boolean }[] = [];
 
     // Add non-recurring
     expenses.forEach(e => {
       const d = parseISO(e.date);
-      if (d >= today && d <= thirtyDaysFromNow) {
+      if (d >= today && d <= rangeEnd) {
         events.push({ date: d, type: 'expense', description: e.description, amount: e.amount, currency: e.currency, category: e.category });
       }
     });
@@ -140,17 +162,19 @@ export default function CalendarView({ data }: CalendarViewProps) {
     dues.forEach(d => {
       const dueDate = parseISO(d.dueDate);
       if (!d.isRecurring) {
-        if (dueDate >= today && dueDate <= thirtyDaysFromNow) {
+        if (dueDate >= today && dueDate <= rangeEnd) {
           events.push({ date: dueDate, type: 'due', description: d.description, amount: d.amount, currency: d.currency, category: d.category });
         }
       } else {
-        // For recurring, find occurrences in the next 30 days
-        let current = new Date(today);
-        while (current <= thirtyDaysFromNow) {
-          if (current.getDate() === dueDate.getDate() && current >= dueDate && (!d.repeatUntil || current <= parseISO(d.repeatUntil))) {
-            events.push({ date: new Date(current), type: 'due', description: d.description, amount: d.amount, currency: d.currency, category: d.category });
+        // For recurring, find occurrences in the range
+        let current = new Date(dueDate);
+        while (current <= rangeEnd) {
+          if (current >= today) {
+            if (!d.repeatUntil || current <= parseISO(d.repeatUntil)) {
+              events.push({ date: new Date(current), type: 'due', description: d.description, amount: d.amount, currency: d.currency, category: d.category, isRecurring: true });
+            }
           }
-          current.setDate(current.getDate() + 1);
+          current.setMonth(current.getMonth() + 1);
         }
       }
     });
@@ -158,60 +182,133 @@ export default function CalendarView({ data }: CalendarViewProps) {
     salaries.forEach(s => {
       const salaryDate = parseISO(s.date);
       if (!s.isRecurring) {
-        if (salaryDate >= today && salaryDate <= thirtyDaysFromNow) {
+        if (salaryDate >= today && salaryDate <= rangeEnd) {
           events.push({ date: salaryDate, type: 'salary', description: s.description, amount: s.amount, currency: s.currency });
         }
       } else {
-        let current = new Date(today);
-        while (current <= thirtyDaysFromNow) {
-          if (current.getDate() === salaryDate.getDate() && current >= salaryDate && (!s.repeatUntil || current <= parseISO(s.repeatUntil))) {
-            events.push({ date: new Date(current), type: 'salary', description: s.description, amount: s.amount, currency: s.currency });
+        let current = new Date(salaryDate);
+        while (current <= rangeEnd) {
+          if (current >= today) {
+            if (!s.repeatUntil || current <= parseISO(s.repeatUntil)) {
+              events.push({ date: new Date(current), type: 'salary', description: s.description, amount: s.amount, currency: s.currency, isRecurring: true });
+            }
           }
-          current.setDate(current.getDate() + 1);
+          current.setMonth(current.getMonth() + 1);
         }
       }
     });
 
     return events.sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [expenses, dues, salaries]);
+  }, [expenses, dues, salaries, displayRange]);
+
+  // Custom Day rendering to show markers
+  const DayMarkers = ({ date }: { date: Date }) => {
+    const hasSalary = modifiers.salary(date);
+    const hasExpense = modifiers.expense(date);
+    const hasDue = modifiers.due(date);
+
+    if (!hasSalary && !hasExpense && !hasDue) return null;
+
+    return (
+      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
+        {hasSalary && <div className="h-1 w-1 rounded-full bg-emerald-500 shadow-[0_0_2px_rgba(16,185,129,0.5)]" />}
+        {hasDue && <div className="h-1 w-1 rounded-full bg-amber-500 shadow-[0_0_2px_rgba(245,158,11,0.5)]" />}
+        {hasExpense && <div className="h-1 w-1 rounded-full bg-rose-500 shadow-[0_0_2px_rgba(244,63,94,0.5)]" />}
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-12 max-w-6xl mx-auto">
-        <Card className="lg:col-span-7 border-zinc-200 shadow-sm overflow-hidden h-fit">
+        <Card className="lg:col-span-7 border-zinc-200 shadow-xl shadow-zinc-200/50 overflow-hidden h-fit bg-white">
           <CardContent className="p-0">
-            <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-zinc-900">Financial Calendar</h3>
-                <p className="text-xs text-zinc-500">Income and expenses</p>
+            <div className="p-5 border-b border-zinc-100 bg-zinc-50/30 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Logo className="h-9 w-9" />
+                <div>
+                  <h3 className="text-base font-black text-zinc-900 leading-tight tracking-tight">Financial Strategy View</h3>
+                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Global Cashflow Mapping</p>
+                </div>
               </div>
-              <div className="flex gap-3 text-[9px] font-bold uppercase tracking-widest">
-                <div className="flex items-center gap-1 text-emerald-600">
-                  <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  Income
-                </div>
-                <div className="flex items-center gap-1 text-rose-600">
-                  <div className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                  Expense
-                </div>
-                <div className="flex items-center gap-1 text-amber-600">
-                  <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-                  Due
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => {
+                    const today = new Date();
+                    setMonth(today);
+                    setSelectedDate(today);
+                  }}
+                  className="h-8 rounded-lg text-[10px] font-bold uppercase tracking-wider bg-white border-zinc-200"
+                >
+                  Today
+                </Button>
+                <div className="hidden sm:flex gap-3 px-3 py-1.5 bg-white border border-zinc-200 rounded-xl shadow-inner">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_4px_rgba(16,185,129,0.5)]" />
+                    <span className="text-[9px] font-black text-zinc-500 uppercase">Input</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-1.5 w-1.5 rounded-full bg-rose-500 shadow-[0_0_4px_rgba(244,63,94,0.5)]" />
+                    <span className="text-[9px] font-black text-zinc-500 uppercase">Output</span>
+                  </div>
                 </div>
               </div>
             </div>
-            <div className="p-4 flex justify-center">
+            <div className="p-6 md:p-8 flex justify-center bg-white">
               <Calendar
                 mode="single"
                 month={month}
                 onMonthChange={handleMonthChange}
                 selected={selectedDate}
                 onSelect={setSelectedDate}
-                className="w-full"
+                className="w-full max-w-md mx-auto"
                 captionLayout="dropdown"
                 modifiers={modifiers}
-                modifiersStyles={modifierStyles}
+                components={{
+                  DayButton: ({ day, className, ...props }) => {
+                    const isToday = isSameDay(day.date, new Date());
+                    const isSelected = selectedDate && isSameDay(day.date, selectedDate);
+                    
+                    return (
+                      <button
+                        {...props}
+                        className={cn(
+                          "relative h-10 w-10 md:h-12 md:w-12 p-0 font-bold transition-all duration-200 rounded-2xl flex items-center justify-center text-sm",
+                          isSelected ? "bg-zinc-900 text-white shadow-lg scale-110 z-10" : "hover:bg-zinc-100",
+                          isToday && !isSelected && "bg-indigo-50 text-indigo-600 ring-2 ring-indigo-200 ring-offset-2",
+                          "group/day"
+                        )}
+                      >
+                        <span className="relative z-10">{day.date.getDate()}</span>
+                        <DayMarkers date={day.date} />
+                        {isSelected && (
+                          <motion.div 
+                            layoutId="calendar-selection"
+                            className="absolute inset-0 bg-zinc-900 rounded-2xl"
+                            transition={{ type: "spring", bounce: 0.2, duration: 0.6 }}
+                          />
+                        )}
+                      </button>
+                    );
+                  }
+                }}
               />
+            </div>
+            <div className="px-6 py-4 bg-zinc-50/50 border-t border-zinc-100 flex items-center justify-center gap-6">
+               <div className="flex items-center gap-2">
+                 <div className="h-2 w-2 rounded-full bg-emerald-500" />
+                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Income</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <div className="h-2 w-2 rounded-full bg-amber-500" />
+                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Dues</span>
+               </div>
+               <div className="flex items-center gap-2">
+                 <div className="h-2 w-2 rounded-full bg-rose-500" />
+                 <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-tighter">Expenses</span>
+               </div>
             </div>
           </CardContent>
         </Card>
@@ -301,44 +398,129 @@ export default function CalendarView({ data }: CalendarViewProps) {
 
     {/* Upcoming Events Section */}
     <div className="max-w-6xl mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-bold text-zinc-900">Upcoming (Next 30 Days)</h3>
-        <Badge variant="secondary" className="bg-zinc-100 text-zinc-600">{upcomingEvents.length} Events</Badge>
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+        <div>
+          <h3 className="text-xl font-black text-zinc-900 tracking-tight">Upcoming Schedule</h3>
+          <p className="text-sm text-zinc-500">Track your future transactions and plan ahead</p>
+        </div>
+        
+        <div className="flex items-center gap-2 bg-zinc-50 p-1.5 rounded-xl border border-zinc-100">
+          <Select value={rangeDays} onValueChange={setRangeDays}>
+            <SelectTrigger className="w-[140px] h-9 border-0 bg-transparent shadow-none focus:ring-0">
+              <div className="flex items-center gap-2">
+                <CalendarIcon className="h-3.5 w-3.5 text-zinc-400" />
+                <SelectValue placeholder="Period" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="7">Next 7 Days</SelectItem>
+              <SelectItem value="15">Next 15 Days</SelectItem>
+              <SelectItem value="30">Next 30 Days</SelectItem>
+              <SelectItem value="90">Next 90 Days</SelectItem>
+              <SelectItem value="custom">Custom Range</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {rangeDays === 'custom' && (
+            <div className="flex items-center gap-2 px-2 border-l border-zinc-200 ml-1">
+              <Input 
+                type="number" 
+                placeholder="Days" 
+                className="h-8 w-16 text-xs bg-white border-zinc-200"
+                value={customRange}
+                onChange={(e) => setCustomRange(e.target.value)}
+              />
+              <span className="text-[10px] font-bold text-zinc-400 uppercase">Days</span>
+            </div>
+          )}
+          
+          <Badge variant="secondary" className="h-7 bg-white text-zinc-600 border border-zinc-100 shadow-sm ml-2">
+            {upcomingEvents.length} Events
+          </Badge>
+        </div>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {upcomingEvents.slice(0, 6).map((event, i) => (
-          <Card key={i} className="border-zinc-200 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between mb-3">
-                <div className={`p-2 rounded-lg ${
-                  event.type === 'salary' ? 'bg-emerald-100 text-emerald-700' :
-                  event.type === 'due' ? 'bg-amber-100 text-amber-700' :
-                  'bg-rose-100 text-rose-700'
-                }`}>
-                  {event.type === 'salary' ? <Wallet className="h-4 w-4" /> :
-                   event.type === 'due' ? <CalendarClock className="h-4 w-4" /> :
-                   <Receipt className="h-4 w-4" />}
+
+      {upcomingEvents.length > 0 ? (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {upcomingEvents.map((event, i) => (
+            <Card key={i} className="group border-zinc-200 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 bg-white overflow-hidden">
+              <div className={`h-1 w-full ${
+                event.type === 'salary' ? 'bg-emerald-500' :
+                event.type === 'due' ? 'bg-amber-500' :
+                'bg-rose-500'
+              }`} />
+              <CardContent className="p-5">
+                <div className="flex items-start justify-between mb-4">
+                  <div className={`p-2.5 rounded-xl shadow-sm ${
+                    event.type === 'salary' ? 'bg-emerald-50 text-emerald-600' :
+                    event.type === 'due' ? 'bg-amber-50 text-amber-600' :
+                    'bg-rose-50 text-rose-600'
+                  }`}>
+                    {event.type === 'salary' ? <Wallet className="h-5 w-5" /> :
+                     event.type === 'due' ? <CalendarClock className="h-5 w-5" /> :
+                     <Receipt className="h-5 w-5" />}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[10px] font-black text-zinc-400 uppercase tracking-widest mb-1">{format(event.date, 'EEEE')}</p>
+                    <div className="flex flex-col items-end">
+                      <span className="text-sm font-bold text-zinc-900">{format(event.date, 'MMM dd')}</span>
+                      <span className="text-[10px] text-zinc-400">{format(event.date, 'yyyy')}</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">{format(event.date, 'MMM dd')}</p>
-                  <p className="text-sm font-black text-zinc-900">
-                    {event.type === 'salary' ? '+' : ''}{formatAmount(event.amount, event.currency)}
-                  </p>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h4 className="text-sm font-bold text-zinc-900 line-clamp-1">{event.description}</h4>
+                      <div className="flex items-center gap-2 mt-1">
+                        {event.category && (
+                          <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-tighter bg-zinc-50/50 border-zinc-200">
+                            {event.category}
+                          </Badge>
+                        )}
+                        {event.isRecurring && (
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="flex items-center gap-1 text-[9px] font-black text-indigo-500 bg-indigo-50 px-1.5 py-0.5 rounded-md border border-indigo-100 uppercase italic">
+                                  Recurring
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="text-xs font-medium">This transaction repeats monthly</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t border-zinc-50 flex items-center justify-between">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Amount</span>
+                    <span className={`text-base font-black ${
+                      event.type === 'salary' ? 'text-emerald-600' :
+                      event.type === 'due' ? 'text-amber-600' :
+                      'text-rose-600'
+                    }`}>
+                      {event.type === 'salary' ? '+' : ''}{formatAmount(event.amount, event.currency)}
+                    </span>
+                  </div>
                 </div>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-zinc-900 truncate">{event.description}</p>
-                {event.category && <p className="text-[10px] text-zinc-500">{event.category}</p>}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-        {upcomingEvents.length === 0 && (
-          <div className="col-span-full py-12 text-center border-2 border-dashed border-zinc-100 rounded-2xl">
-            <p className="text-sm text-zinc-400">No upcoming events found</p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : (
+        <div className="flex flex-col items-center justify-center py-24 text-center border-2 border-dashed border-zinc-100 rounded-[2rem] bg-zinc-50/30">
+          <div className="h-20 w-20 rounded-full bg-white shadow-sm flex items-center justify-center text-zinc-200 mb-6">
+            <CalendarIcon className="h-10 w-10 opacity-20" />
           </div>
-        )}
-      </div>
+          <h4 className="text-lg font-bold text-zinc-900">No events in this period</h4>
+          <p className="text-sm text-zinc-500 max-w-xs mx-auto mt-1">Try extending the range or check back later for new transactions.</p>
+        </div>
+      )}
     </div>
   </div>
   );
