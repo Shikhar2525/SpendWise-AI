@@ -20,7 +20,7 @@ import { suggestCategory } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import debounce from 'lodash/debounce';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
-import { cn } from '../lib/utils';
+import { cn, formatInputText } from '../lib/utils';
 
 interface ExpensesViewProps {
   data: {
@@ -167,7 +167,7 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
         currency: formData.currency,
         category: formData.category,
         date: formData.date,
-        description: formData.description,
+        description: formatInputText(formData.description),
         updatedAt: new Date().toISOString()
       };
 
@@ -377,10 +377,12 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
               {filteredExpenses.length > 0 ? (
                 filteredExpenses.map((expense) => (
                   <TableRow key={expense.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
-                    <TableCell className="font-bold text-zinc-900 dark:text-zinc-100">
+                    <TableCell className="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                       {format(parseISO(expense.date), 'MMM dd, yyyy')}
                     </TableCell>
-                    <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium">{expense.description}</TableCell>
+                    <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium tracking-tight whitespace-nowrap">
+                      {formatInputText(expense.description)}
+                    </TableCell>
                     <TableCell>
                       <Badge variant="secondary" className="font-bold italic uppercase text-[9px] tracking-tight bg-zinc-100 dark:bg-zinc-900 text-zinc-600 dark:text-zinc-400 border-none px-2">
                         {expense.category}

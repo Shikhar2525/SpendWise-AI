@@ -22,7 +22,7 @@ import { useCallback } from 'react';
 import debounce from 'lodash/debounce';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
-import { cn } from '../lib/utils';
+import { cn, formatInputText } from '../lib/utils';
 
 interface DuesViewProps {
   data: {
@@ -142,7 +142,7 @@ export default function DuesView({ data }: DuesViewProps) {
         currency: formData.currency,
         category: formData.category,
         dueDate: formData.dueDate,
-        description: formData.description,
+        description: formatInputText(formData.description),
         isRecurring: formData.isRecurring,
         repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
         updatedAt: new Date().toISOString()
@@ -446,7 +446,9 @@ export default function DuesView({ data }: DuesViewProps) {
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className={cn("font-bold tracking-tight text-zinc-900 dark:text-zinc-100", due.isPaid && "line-through text-zinc-400 dark:text-zinc-600")}>{due.description}</span>
+                          <span className={cn("font-bold tracking-tight text-zinc-900 dark:text-zinc-100", due.isPaid && "line-through text-zinc-400 dark:text-zinc-600")}>
+                            {formatInputText(due.description)}
+                          </span>
                           {due.isRecurring && (
                             <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5">
                               <CalendarClock className="h-2.5 w-2.5" /> Recurring

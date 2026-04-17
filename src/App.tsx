@@ -189,53 +189,51 @@ function AppContent() {
                   <span className="text-xl font-black tracking-tighter uppercase italic dark:text-white">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
                 </div>
                 <ScrollArea className="flex-1">
-                  <div className="flex flex-col min-h-full">
-                    <nav className="space-y-2 p-6 flex-1">
-                      {navItems.map((item) => (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            setActiveTab(item.id);
-                            setIsMobileMenuOpen(false);
-                          }}
-                          className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-bold uppercase tracking-tight transition-all ${
-                            activeTab === item.id 
-                              ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-2xl' 
-                              : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent'
-                          }`}
-                        >
-                          <item.icon className="h-5 w-5" />
-                          <span className="text-[11px] tracking-widest">{item.label}</span>
-                        </button>
-                      ))}
-                    </nav>
-                    <div className="mt-auto border-t border-zinc-100 dark:border-zinc-800 p-4 space-y-4 bg-zinc-50/50 dark:bg-zinc-900/10">
-                      <div className="flex items-center gap-3">
-                        <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
-                          <SelectTrigger className="flex-1 h-10 text-[9px] font-black uppercase tracking-widest border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-xl shadow-sm">
-                            <SelectValue placeholder="Currency" />
-                          </SelectTrigger>
-                          <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
-                            {CURRENCIES.map(c => (
-                              <SelectItem key={c.code} value={c.code} className="text-[9px] font-bold uppercase tracking-widest">
-                                {c.symbol} {c.code}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <ThemeToggle />
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        className="w-full justify-start gap-3 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold uppercase text-[9px] tracking-widest h-10 rounded-xl transition-all" 
-                        onClick={logout}
+                  <nav className="space-y-2 p-6">
+                    {navItems.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          setIsMobileMenuOpen(false);
+                        }}
+                        className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-bold uppercase tracking-tight transition-all ${
+                          activeTab === item.id 
+                            ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-2xl' 
+                            : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent'
+                        }`}
                       >
-                        <LogOut className="h-4 w-4" />
-                        Logout Account
-                      </Button>
-                    </div>
-                  </div>
+                        <item.icon className="h-5 w-5" />
+                        <span className="text-[11px] tracking-widest">{item.label}</span>
+                      </button>
+                    ))}
+                  </nav>
                 </ScrollArea>
+                <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 space-y-4 bg-zinc-50/50 dark:bg-zinc-900/10 shrink-0">
+                  <div className="flex items-center gap-3">
+                    <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
+                      <SelectTrigger className="flex-1 h-10 text-[9px] font-black uppercase tracking-widest border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-xl shadow-sm">
+                        <SelectValue placeholder="Currency" />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
+                        {CURRENCIES.map(c => (
+                          <SelectItem key={c.code} value={c.code} className="text-[9px] font-bold uppercase tracking-widest">
+                            {c.symbol} {c.code}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <ThemeToggle />
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    className="w-full justify-start gap-3 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold uppercase text-[9px] tracking-widest h-10 rounded-xl transition-all" 
+                    onClick={logout}
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Logout Account
+                  </Button>
+                </div>
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-2">

@@ -8,21 +8,19 @@ import { useCurrency } from '../contexts/CurrencyContext';
 interface VisionaryForecastProps {
   income: number;
   expenses: number;
+  funFact?: string;
 }
 
-export function VisionaryForecast({ income, expenses }: VisionaryForecastProps) {
+export function VisionaryForecast({ income, expenses, funFact }: VisionaryForecastProps) {
   const { preferredCurrency, formatAmount } = useCurrency();
   const [forecast, setForecast] = React.useState<{ text: string, type: 'positive' | 'neutral' | 'warning' } | null>(null);
 
   React.useEffect(() => {
-    // We only want to update this once per session or when major data changes, 
-    // but the user said "automatically when user login, but not update too frequently"
-    // We can use session storage to cache it for the current session.
-    const cached = sessionStorage.getItem('spendwise_visionary_forecast');
-    if (cached) {
-      setForecast(JSON.parse(cached));
+    if (funFact) {
+      setForecast({ text: funFact, type: 'neutral' });
       return;
     }
+    // Fallback logic if no funFact is provided (not used currently but good for safety)
 
     const netSavings = income - expenses;
     let text = "";
@@ -87,7 +85,9 @@ export function VisionaryForecast({ income, expenses }: VisionaryForecastProps) 
           {icons[forecast.type]}
         </div>
         <div>
-          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50 mb-2">Advanced Prediction Engine</h4>
+          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50 mb-2">
+            {funFact ? "Financial Fun Fact" : "Advanced Prediction Engine"}
+          </h4>
           <p className="text-xl font-black tracking-tight leading-tight italic uppercase">
             {forecast.text}
           </p>

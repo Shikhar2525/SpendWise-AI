@@ -38,7 +38,7 @@ import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { VisionaryForecast } from './VisionaryForecast';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
 import { useTheme } from '../contexts/ThemeContext';
-import { cn } from '../lib/utils';
+import { cn, formatInputText } from '../lib/utils';
 import { Logo } from './Logo';
 import { getCurrentFunFact } from '../lib/funFacts';
 
@@ -149,6 +149,7 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
       <VisionaryForecast 
         income={currentMonthStats.totalIncome} 
         expenses={currentMonthStats.totalExpenses} 
+        funFact={funFact}
       />
 
       {/* Summary Cards */}
@@ -379,7 +380,9 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
                         <CalendarClock className="h-5 w-5" />
                       </div>
                       <div className="space-y-0.5">
-                        <p className="text-sm font-black text-zinc-900 dark:text-white uppercase italic tracking-tight">{due.description}</p>
+                        <p className="text-sm font-black text-zinc-900 dark:text-white uppercase italic tracking-tight">
+                          {formatInputText(due.description)}
+                        </p>
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{format(parseISO(due.dueDate), 'MMM dd, yyyy')}</p>
                       </div>
                     </div>
@@ -434,7 +437,7 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
                          <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600">
                            <Target className="h-5 w-5" />
                          </div>
-                         <p className="font-black italic uppercase text-sm">{goal.name}</p>
+                         <p className="font-black italic uppercase text-sm">{formatInputText(goal.name)}</p>
                       </div>
                       <div className="text-right">
                         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Target Met</span>
@@ -544,10 +547,12 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
                 <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
                   <Sparkles className="h-4 w-4" />
                 </div>
-                <h4 className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">Fun Fact</h4>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">Strategic Insight</h4>
               </div>
               <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-bold italic uppercase">
-                {funFact}
+                {currentMonthStats.balance > currentMonthStats.totalIncome * 0.3 
+                   ? "You are maintaining high liquidity. Strategic investments recommended."
+                   : "Focus on consolidating small wins to build momentum."}
               </p>
             </div>
           </div>

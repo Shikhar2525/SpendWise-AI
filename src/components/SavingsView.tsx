@@ -20,7 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
-import { cn } from '../lib/utils';
+import { cn, formatInputText } from '../lib/utils';
 
 interface SavingsViewProps {
   data: {
@@ -122,7 +122,7 @@ export default function SavingsView({ data }: SavingsViewProps) {
         type: savingFormData.type,
         startDate: savingFormData.startDate,
         endDate: savingFormData.endDate || null,
-        description: savingFormData.description,
+        description: formatInputText(savingFormData.description),
         isRecurring: savingFormData.isRecurring,
         updatedAt: new Date().toISOString()
       };
@@ -189,7 +189,7 @@ export default function SavingsView({ data }: SavingsViewProps) {
     try {
       const goalData = {
         uid: user.uid,
-        name: goalFormData.name,
+        name: formatInputText(goalFormData.name),
         targetAmount: parseFloat(goalFormData.targetAmount),
         currentAmount: parseFloat(goalFormData.currentAmount),
         currency: goalFormData.currency,
@@ -507,7 +507,9 @@ export default function SavingsView({ data }: SavingsViewProps) {
                         <TableCell className="font-bold text-zinc-900 dark:text-zinc-100 pl-6">
                           {format(parseISO(saving.startDate), 'MMM dd, yyyy')}
                         </TableCell>
-                        <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium">{saving.description}</TableCell>
+                        <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium tracking-tight whitespace-nowrap">
+                          {formatInputText(saving.description)}
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className="font-bold italic uppercase text-[9px] tracking-tight bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 px-2 py-0.5">
                             {saving.type}
@@ -585,7 +587,9 @@ export default function SavingsView({ data }: SavingsViewProps) {
                             {isComplete ? <CheckCircle2 className="h-6 w-6" /> : <Target className="h-6 w-6" />}
                           </div>
                           <div>
-                            <CardTitle className="text-xl font-black italic tracking-tight uppercase leading-none dark:text-white">{goal.name}</CardTitle>
+                            <CardTitle className="text-xl font-black italic tracking-tight uppercase leading-none dark:text-white uppercase whitespace-nowrap">
+                              {formatInputText(goal.name)}
+                            </CardTitle>
                             <CardDescription className="flex items-center gap-1.5 mt-1.5 font-bold text-zinc-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">
                               <Calendar className="h-3 w-3" />
                               By {format(parseISO(goal.deadline), 'MMMM yyyy')}

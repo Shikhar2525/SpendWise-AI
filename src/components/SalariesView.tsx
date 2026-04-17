@@ -19,7 +19,7 @@ import { ConfirmDialog } from './ui/confirm-dialog';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
 import { Logo } from './Logo';
-import { cn } from '../lib/utils';
+import { cn, formatInputText } from '../lib/utils';
 
 interface SalariesViewProps {
   data: {
@@ -92,7 +92,7 @@ export default function SalariesView({ data }: SalariesViewProps) {
         amount: parseFloat(formData.amount),
         currency: formData.currency,
         date: formData.date,
-        description: formData.description,
+        description: formatInputText(formData.description),
         isRecurring: formData.isRecurring,
         repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
         updatedAt: new Date().toISOString()
@@ -256,10 +256,12 @@ export default function SalariesView({ data }: SalariesViewProps) {
               {filteredSalaries.length > 0 ? (
                 filteredSalaries.map((salary) => (
                   <TableRow key={salary.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
-                    <TableCell className="font-bold text-zinc-900 dark:text-zinc-100">
+                    <TableCell className="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                       {format(parseISO(salary.date), 'MMM dd, yyyy')}
                     </TableCell>
-                    <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium">{salary.description}</TableCell>
+                    <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium tracking-tight whitespace-nowrap">
+                      {formatInputText(salary.description)}
+                    </TableCell>
                     <TableCell>
                       {salary.isRecurring ? (
                         <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-none font-bold uppercase text-[9px] tracking-widest px-2 py-0.5">
