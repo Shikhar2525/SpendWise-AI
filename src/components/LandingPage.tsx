@@ -87,7 +87,7 @@ export default function LandingPage() {
           
           <h1 className="text-6xl sm:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.82] italic uppercase">
             Your Wealth <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-indigo-600 to-emerald-600 dark:from-white dark:via-indigo-400 dark:to-emerald-400">Simplified</span> <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-indigo-600 to-emerald-600 dark:from-white dark:via-indigo-400 dark:to-emerald-400 px-4 inline-block">Simplified</span> <br />
             Built for you.
           </h1>
 

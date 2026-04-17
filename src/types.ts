@@ -5,6 +5,7 @@ export interface UserProfile {
   photoURL?: string;
   createdAt: string;
   preferredCurrency: string;
+  hasSeenTutorial: boolean;
 }
 
 export interface Expense {

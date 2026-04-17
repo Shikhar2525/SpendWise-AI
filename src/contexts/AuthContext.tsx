@@ -10,6 +10,7 @@ interface AuthContextType {
   isConnected: boolean;
   signIn: () => Promise<void>;
   logout: () => Promise<void>;
+  markTutorialSeen: () => Promise<void>;
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
@@ -48,8 +49,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (userDoc.exists()) {
           const profile = userDoc.data() as UserProfile;
           // Sync photoURL if it exists in auth but not in profile
+          let updated = false;
+          let updatedProfile = { ...profile };
+
           if (user.photoURL && !profile.photoURL) {
-            const updatedProfile = { ...profile, photoURL: user.photoURL };
+            updatedProfile.photoURL = user.photoURL;
+            updated = true;
+          }
+
+          // Ensure hasSeenTutorial exists (for older users)
+          if (profile.hasSeenTutorial === undefined) {
+            updatedProfile.hasSeenTutorial = false;
+            updated = true;
+          }
+
+          if (updated) {
             await setDoc(userDocRef, updatedProfile, { merge: true });
             setUserProfile(updatedProfile);
           } else {
@@ -62,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             displayName: user.displayName || 'User',
             photoURL: user.photoURL || undefined,
             preferredCurrency: 'USD',
+            hasSeenTutorial: false,
             createdAt: new Date().toISOString(),
           };
           await setDoc(userDocRef, newProfile);
@@ -92,8 +107,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const markTutorialSeen = async () => {
+    if (!user || !userProfile) return;
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      await setDoc(userDocRef, { hasSeenTutorial: true }, { merge: true });
+      setUserProfile({ ...userProfile, hasSeenTutorial: true });
+    } catch (error) {
+      console.error('Error marking tutorial as seen:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, isConnected, signIn, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen }}>
       {children}
     </AuthContext.Provider>
   );

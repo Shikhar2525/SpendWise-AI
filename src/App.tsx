@@ -44,6 +44,9 @@ import { FinancialPeriodProvider, useFinancialPeriod } from './contexts/Financia
 import { TooltipProvider } from './components/ui/tooltip';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { ThemeToggle } from './components/ThemeToggle';
+import { Tutorial } from './components/Tutorial';
+import { HelpCircle } from 'lucide-react';
+import { AnimatePresence } from 'motion/react';
 
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import { CURRENCIES } from './types';
@@ -56,12 +59,41 @@ import {
 } from './components/ui/select';
 
 function AppContent() {
-  const { user, userProfile, loading, isConnected, signIn, logout } = useAuth();
+  const { user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen } = useAuth();
   const { preferredCurrency, setPreferredCurrency } = useCurrency();
   const { selectedMonth, setSelectedMonth } = useFinancialPeriod();
   const financialData = useFinancialData();
   const [activeTab, setActiveTab] = React.useState('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+  const [showTutorial, setShowTutorial] = React.useState(false);
+  const [isTutorialReplay, setIsTutorialReplay] = React.useState(false);
+
+  React.useEffect(() => {
+    if (userProfile && userProfile.hasSeenTutorial === false) {
+      setShowTutorial(true);
+    }
+  }, [userProfile]);
+
+  const startTutorial = () => {
+    setIsTutorialReplay(true);
+    setShowTutorial(true);
+  };
+
+  const onTutorialStepChange = (stepIndex: number) => {
+    const stepToTab: Record<number, string> = {
+      0: 'dashboard',
+      1: 'dashboard',
+      2: 'salaries',
+      3: 'expenses',
+      4: 'budgets',
+      5: 'dues',
+      6: 'insights'
+    };
+    const targetTab = stepToTab[stepIndex];
+    if (targetTab && activeTab !== targetTab) {
+      setActiveTab(targetTab);
+    }
+  };
 
   if (loading) {
     return (
@@ -131,6 +163,7 @@ function AppContent() {
             {navItems.map((item) => (
               <button
                 key={item.id}
+                id={`nav-${item.id}`}
                 onClick={() => setActiveTab(item.id)}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-tight transition-all duration-300 ${
                   activeTab === item.id 
@@ -144,27 +177,7 @@ function AppContent() {
             ))}
           </nav>
         </ScrollArea>
-        <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 bg-zinc-50/50 dark:bg-zinc-900/10">
-          <div className="flex items-center gap-3 px-2 py-2 mb-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm transition-colors">
-            <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 shadow-sm flex items-center justify-center overflow-hidden">
-              {userProfile?.photoURL ? (
-                <img 
-                  src={userProfile.photoURL} 
-                  alt={userProfile.displayName} 
-                  className="h-full w-full object-cover"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                  {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
-                </div>
-              )}
-            </div>
-            <div className="flex-1 overflow-hidden">
-              <p className="truncate text-xs font-bold text-zinc-900 dark:text-white">{userProfile?.displayName || 'Active User'}</p>
-              <p className="truncate text-[10px] font-medium text-zinc-400 dark:text-zinc-500">{userProfile?.email}</p>
-            </div>
-          </div>
+        <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 bg-zinc-50/50 dark:bg-zinc-900/10 shrink-0">
           <div className="px-1 mb-4 flex items-center justify-between gap-2">
             <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
               <SelectTrigger className="flex-1 h-9 text-[9px] font-black uppercase tracking-widest border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-xl">
@@ -180,21 +193,26 @@ function AppContent() {
             </Select>
             <ThemeToggle />
           </div>
-          <Button variant="ghost" className="w-full justify-start gap-3 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold uppercase text-[9px] tracking-widest h-9 rounded-xl transition-all" onClick={logout}>
-            <LogOut className="h-3.5 w-3.5" />
-            Logout Account
+          <Button 
+            variant="ghost" 
+            className="w-full justify-start gap-3 text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10 font-bold uppercase text-[9px] tracking-widest h-9 rounded-xl transition-all" 
+            onClick={startTutorial}
+          >
+            <HelpCircle className="h-3.5 w-3.5" />
+            Watch Tutorial
           </Button>
         </div>
       </aside>
 
-      {/* Mobile Header */}
+      {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-20 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-6 lg:hidden transition-colors">
+        {/* Universal Header */}
+        <header className="flex h-20 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-6 shrink-0 transition-colors z-30">
           <div className="flex items-center gap-4">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger 
                 render={
-                  <button className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all">
+                  <button className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all lg:hidden">
                     <Menu className="h-7 w-7" />
                   </button>
                 }
@@ -230,8 +248,8 @@ function AppContent() {
                     ))}
                   </nav>
                 </ScrollArea>
-                <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 space-y-4 bg-zinc-50/50 dark:bg-zinc-900/10 shrink-0">
-                  <div className="flex items-center gap-3">
+                <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 space-y-2 bg-zinc-50/50 dark:bg-zinc-900/10 shrink-0">
+                  <div className="flex items-center gap-3 mb-2">
                     <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
                       <SelectTrigger className="flex-1 h-10 text-[9px] font-black uppercase tracking-widest border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-xl shadow-sm">
                         <SelectValue placeholder="Currency" />
@@ -247,29 +265,21 @@ function AppContent() {
                     <ThemeToggle />
                   </div>
                   <Button 
-                    variant="ghost" 
-                    className="w-full justify-start gap-3 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold uppercase text-[9px] tracking-widest h-10 rounded-xl transition-all" 
-                    onClick={logout}
+                    variant="outline" 
+                    className="w-full justify-start gap-3 text-zinc-500 hover:text-indigo-600 border-zinc-200 dark:border-zinc-800 h-10 rounded-xl transition-all" 
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      startTutorial();
+                    }}
                   >
-                    <LogOut className="h-4 w-4" />
-                    Logout Account
+                    <HelpCircle className="h-4 w-4" />
+                    <span className="text-[10px] uppercase font-black">Watch Tutorial</span>
                   </Button>
                 </div>
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-2">
-              <div className="h-7 w-7 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0">
-                {userProfile?.photoURL ? (
-                  <img 
-                    src={userProfile.photoURL} 
-                    alt={userProfile.displayName} 
-                    className="h-full w-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <Logo className="h-full w-full p-1" />
-                )}
-              </div>
+              <Logo className="h-7 w-7" />
               <div className="flex flex-col">
                 <span className="text-lg font-black tracking-tighter uppercase italic dark:text-white leading-none">SpendWise</span>
                 <Badge className="w-fit h-3.5 px-1.5 py-0 text-[7px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white border-none rounded-md scale-[0.8] origin-left mt-0.5">
@@ -277,6 +287,40 @@ function AppContent() {
                 </Badge>
               </div>
             </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+             {/* Profile Section in Top Right */}
+             <div className="hidden sm:flex items-center gap-4 border-r border-zinc-100 dark:border-zinc-800 pr-4 mr-2">
+                <div className="flex flex-col items-end text-right">
+                  <p className="text-[10px] font-black uppercase tracking-tight text-zinc-900 dark:text-white leading-none">{userProfile?.displayName || 'Active User'}</p>
+                  <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter mt-1">{userProfile?.email}</p>
+                </div>
+                <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 shadow-sm flex items-center justify-center overflow-hidden shrink-0">
+                  {userProfile?.photoURL ? (
+                    <img 
+                      src={userProfile.photoURL} 
+                      alt={userProfile.displayName} 
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                      {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
+                </div>
+             </div>
+             
+             <Button 
+                variant="ghost" 
+                size="icon"
+                className="h-10 w-10 text-zinc-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 rounded-xl transition-all" 
+                onClick={logout}
+                title="Logout"
+              >
+                <LogOut className="h-5 w-5" />
+              </Button>
           </div>
         </header>
 
@@ -286,16 +330,6 @@ function AppContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-2">
-                   {userProfile?.photoURL && (
-                     <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-zinc-100 dark:border-zinc-800">
-                        <img 
-                          src={userProfile.photoURL} 
-                          alt="Avatar" 
-                          className="h-full w-full object-cover"
-                          referrerPolicy="no-referrer"
-                        />
-                     </div>
-                   )}
                    <h2 className="text-4xl font-black italic tracking-tighter text-zinc-900 dark:text-white uppercase leading-none">
                      {navItems.find(i => i.id === activeTab)?.label}
                    </h2>
@@ -305,13 +339,15 @@ function AppContent() {
                 </p>
               </div>
               
-              {activeTab !== 'calendar' && activeTab !== 'insights' && (
-                <MonthFilter 
-                  selectedMonth={selectedMonth} 
-                  onMonthChange={setSelectedMonth} 
-                  suggestions={monthSuggestions} 
-                />
-              )}
+              <div id="filter-container">
+                {activeTab !== 'calendar' && activeTab !== 'insights' && (
+                  <MonthFilter 
+                    selectedMonth={selectedMonth} 
+                    onMonthChange={setSelectedMonth} 
+                    suggestions={monthSuggestions} 
+                  />
+                )}
+              </div>
             </div>
             
             <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
@@ -321,6 +357,18 @@ function AppContent() {
         </main>
       </div>
       <FloatingChat data={financialData} />
+      <AnimatePresence>
+        {showTutorial && (
+          <Tutorial 
+            isReplay={isTutorialReplay} 
+            onStepChange={onTutorialStepChange}
+            onClose={() => {
+              setShowTutorial(false);
+              setIsTutorialReplay(false);
+            }} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

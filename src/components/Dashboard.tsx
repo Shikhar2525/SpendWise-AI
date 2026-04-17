@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { 
   TrendingUp, 
@@ -208,18 +209,17 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
             <div className="text-3xl font-black tracking-tight">{formatAmount(currentMonthStats.balance)}</div>
             <div className="mt-4 space-y-2">
                <div className="flex justify-between items-center text-[10px] font-bold uppercase tracking-widest text-indigo-200 dark:text-indigo-600">
-                  <span>Usage</span>
+                  <span>Usage Flow</span>
                   <span>{Math.max(0, Math.min(100, (currentMonthStats.totalExpenses / (currentMonthStats.totalIncome || 1)) * 100)).toFixed(1)}%</span>
                </div>
-               <Progress 
-                value={Math.max(0, Math.min(100, (currentMonthStats.balance / (currentMonthStats.totalIncome || 1)) * 100))} 
-                className="h-2 bg-indigo-950/20 dark:bg-indigo-50"
-                children={
-                   <ProgressTrack className="h-full w-full bg-transparent">
-                      <ProgressIndicator className="h-full bg-white dark:bg-indigo-600 transition-all duration-1000" />
-                   </ProgressTrack>
-                }
-              />
+               <div className="h-2 w-full bg-indigo-950/20 dark:bg-zinc-100 rounded-full overflow-hidden">
+                  <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.max(0, Math.min(100, (currentMonthStats.totalExpenses / (currentMonthStats.totalIncome || 1)) * 100))}%` }}
+                    transition={{ duration: 1, ease: "easeOut" }}
+                    className="h-full bg-white dark:bg-indigo-600 rounded-full"
+                  />
+               </div>
             </div>
           </CardContent>
         </Card>
