@@ -131,83 +131,103 @@ export default function LandingPage() {
           >
             <div className="absolute inset-0 bg-gradient-to-t from-white/20 dark:from-zinc-950/20 to-transparent pointer-events-none z-10" />
             
-            {/* Real-looking Dashboard Preview */}
-            <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-[34px] overflow-hidden border border-zinc-100 dark:border-zinc-800 flex h-[600px]">
+            {/* Real Dashboard Preview */}
+            <div className="bg-zinc-50 dark:bg-zinc-900/50 rounded-[34px] overflow-hidden border border-zinc-100 dark:border-zinc-800 flex h-[700px]">
               {/* Mini Sidebar */}
-              <div className="w-16 sm:w-20 border-r border-zinc-100 dark:border-zinc-800 flex flex-col items-center py-8 gap-6 shrink-0">
+              <div className="w-16 sm:w-20 border-r border-zinc-100 dark:border-zinc-800 flex flex-col items-center py-8 gap-6 shrink-0 bg-white dark:bg-zinc-950">
                 <Logo className="h-6 w-6 mb-4" />
                 {[LayoutDashboard, Wallet, Receipt, PieChart, Sparkles].map((Icon, i) => (
-                  <div key={i} className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${i === 0 ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-lg' : 'text-zinc-400 hover:bg-zinc-200 dark:hover:bg-zinc-800'}`}>
+                  <div key={i} className={`h-10 w-10 rounded-xl flex items-center justify-center transition-colors ${i === 0 ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-lg' : 'text-zinc-400'}`}>
                     <Icon className="h-5 w-5" />
                   </div>
                 ))}
               </div>
               
               {/* Main Content Preview */}
-              <div className="flex-1 p-8 space-y-8 overflow-hidden">
-                <div className="flex justify-between items-center mb-4">
-                  <div className="space-y-1">
-                    <h3 className="text-2xl font-black italic uppercase tracking-tighter">Financial Matrix</h3>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Real-time intelligence active</p>
-                  </div>
-                  <div className="h-10 w-10 rounded-full bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 border border-indigo-100 dark:border-indigo-500/20">
-                     <Plus className="h-5 w-5" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { label: 'Liquidity', val: '$24,850', trend: '+12%', icon: <Wallet className="h-4 w-4" /> },
-                    { label: 'Burn Rate', val: '$4,200', trend: '-5%', icon: <TrendingDown className="h-4 w-4" /> },
-                    { label: 'Wealth Gap', val: '$850k', trend: 'Target', icon: <Target className="h-4 w-4" /> }
-                  ].map((card, i) => (
-                    <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-2">
-                       <div className="flex justify-between items-center">
-                          <div className="p-2 bg-zinc-50 dark:bg-zinc-800 rounded-lg text-zinc-400">{card.icon}</div>
-                          <span className="text-[9px] font-black text-indigo-500 uppercase tracking-widest">{card.trend}</span>
-                       </div>
-                       <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">{card.label}</p>
-                       <p className="text-2xl font-black italic tracking-tighter">{card.val}</p>
+              <div className="flex-1 overflow-y-auto scrollbar-hide">
+                {/* Real-style Banner */}
+                <div className="p-8 pb-0">
+                  <div className="relative overflow-hidden rounded-[32px] bg-zinc-900 p-10 text-white">
+                    <div className="absolute inset-0 opacity-20">
+                      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(79,70,229,1),transparent)]" />
                     </div>
-                  ))}
-                </div>
-
-                <div className="grid grid-cols-12 gap-6 h-full">
-                  <div className="col-span-8 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-6 shadow-sm">
-                    <div className="flex justify-between items-center mb-8">
-                      <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Strategic Performance</h4>
-                      <BarChart3 className="h-4 w-4 text-zinc-300" />
-                    </div>
-                    <div className="space-y-6">
-                      {[65, 85, 45, 95, 75].map((w, i) => (
-                        <div key={i} className="space-y-2">
-                          <div className="flex justify-between text-[9px] font-bold uppercase tracking-widest text-zinc-400">
-                             <span>Node {i + 1}</span>
-                             <span>{w}% Confidence</span>
-                          </div>
-                          <div className="h-1.5 bg-zinc-50 dark:bg-zinc-800 rounded-full overflow-hidden">
-                             <div className="h-full bg-indigo-500" style={{ width: `${w}%` }} />
-                          </div>
+                    <div className="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
+                      <div className="space-y-4">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
+                          <Sparkles className="h-3 w-3 text-indigo-400" />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100">Intelligent Analysis</span>
                         </div>
-                      ))}
+                        <h3 className="text-4xl font-black italic uppercase tracking-tighter leading-none">
+                          Your Wealth is <br />
+                          <span className="text-indigo-400">Projected to Grow</span> 15%
+                        </h3>
+                        <p className="text-sm font-medium text-zinc-400 max-w-md">
+                          "Detected $450 in redundant subscriptions. Optimizing these could accelerate your property goal by 3 months."
+                        </p>
+                      </div>
+                      <div className="flex gap-4">
+                        <div className="p-6 bg-white/5 rounded-2xl border border-white/5 backdrop-blur-sm text-center">
+                          <p className="text-[9px] font-black uppercase tracking-widest text-indigo-400 mb-1">Savings Goal</p>
+                          <p className="text-2xl font-black italic tracking-tighter leading-none">$850k</p>
+                        </div>
+                        <div className="p-6 bg-emerald-500 rounded-2xl text-center text-zinc-950">
+                          <p className="text-[9px] font-black uppercase tracking-widest mb-1">Active Liquidity</p>
+                          <p className="text-2xl font-black italic tracking-tighter leading-none">$24,850</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div className="col-span-4 space-y-6">
-                    <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-6 shadow-sm flex flex-col items-center justify-center text-center gap-4">
-                       <div className="h-16 w-16 rounded-full bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600">
-                         <ShieldCheck className="h-8 w-8" />
-                       </div>
-                       <div>
-                         <p className="text-[10px] font-black uppercase tracking-widest text-emerald-500">Security Active</p>
-                         <p className="text-xs font-bold text-zinc-400 italic">Vault Locked</p>
-                       </div>
+                </div>
+
+                <div className="p-8 space-y-8">
+                  <div className="grid grid-cols-3 gap-6">
+                    {[
+                      { label: 'Monthly Income', val: '$12,400', color: 'text-emerald-500' },
+                      { label: 'Burn Rate', val: '$4,200', color: 'text-rose-500' },
+                      { label: 'Active Budget', val: '$3,800', color: 'text-indigo-500' }
+                    ].map((card, i) => (
+                      <div key={i} className="bg-white dark:bg-zinc-900 p-6 rounded-3xl border border-zinc-100 dark:border-zinc-800 shadow-sm space-y-2">
+                        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-400">{card.label}</p>
+                        <p className={`text-3xl font-black italic tracking-tighter ${card.color}`}>{card.val}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="grid grid-cols-12 gap-6">
+                    <div className="col-span-8 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8 shadow-sm">
+                      <div className="flex justify-between items-center mb-10">
+                        <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-900 dark:text-white italic">Strategic Matrix</h4>
+                        <div className="flex gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+                          <span className="text-indigo-500">Income</span>
+                          <span>Expenses</span>
+                        </div>
+                      </div>
+                      <div className="h-64 flex items-end gap-1.5">
+                        {[40, 65, 35, 85, 45, 95, 25, 65, 75, 55, 85, 45].map((h, i) => (
+                          <div key={i} className="flex-1 bg-indigo-500/10 rounded-t-xl group/bar relative">
+                            <motion.div 
+                              initial={{ height: 0 }}
+                              whileInView={{ height: `${h}%` }}
+                              className="w-full bg-indigo-500 rounded-t-xl transition-all duration-1000"
+                            />
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                    <div className="bg-indigo-600 text-white rounded-3xl p-6 shadow-xl space-y-4">
-                       <div className="flex items-center gap-2">
-                         <Sparkles className="h-4 w-4 animate-pulse" />
-                         <span className="text-[9px] font-black uppercase tracking-widest">AI Agent active</span>
+                    <div className="col-span-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8 shadow-sm space-y-8">
+                       <div>
+                         <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400 mb-6">Neural Insights</h4>
+                         <div className="space-y-4">
+                           <div className="p-4 bg-rose-50 dark:bg-rose-500/5 rounded-2xl border border-rose-100 dark:border-rose-500/10 flex items-center gap-3">
+                              <Zap className="h-4 w-4 text-rose-500" />
+                              <span className="text-xs font-bold tracking-tight text-rose-600">Rent Due in 2 Days</span>
+                           </div>
+                           <div className="p-4 bg-emerald-50 dark:bg-emerald-500/5 rounded-2xl border border-emerald-100 dark:border-emerald-500/10 flex items-center gap-3">
+                              <Check className="h-4 w-4 text-emerald-500" />
+                              <span className="text-xs font-bold tracking-tight text-emerald-600">Savings Target Met</span>
+                           </div>
+                         </div>
                        </div>
-                       <p className="text-sm font-bold italic leading-tight">"Detected $450 in redundant subscriptions. Optimizing now..."</p>
                     </div>
                   </div>
                 </div>
@@ -227,75 +247,37 @@ export default function LandingPage() {
       {/* Feature Grids */}
       <section id="features" className="py-32 px-6 bg-zinc-50/50 dark:bg-zinc-900/30 border-y border-zinc-200 dark:border-zinc-800">
         <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-24 items-center mb-32">
-            <div className="space-y-8">
-              <Badge className="bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-none px-4 py-1">INTELLIGENCE</Badge>
-              <h2 className="text-5xl sm:text-6xl font-black tracking-tighter uppercase italic leading-[0.82]">Neural <br /> Recognition.</h2>
-              <p className="text-xl text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
-                Manually tracking receipts is for the last decade. Our neural engine recognizes, 
-                categorizes, and analyzes every penny you spend with surgical precision. 
-                Focus on your goals, while we handle the data.
-              </p>
-              <ul className="space-y-4">
-                {[
-                  { icon: <BrainCircuit className="h-5 w-5" />, text: "Neural categorization of every receipt" },
-                  { icon: <BarChart3 className="h-5 w-5" />, text: "Predictive wealth forecasting" },
-                  { icon: <ShieldCheck className="h-5 w-5" />, text: "Fraud and anomaly detection" }
-                ].map((li, i) => (
-                  <motion.li 
-                    key={i}
-                    initial={{ x: -20, opacity: 0 }}
-                    whileInView={{ x: 0, opacity: 1 }}
-                    transition={{ delay: i * 0.1 }}
-                    className="flex items-center gap-3 text-sm font-bold tracking-tight"
-                  >
-                    <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg">{li.icon}</div>
-                    {li.text}
-                  </motion.li>
-                ))}
-              </ul>
-            </div>
-            <div className="relative aspect-square bg-gradient-to-br from-indigo-100 to-emerald-100 dark:from-zinc-800 dark:to-zinc-900 rounded-[64px] overflow-hidden group">
-              <div className="absolute inset-0 flex items-center justify-center">
-                 <div className="w-[80%] h-[70%] bg-white dark:bg-zinc-950 rounded-[40px] shadow-2xl p-8 space-y-6 group-hover:scale-105 transition-transform duration-700">
-                    <div className="flex items-center justify-between">
-                      <div className="h-6 w-32 bg-zinc-100 dark:bg-zinc-800 rounded-full" />
-                      <Plus className="h-5 w-5 text-indigo-500" />
-                    </div>
-                    <div className="space-y-2">
-                       <div className="h-10 w-full bg-zinc-50 dark:bg-zinc-900 rounded-xl" />
-                       <div className="h-4 w-[60%] bg-zinc-100 dark:bg-zinc-800 rounded-full" />
-                    </div>
-                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
-                       <div className="text-xs font-bold text-indigo-600 mb-2">AI Suggestion:</div>
-                       <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl italic text-[11px] font-medium leading-relaxed">
-                         "You've spent 15% more on Coffee this month. Switch to a home brew to save <b>$120/mo</b>."
-                       </div>
-                    </div>
-                 </div>
-              </div>
-            </div>
+          <div className="text-center space-y-4 mb-20">
+            <Badge className="bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-none px-4 py-1">CORE ECOSYSTEM</Badge>
+            <h2 className="text-5xl sm:text-7xl font-black tracking-tighter uppercase italic leading-tight">Every Feature. <br /> One Interface.</h2>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard 
-              icon={<CalendarClock className="h-6 w-6" />}
-              title="Predictive Dues"
-              description="Stop reacting to bills. We forecast your recurring obligations decades into the future, ensuring you're never surprised."
-              accent="rose"
-            />
-            <FeatureCard 
-              icon={<Globe className="h-6 w-6" />}
-              title="Global Capital"
-              description="Manage wealth in any currency. Live market integrations convert your global footprint into a single, unified truth."
-              accent="emerald"
-            />
-            <FeatureCard 
-              icon={<PieChart className="h-6 w-6" />}
-              title="Visual Limits"
-              description="Set boundary targets that adapt to your lifestyle. High-fidelity visualizations tell you exactly where your limit sits."
-              accent="amber"
-            />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              { icon: <BrainCircuit className="h-5 w-5" />, title: "Neural Recognition", desc: "AI-driven categorization of every transaction with 99.9% accuracy.", accent: "rose" as const },
+              { icon: <Wallet className="h-5 w-5" />, title: "Income Flow", desc: "Manage salaries, dividends, and bonuses in a single stream.", accent: "emerald" as const },
+              { icon: <Receipt className="h-5 w-5" />, title: "Expense Engine", desc: "Track every penny with high-fidelity filtering and visual tags.", accent: "amber" as const },
+              { icon: <PieChart className="h-5 w-5" />, title: "Dynamic Budgets", desc: "Set boundaries that adapt as your financial lifestyle evolves.", accent: "emerald" as const },
+              { icon: <CalendarClock className="h-5 w-5" />, title: "Predictive Dues", desc: "Calendar-driven forecasting for all recurring bill cycles.", accent: "rose" as const },
+              { icon: <Target className="h-5 w-5" />, title: "Wealth Milestones", desc: "Set geometric savings goals and track your trajectory in real-time.", accent: "amber" as const },
+              { icon: <Sparkles className="h-5 w-5" />, title: "AI Intelligence", desc: "Conversational financial advisor powered by neural insight.", accent: "emerald" as const },
+              { icon: <Globe className="h-5 w-5" />, title: "Global Sync", desc: "Live multi-currency conversion with real-world market parity.", accent: "rose" as const },
+              { icon: <ShieldCheck className="h-5 w-5" />, title: "Vault Security", desc: "Bank-grade encryption protecting your financial identity.", accent: "amber" as const }
+            ].map((f, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+              >
+                <FeatureCard 
+                  icon={f.icon}
+                  title={f.title}
+                  description={f.desc}
+                  accent={f.accent}
+                />
+              </motion.div>
+            ))}
           </div>
         </div>
       </section>
@@ -316,45 +298,54 @@ export default function LandingPage() {
               { 
                 name: 'Essential', 
                 price: '$0', 
-                desc: 'Perfect for starters', 
-                features: ['Basic Tracking', 'Manual Entry', 'Single Device'],
-                cta: 'Get Started',
+                desc: 'Free to everyone', 
+                features: ['Basic Tracking', 'Manual Entry', 'Single Device', 'Community Support'],
+                cta: 'Start Forever Free',
                 active: false
               },
               { 
                 name: 'Intelligent', 
                 price: '$0', 
-                desc: 'Our most popular plan', 
-                features: ['AI Neural Recognition', 'Predictive Forecasts', 'Infinite Growth', 'Direct Sync'],
-                cta: 'Try Intelligence',
+                desc: 'Includes everything in Essential', 
+                features: ['All Essential Features', 'AI Neural Recognition', 'Predictive Forecasts', 'Infinite Growth', 'Direct Bank Sync'],
+                cta: 'Try Free Right Now',
                 active: true,
-                badge: 'Free for Now'
+                badge: 'Promotional Free'
               },
               { 
                 name: 'Architect', 
-                price: '$0', 
-                desc: 'For elite managers', 
-                features: ['Dedicated AI Agent', 'Legacy Planning', 'Custom Dashboards', 'Priority Processing'],
-                cta: 'Go Architect',
-                active: false
+                price: '$29', 
+                desc: 'For elite capital managers', 
+                features: ['Everything in Intelligent', 'Dedicated AI Analyst', 'Estate Logic Engine', 'Custom API Access', 'Priority Matrix'],
+                cta: 'Plan Locked',
+                active: false,
+                locked: true
               }
             ].map((plan, i) => (
               <div 
                 key={i} 
-                className={`relative p-10 rounded-[40px] border transition-all duration-500 flex flex-col ${plan.active ? 'bg-zinc-900 border-zinc-800 text-white scale-105 shadow-2xl z-10' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-white hover:border-indigo-400'}`}
+                className={`relative p-10 rounded-[40px] border transition-all duration-500 flex flex-col ${plan.active ? 'bg-zinc-900 border-zinc-800 text-white scale-105 shadow-2xl z-10' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-white hover:border-indigo-400 opacity-90'} ${plan.locked ? 'grayscale-[0.5]' : ''}`}
               >
                 {plan.badge && (
                   <div className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
                     {plan.badge}
                   </div>
                 )}
+                {plan.locked && (
+                  <div className="absolute inset-0 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-[2px] rounded-[40px] z-20 flex items-center justify-center p-6 text-center">
+                    <div className="space-y-2">
+                       <ShieldCheck className="h-8 w-8 text-zinc-400 mx-auto" />
+                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Available Q3 2026</p>
+                    </div>
+                  </div>
+                )}
                 <div className="mb-8">
                   <h3 className="text-sm font-black uppercase tracking-widest opacity-60 mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-5xl font-black italic tracking-tighter">{plan.price}</span>
-                    <span className="text-xs font-bold opacity-40 uppercase tracking-widest">/ Lifetime</span>
+                    <span className="text-xs font-bold opacity-40 uppercase tracking-widest">/ Year</span>
                   </div>
-                  <p className="mt-4 text-xs font-bold opacity-60 uppercase tracking-tight italic">{plan.desc}</p>
+                  <p className="mt-4 text-xs font-bold opacity-60 uppercase tracking-tight italic leading-relaxed">{plan.desc}</p>
                 </div>
                 
                 <ul className="space-y-4 mb-10 flex-1">
@@ -370,6 +361,7 @@ export default function LandingPage() {
 
                 <Button 
                   onClick={signIn}
+                  disabled={plan.locked}
                   className={`w-full rounded-2xl h-14 text-xs font-black uppercase tracking-widest transition-all ${plan.active ? 'bg-white text-black hover:bg-zinc-100 shadow-xl' : 'bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100'}`}
                 >
                   {plan.cta}

@@ -119,7 +119,12 @@ function AppContent() {
       <aside className="hidden w-64 flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 lg:flex transition-colors">
         <div className="flex h-20 items-center justify-center gap-3 px-6 border-b border-zinc-100 dark:border-zinc-800">
           <Logo className="h-8 w-8" />
-          <span className="text-xl font-black tracking-tighter uppercase italic text-zinc-900 dark:text-white">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
+          <div className="flex flex-col">
+            <span className="text-xl font-black tracking-tighter uppercase italic text-zinc-900 dark:text-white leading-none">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
+            <Badge className="w-fit h-4 px-1.5 py-0 text-[8px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white border-none rounded-md scale-[0.8] origin-left mt-0.5">
+              Intelligent
+            </Badge>
+          </div>
         </div>
         <ScrollArea className="flex-1 px-4 py-6">
           <nav className="space-y-1.5">
@@ -186,7 +191,12 @@ function AppContent() {
               <SheetContent side="left" className="w-72 h-full p-0 flex flex-col bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800">
                 <div className="flex h-20 items-center justify-center gap-3 px-6 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
                   <Logo className="h-8 w-8" />
-                  <span className="text-xl font-black tracking-tighter uppercase italic dark:text-white">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
+                  <div className="flex flex-col">
+                    <span className="text-xl font-black tracking-tighter uppercase italic dark:text-white leading-none">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
+                    <Badge className="w-fit h-4 px-1.5 py-0 text-[8px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white border-none rounded-md scale-[0.8] origin-left mt-0.5">
+                      Intelligent
+                    </Badge>
+                  </div>
                 </div>
                 <ScrollArea className="flex-1">
                   <nav className="space-y-2 p-6">
@@ -238,7 +248,12 @@ function AppContent() {
             </Sheet>
             <div className="flex items-center gap-2">
               <Logo className="h-7 w-7" />
-              <span className="text-lg font-black tracking-tighter uppercase italic dark:text-white">SpendWise</span>
+              <div className="flex flex-col">
+                <span className="text-lg font-black tracking-tighter uppercase italic dark:text-white leading-none">SpendWise</span>
+                <Badge className="w-fit h-3.5 px-1.5 py-0 text-[7px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white border-none rounded-md scale-[0.8] origin-left mt-0.5">
+                  Intelligent
+                </Badge>
+              </div>
             </div>
           </div>
         </header>
