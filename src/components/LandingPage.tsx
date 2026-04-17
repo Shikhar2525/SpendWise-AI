@@ -82,13 +82,13 @@ export default function LandingPage() {
         >
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 mb-4">
             <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
-            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-indigo-600 dark:text-indigo-400">Next-gen wealth management</span>
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-indigo-600 dark:text-indigo-400">Smart money management</span>
           </div>
           
           <h1 className="text-6xl sm:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.82] italic uppercase">
-            Wealth <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-indigo-600 to-emerald-600 dark:from-white dark:via-indigo-400 dark:to-emerald-400">Architected</span> <br />
-            By Design.
+            Your Wealth <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-indigo-600 to-emerald-600 dark:from-white dark:via-indigo-400 dark:to-emerald-400">Simplified</span> <br />
+            Built for you.
           </h1>
 
           <p className="text-xl sm:text-2xl text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto leading-tight font-medium">
@@ -155,14 +155,14 @@ export default function LandingPage() {
                       <div className="space-y-4">
                         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
                           <Sparkles className="h-3 w-3 text-indigo-400" />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100">Intelligent Analysis</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100">Smart Analysis</span>
                         </div>
                         <h3 className="text-4xl font-black italic uppercase tracking-tighter leading-none">
-                          Your Wealth is <br />
-                          <span className="text-indigo-400">Projected to Grow</span> 15%
+                          Your Money is <br />
+                          <span className="text-indigo-400">Set to Grow</span> 15%
                         </h3>
                         <p className="text-sm font-medium text-zinc-400 max-w-md">
-                          "Detected $450 in redundant subscriptions. Optimizing these could accelerate your property goal by 3 months."
+                          "I found $450 in extra subscriptions. Saving this could reach your house goal 3 months faster."
                         </p>
                       </div>
                       <div className="flex gap-4">
@@ -196,7 +196,7 @@ export default function LandingPage() {
                   <div className="grid grid-cols-12 gap-6">
                     <div className="col-span-8 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8 shadow-sm">
                       <div className="flex justify-between items-center mb-10">
-                        <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-900 dark:text-white italic">Strategic Matrix</h4>
+                        <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-900 dark:text-white italic">Money Overview</h4>
                         <div className="flex gap-2 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
                           <span className="text-indigo-500">Income</span>
                           <span>Expenses</span>
@@ -216,7 +216,7 @@ export default function LandingPage() {
                     </div>
                     <div className="col-span-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-3xl p-8 shadow-sm space-y-8">
                        <div>
-                         <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400 mb-6">Neural Insights</h4>
+                         <h4 className="text-[11px] font-black uppercase tracking-widest text-zinc-400 mb-6">Smart Tips</h4>
                          <div className="space-y-4">
                            <div className="p-4 bg-rose-50 dark:bg-rose-500/5 rounded-2xl border border-rose-100 dark:border-rose-500/10 flex items-center gap-3">
                               <Zap className="h-4 w-4 text-rose-500" />
@@ -254,15 +254,15 @@ export default function LandingPage() {
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
-              { icon: <BrainCircuit className="h-5 w-5" />, title: "Neural Recognition", desc: "AI-driven categorization of every transaction with 99.9% accuracy.", accent: "rose" as const },
-              { icon: <Wallet className="h-5 w-5" />, title: "Income Flow", desc: "Manage salaries, dividends, and bonuses in a single stream.", accent: "emerald" as const },
-              { icon: <Receipt className="h-5 w-5" />, title: "Expense Engine", desc: "Track every penny with high-fidelity filtering and visual tags.", accent: "amber" as const },
-              { icon: <PieChart className="h-5 w-5" />, title: "Dynamic Budgets", desc: "Set boundaries that adapt as your financial lifestyle evolves.", accent: "emerald" as const },
-              { icon: <CalendarClock className="h-5 w-5" />, title: "Predictive Dues", desc: "Calendar-driven forecasting for all recurring bill cycles.", accent: "rose" as const },
-              { icon: <Target className="h-5 w-5" />, title: "Wealth Milestones", desc: "Set geometric savings goals and track your trajectory in real-time.", accent: "amber" as const },
-              { icon: <Sparkles className="h-5 w-5" />, title: "AI Intelligence", desc: "Conversational financial advisor powered by neural insight.", accent: "emerald" as const },
-              { icon: <Globe className="h-5 w-5" />, title: "Global Sync", desc: "Live multi-currency conversion with real-world market parity.", accent: "rose" as const },
-              { icon: <ShieldCheck className="h-5 w-5" />, title: "Vault Security", desc: "Bank-grade encryption protecting your financial identity.", accent: "amber" as const }
+              { icon: <BrainCircuit className="h-5 w-5" />, title: "Smart Tracking", desc: "Auto-sorts your spending with 99.9% accuracy using smart AI.", accent: "rose" as const },
+              { icon: <Wallet className="h-5 w-5" />, title: "Income Flow", desc: "See your salaries, dividends, and bonuses in one clear view.", accent: "emerald" as const },
+              { icon: <Receipt className="h-5 w-5" />, title: "Easy Expenses", desc: "Track every penny with simple search and visual categories.", accent: "amber" as const },
+              { icon: <PieChart className="h-5 w-5" />, title: "Dynamic Budgets", desc: "Set limits that change as your life and spending habits do.", accent: "emerald" as const },
+              { icon: <CalendarClock className="h-5 w-5" />, title: "Bill Planning", desc: "Automatic reminders and tracking for all your monthly bills.", accent: "rose" as const },
+              { icon: <Target className="h-5 w-5" />, title: "Savings Goals", desc: "Set money goals and see exactly when you will reach them.", accent: "amber" as const },
+              { icon: <Sparkles className="h-5 w-5" />, title: "Money Assistant", desc: "Talk to your financial assistant for smart tips and insights.", accent: "emerald" as const },
+              { icon: <Globe className="h-5 w-5" />, title: "Currency Converter", desc: "Manage money in any currency with live exchange rates.", accent: "rose" as const },
+              { icon: <ShieldCheck className="h-5 w-5" />, title: "Safe & Secure", desc: "Bank-level security ensuring your data stays private and safe.", accent: "amber" as const }
             ].map((f, i) => (
               <motion.div
                 key={i}
@@ -307,24 +307,24 @@ export default function LandingPage() {
                 name: 'Intelligent', 
                 price: '$0', 
                 desc: 'Includes everything in Essential', 
-                features: ['All Essential Features', 'AI Neural Recognition', 'Predictive Forecasts', 'Infinite Growth', 'Direct Bank Sync'],
+                features: ['All Essential Features', 'Smart Auto-Tracking', 'Balance Forecasting', 'Saving Tips', 'Bank Sync'],
                 cta: 'Try Free Right Now',
                 active: true,
-                badge: 'Promotional Free'
+                badge: 'Special Offer'
               },
               { 
                 name: 'Architect', 
                 price: '$29', 
-                desc: 'For elite capital managers', 
-                features: ['Everything in Intelligent', 'Dedicated AI Analyst', 'Estate Logic Engine', 'Custom API Access', 'Priority Matrix'],
-                cta: 'Plan Locked',
+                desc: 'For serious money managers', 
+                features: ['Everything in Intelligent', 'Dedicated Assistant', 'Personalized Advice', 'Custom Data Export', 'Priority Help'],
+                cta: 'Coming Soon',
                 active: false,
                 locked: true
               }
             ].map((plan, i) => (
               <div 
                 key={i} 
-                className={`relative p-10 rounded-[40px] border transition-all duration-500 flex flex-col ${plan.active ? 'bg-zinc-900 border-zinc-800 text-white scale-105 shadow-2xl z-10' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-white hover:border-indigo-400 opacity-90'} ${plan.locked ? 'grayscale-[0.5]' : ''}`}
+                className={`relative p-10 rounded-[40px] border transition-all duration-500 flex flex-col ${plan.active ? 'bg-zinc-900 border-zinc-800 text-white scale-105 shadow-2xl z-10' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-white hover:border-indigo-400 opacity-90'} ${plan.locked ? 'grayscale-[0.2]' : ''}`}
               >
                 {plan.badge && (
                   <div className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
@@ -332,10 +332,10 @@ export default function LandingPage() {
                   </div>
                 )}
                 {plan.locked && (
-                  <div className="absolute inset-0 bg-white/50 dark:bg-zinc-950/50 backdrop-blur-[2px] rounded-[40px] z-20 flex items-center justify-center p-6 text-center">
-                    <div className="space-y-2">
-                       <ShieldCheck className="h-8 w-8 text-zinc-400 mx-auto" />
-                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">Available Q3 2026</p>
+                  <div className="absolute inset-0 bg-white/30 dark:bg-zinc-950/30 backdrop-blur-[1px] rounded-[40px] z-20 flex items-center justify-center p-6 text-center group">
+                    <div className="space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                       <ShieldCheck className="h-8 w-8 text-indigo-500 mx-auto" />
+                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">Coming Q3 2026</p>
                     </div>
                   </div>
                 )}
