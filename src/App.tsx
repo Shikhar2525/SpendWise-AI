@@ -146,12 +146,23 @@ function AppContent() {
         </ScrollArea>
         <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 bg-zinc-50/50 dark:bg-zinc-900/10">
           <div className="flex items-center gap-3 px-2 py-2 mb-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm transition-colors">
-            <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 shadow-sm flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-base italic">
-              {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+            <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 shadow-sm flex items-center justify-center overflow-hidden">
+              {userProfile?.photoURL ? (
+                <img 
+                  src={userProfile.photoURL} 
+                  alt={userProfile.displayName} 
+                  className="h-full w-full object-cover"
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                  {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-[10px] font-black italic uppercase tracking-tight text-zinc-900 dark:text-white">{userProfile?.displayName || 'Active User'}</p>
-              <p className="truncate text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">{userProfile?.email}</p>
+              <p className="truncate text-xs font-bold text-zinc-900 dark:text-white">{userProfile?.displayName || 'Active User'}</p>
+              <p className="truncate text-[10px] font-medium text-zinc-400 dark:text-zinc-500">{userProfile?.email}</p>
             </div>
           </div>
           <div className="px-1 mb-4 flex items-center justify-between gap-2">
@@ -247,7 +258,18 @@ function AppContent() {
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-2">
-              <Logo className="h-7 w-7" />
+              <div className="h-7 w-7 rounded-lg overflow-hidden border border-zinc-200 dark:border-zinc-800 shrink-0">
+                {userProfile?.photoURL ? (
+                  <img 
+                    src={userProfile.photoURL} 
+                    alt={userProfile.displayName} 
+                    className="h-full w-full object-cover"
+                    referrerPolicy="no-referrer"
+                  />
+                ) : (
+                  <Logo className="h-full w-full p-1" />
+                )}
+              </div>
               <div className="flex flex-col">
                 <span className="text-lg font-black tracking-tighter uppercase italic dark:text-white leading-none">SpendWise</span>
                 <Badge className="w-fit h-3.5 px-1.5 py-0 text-[7px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white border-none rounded-md scale-[0.8] origin-left mt-0.5">
@@ -263,10 +285,22 @@ function AppContent() {
           <div className="mx-auto max-w-6xl space-y-10">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div>
-                <h2 className="text-4xl font-black italic tracking-tighter text-zinc-900 dark:text-white uppercase leading-none">
-                  {navItems.find(i => i.id === activeTab)?.label}
-                </h2>
-                <p className="text-sm font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2">
+                <div className="flex items-center gap-3 mb-2">
+                   {userProfile?.photoURL && (
+                     <div className="h-8 w-8 rounded-full overflow-hidden border-2 border-zinc-100 dark:border-zinc-800">
+                        <img 
+                          src={userProfile.photoURL} 
+                          alt="Avatar" 
+                          className="h-full w-full object-cover"
+                          referrerPolicy="no-referrer"
+                        />
+                     </div>
+                   )}
+                   <h2 className="text-4xl font-black italic tracking-tighter text-zinc-900 dark:text-white uppercase leading-none">
+                     {navItems.find(i => i.id === activeTab)?.label}
+                   </h2>
+                </div>
+                <p className="text-sm font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
                   {activeTab === 'dashboard' ? `Welcome back, ${userProfile?.displayName || 'User'}` : `Managing your ${activeTab}`}
                 </p>
               </div>

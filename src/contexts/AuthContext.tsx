@@ -42,18 +42,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
         if (userDoc.exists()) {
-          setUserProfile(userDoc.data() as UserProfile);
+          const profile = userDoc.data() as UserProfile;
+          // Sync photoURL if it exists in auth but not in profile
+          if (user.photoURL && !profile.photoURL) {
+            const updatedProfile = { ...profile, photoURL: user.photoURL };
+            await setDoc(userDocRef, updatedProfile, { merge: true });
+            setUserProfile(updatedProfile);
+          } else {
+            setUserProfile(profile);
+          }
         } else {
           const newProfile: UserProfile = {
             uid: user.uid,
             email: user.email || '',
             displayName: user.displayName || 'User',
+            photoURL: user.photoURL || undefined,
             preferredCurrency: 'USD',
             createdAt: new Date().toISOString(),
           };
-          await setDoc(doc(db, 'users', user.uid), newProfile);
+          await setDoc(userDocRef, newProfile);
           setUserProfile(newProfile);
         }
       } else {
