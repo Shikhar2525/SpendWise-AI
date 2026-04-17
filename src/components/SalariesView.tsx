@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
+import { Badge } from './ui/badge';
+import { Progress, ProgressIndicator, ProgressTrack } from './ui/progress';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -10,12 +12,14 @@ import { db, collection, addDoc, deleteDoc, doc, updateDoc, OperationType, handl
 import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { format, parseISO, isSameMonth } from 'date-fns';
-import { Trash2, Edit, Plus, Wallet, TrendingUp, Calendar } from 'lucide-react';
+import { Trash2, Edit, Plus, Wallet, TrendingUp, Calendar, ArrowUpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ConfirmDialog } from './ui/confirm-dialog';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
+import { Logo } from './Logo';
+import { cn } from '../lib/utils';
 
 interface SalariesViewProps {
   data: {
@@ -126,132 +130,156 @@ export default function SalariesView({ data }: SalariesViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-end">
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger render={<Button onClick={openAddDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2"><Plus className="h-4 w-4" />Add Income</Button>} />
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>{editingSalary ? 'Edit Income' : 'Add New Income'}</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Input 
-                  id="description" 
-                  placeholder="e.g. Monthly Salary" 
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="amount">Amount</Label>
-                  <Input 
-                    id="amount" 
-                    type="number" 
-                    placeholder="0.00" 
-                    value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="currency">Currency</Label>
-                  <Select 
-                    value={formData.currency} 
-                    onValueChange={(v) => setFormData({...formData, currency: v})}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map(c => (
-                        <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="date">Date</Label>
-                <Input 
-                  id="date" 
-                  type="date" 
-                  value={formData.date}
-                  onChange={(e) => setFormData({...formData, date: e.target.value})}
-                />
-              </div>
-              <div className="flex items-center gap-2 pt-2">
-                <input 
-                  type="checkbox" 
-                  id="isRecurring" 
-                  checked={formData.isRecurring}
-                  onChange={(e) => setFormData({...formData, isRecurring: e.target.checked})}
-                  className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
-                />
-                <Label htmlFor="isRecurring" className="text-sm font-medium">Recurring Monthly</Label>
-              </div>
-              {formData.isRecurring && (
-                <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
-                  <Label htmlFor="repeatUntil">Repeat Until (Optional)</Label>
-                  <Input 
-                    id="repeatUntil" 
-                    type="date" 
-                    value={formData.repeatUntil}
-                    onChange={(e) => setFormData({...formData, repeatUntil: e.target.value})}
-                  />
-                </div>
-              )}
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-2xl bg-emerald-50 dark:bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shadow-sm border border-emerald-100/50 dark:border-emerald-500/20">
+            <ArrowUpCircle className="h-6 w-6" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight italic">Income</h2>
+              <Logo className="h-5 w-5" />
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-              <Button className="bg-zinc-900 text-white" onClick={handleSaveSalary}>
-                {editingSalary ? 'Update Income' : 'Save Income'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Manage your income sources and history</p>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger 
+              render={
+                <Button onClick={openAddDialog} className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 gap-2 h-10 rounded-xl shadow-lg shadow-zinc-200 dark:shadow-none font-black uppercase text-[10px] tracking-widest">
+                  <Plus className="h-4 w-4" /> Add Income
+                </Button>
+              }
+            />
+            <DialogContent className="sm:max-w-[425px] dark:bg-zinc-950 dark:border-zinc-800">
+              <DialogHeader>
+                <DialogTitle className="font-black italic text-xl dark:text-white">{editingSalary ? 'Edit Income' : 'New Income'}</DialogTitle>
+              </DialogHeader>
+              <div className="grid gap-6 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Description</Label>
+                  <Input 
+                    id="description" 
+                    placeholder="e.g. Salary, Dividend" 
+                    className="dark:bg-zinc-900 dark:border-zinc-800"
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-2">
+                    <Label htmlFor="amount" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Amount</Label>
+                    <Input 
+                      id="amount" 
+                      type="number" 
+                      placeholder="0.00" 
+                      className="font-bold dark:bg-zinc-900 dark:border-zinc-800"
+                      value={formData.amount}
+                      onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    />
+                  </div>
+                  <div className="grid gap-2">
+                    <Label htmlFor="currency" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Currency</Label>
+                    <Select 
+                      value={formData.currency} 
+                      onValueChange={(v) => setFormData({...formData, currency: v})}
+                    >
+                      <SelectTrigger className="dark:bg-zinc-900 dark:border-zinc-800">
+                        <SelectValue placeholder="Currency" />
+                      </SelectTrigger>
+                      <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
+                        {CURRENCIES.map(c => (
+                          <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div className="grid gap-2">
+                  <Label htmlFor="date" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Entry Date</Label>
+                  <Input 
+                    id="date" 
+                    type="date" 
+                    className="dark:bg-zinc-900 dark:border-zinc-800"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                  />
+                </div>
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 transition-all">
+                  <input 
+                    type="checkbox" 
+                    id="isRecurring" 
+                    checked={formData.isRecurring}
+                    onChange={(e) => setFormData({...formData, isRecurring: e.target.checked})}
+                    className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:ring-zinc-900"
+                  />
+                  <Label htmlFor="isRecurring" className="text-xs font-bold uppercase tracking-tighter cursor-pointer dark:text-zinc-300">Recurring Monthly Income</Label>
+                </div>
+                {formData.isRecurring && (
+                  <div className="grid gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label htmlFor="repeatUntil" className="text-xs font-bold uppercase tracking-widest text-zinc-500">End Date (Optional)</Label>
+                    <Input 
+                      id="repeatUntil" 
+                      type="date" 
+                      className="dark:bg-zinc-900 dark:border-zinc-800"
+                      value={formData.repeatUntil}
+                      onChange={(e) => setFormData({...formData, repeatUntil: e.target.value})}
+                    />
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" className="dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white font-black uppercase text-[10px] tracking-widest" onClick={handleSaveSalary}>
+                  {editingSalary ? 'Save Changes' : 'Add Income'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <Card className="border-zinc-200 shadow-sm">
+      <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden bg-white dark:bg-zinc-950 rounded-2xl">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow className="bg-zinc-50 hover:bg-zinc-50">
-                <TableHead>Date</TableHead>
-                <TableHead>Description</TableHead>
-                <TableHead>Recurring</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+              <TableRow className="bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 border-b dark:border-zinc-800">
+                <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Date</TableHead>
+                <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Description</TableHead>
+                <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Recurring</TableHead>
+                <TableHead className="text-right font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Amount</TableHead>
                 <TableHead className="w-[100px]"></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredSalaries.length > 0 ? (
                 filteredSalaries.map((salary) => (
-                  <TableRow key={salary.id} className="hover:bg-zinc-50/50 transition-colors">
-                    <TableCell className="font-medium">
+                  <TableRow key={salary.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
+                    <TableCell className="font-bold text-zinc-900 dark:text-zinc-100">
                       {format(parseISO(salary.date), 'MMM dd, yyyy')}
                     </TableCell>
-                    <TableCell>{salary.description}</TableCell>
+                    <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium">{salary.description}</TableCell>
                     <TableCell>
                       {salary.isRecurring ? (
-                        <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700">
-                          Yes
-                        </span>
+                        <Badge className="bg-emerald-50 dark:bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-none font-bold uppercase text-[9px] tracking-widest px-2 py-0.5">
+                          Recurring
+                        </Badge>
                       ) : (
-                        <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-600">
-                          No
-                        </span>
+                        <Badge variant="outline" className="text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-800 font-bold uppercase text-[9px] tracking-widest px-2 py-0.5">
+                          One-off
+                        </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right font-bold text-emerald-600">
+                    <TableCell className="text-right font-black italic tracking-tighter text-emerald-600 dark:text-emerald-400 text-lg">
                       +{formatAmount(salary.amount, salary.currency)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1 opacity-10 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                          className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                           onClick={() => openEditDialog(salary)}
                         >
                           <Edit className="h-4 w-4" />
@@ -259,7 +287,7 @@ export default function SalariesView({ data }: SalariesViewProps) {
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-8 w-8 text-zinc-400 hover:text-red-600"
+                          className="h-8 w-8 text-zinc-400 hover:text-rose-600"
                           onClick={() => setDeleteConfirmId(salary.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -270,8 +298,11 @@ export default function SalariesView({ data }: SalariesViewProps) {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={5} className="h-32 text-center text-zinc-500">
-                    No income entries found. Add your salary to start planning!
+                  <TableCell colSpan={5} className="h-32 text-center text-zinc-500 dark:text-zinc-600 italic">
+                    <div className="flex flex-col items-center justify-center gap-2">
+                       <ArrowUpCircle className="h-8 w-8 opacity-20" />
+                       <p>No income streams identified for this period.</p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}

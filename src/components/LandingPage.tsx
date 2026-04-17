@@ -1,250 +1,326 @@
-import { motion } from 'motion/react';
-import { ArrowRight, Wallet, Target, Sparkles, PieChart, Calendar, LayoutDashboard, BrainCircuit, Zap, Bot } from 'lucide-react';
+import { motion, useScroll, useTransform } from 'motion/react';
+import { useRef } from 'react';
+import { 
+  ArrowRight, 
+  Sparkles, 
+  PieChart, 
+  CalendarClock, 
+  BrainCircuit, 
+  ShieldCheck, 
+  Globe, 
+  BarChart3,
+  ChevronRight,
+  Plus
+} from 'lucide-react';
 import { Button } from './ui/button';
-import { Card, CardContent } from './ui/card';
+import { Card } from './ui/card';
 import { Badge } from './ui/badge';
 import { useAuth } from '../contexts/AuthContext';
 import { Logo } from './Logo';
+import { useTheme } from '../contexts/ThemeContext';
+import { ThemeToggle } from './ThemeToggle';
 
 export default function LandingPage() {
   const { signIn } = useAuth();
+  const { resolvedTheme } = useTheme();
+  const targetRef = useRef<HTMLDivElement>(null);
+  const { scrollYProgress } = useScroll({
+    target: targetRef,
+    offset: ["start start", "end start"],
+  });
 
-  const container = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.3,
-      },
-    },
-  };
-
-  const item = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-  };
+  const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
+  const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
 
   return (
-    <div className="min-h-screen bg-[#050505] text-white selection:bg-indigo-500 selection:text-white font-sans overflow-x-hidden">
-      {/* Background decoration */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-indigo-500/10 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-emerald-500/10 blur-[120px] rounded-full" />
+    <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white selection:bg-indigo-500/30 font-sans transition-colors duration-500 overflow-x-hidden">
+      {/* Dynamic Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-indigo-500/5 dark:bg-indigo-500/10 blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 dark:bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
       {/* Nav */}
-      <nav className="relative z-50 flex items-center justify-between px-6 py-8 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <Logo className="h-10 w-10" />
-          <span className="text-xl font-black tracking-tighter italic">SpendWise <span className="text-indigo-400">AI</span></span>
-        </div>
-        <div className="flex items-center gap-6">
-          <button onClick={signIn} className="text-sm font-bold tracking-widest uppercase hover:text-indigo-400 transition-colors hidden sm:block">
-            Dashboard
-          </button>
-          <Button 
-            onClick={signIn}
-            className="bg-white text-black hover:bg-zinc-200 rounded-full px-8 h-12 text-[11px] font-bold tracking-widest uppercase shadow-xl"
-          >
-            Get Started
-          </Button>
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 transition-colors">
+        <div className="flex items-center justify-between px-6 h-20 max-w-7xl mx-auto">
+          <div className="flex items-center gap-2.5">
+            <Logo className="h-9 w-9" />
+            <span className="text-xl font-black tracking-tighter uppercase italic">
+              SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span>
+            </span>
+          </div>
+          
+          <div className="flex items-center gap-4 sm:gap-8">
+            <div className="hidden md:flex items-center gap-8 mr-4">
+              <a href="#features" className="text-sm font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">Features</a>
+              <a href="#vision" className="text-sm font-semibold text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100 transition-colors">Vision</a>
+            </div>
+            <ThemeToggle />
+            <Button 
+              onClick={signIn}
+              className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-full px-6 h-11 text-xs font-bold tracking-widest uppercase transition-all shadow-lg shadow-zinc-200 dark:shadow-none"
+            >
+              Sign In
+            </Button>
+          </div>
         </div>
       </nav>
 
-      {/* Hero */}
-      <main className="relative z-10 max-w-7xl mx-auto px-6 pt-20 pb-32 overflow-hidden">
-        <div className="grid lg:grid-cols-2 gap-20 items-center">
-          <motion.div 
-            variants={container}
-            initial="hidden"
-            animate="show"
-            className="space-y-8"
-          >
-            <motion.div variants={item} className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-              <Sparkles className="h-4 w-4 text-indigo-400" />
-              <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">AI-Powered Financial Freedom</span>
-            </motion.div>
-            
-            <motion.h1 variants={item} className="text-6xl sm:text-7xl lg:text-8xl font-black tracking-tight leading-[0.9] italic">
-              SMARTER <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-white to-emerald-400">SAVINGS</span> <br />
-              FOR EVERYONE.
-            </motion.h1>
+      {/* Hero Section */}
+      <section ref={targetRef} className="relative pt-44 pb-24 px-6 overflow-hidden">
+        <motion.div 
+          style={{ opacity, scale }}
+          className="max-w-7xl mx-auto text-center space-y-10"
+        >
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 mb-4">
+            <Sparkles className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+            <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-indigo-600 dark:text-indigo-400">Next-gen wealth management</span>
+          </div>
+          
+          <h1 className="text-6xl sm:text-8xl lg:text-9xl font-black tracking-tighter leading-[0.82] italic uppercase">
+            Wealth <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-zinc-900 via-indigo-600 to-emerald-600 dark:from-white dark:via-indigo-400 dark:to-emerald-400">Architected</span> <br />
+            By Design.
+          </h1>
 
-            <motion.p variants={item} className="text-lg text-zinc-500 max-w-lg leading-relaxed font-medium">
-              Take control of your money with AI that works for you. 
-              Automatically track bills, set clear savings goals, and 
-              get simple advice to grow your wealth.
-            </motion.p>
+          <p className="text-xl sm:text-2xl text-zinc-500 dark:text-zinc-400 max-w-2xl mx-auto leading-tight font-medium">
+            SpendWise AI isn't a spreadsheet. It's your financial foresight. <br className="hidden sm:block" />
+            Zero manual entry. Infinite growth.
+          </p>
 
-            <motion.div variants={item} className="flex flex-col sm:flex-row gap-4 pt-4">
-              <Button 
-                onClick={signIn}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-10 h-14 text-[12px] font-bold tracking-widest uppercase group"
-              >
-                Join Now <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-              <div className="flex items-center gap-4 px-6 border-l border-white/10 ml-0 sm:ml-4">
-                <div className="flex -space-x-3">
-                  {[1,2,3].map(i => (
-                    <div key={i} className="h-10 w-10 rounded-full border-2 border-black bg-zinc-800 flex items-center justify-center overflow-hidden">
-                      <img 
-                        src={`https://picsum.photos/seed/${i + 10}/100/100`} 
-                        alt="User" 
-                        referrerPolicy="no-referrer"
-                        className="h-full w-full object-cover grayscale opacity-50"
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 leading-tight">
-                  Join <span className="text-white">100+ users</span> <br />
-                  building wealth
-                </div>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <Button 
+              onClick={signIn}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full px-12 h-16 text-[14px] font-bold tracking-widest uppercase group shadow-2xl shadow-indigo-200 dark:shadow-indigo-500/20"
+            >
+              Launch Dashboard <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </Button>
+            <div className="flex items-center gap-4 px-8 h-16 border border-zinc-200 dark:border-zinc-800 rounded-full bg-white/50 dark:bg-zinc-900/50 backdrop-blur-sm">
+              <div className="flex -space-x-3">
+                {[1,2,3].map(i => (
+                  <img 
+                    key={i}
+                    src={`https://picsum.photos/seed/${i + 50}/100/100`} 
+                    alt="User" 
+                    referrerPolicy="no-referrer"
+                    className="h-9 w-9 rounded-full border-2 border-white dark:border-zinc-900 object-cover"
+                  />
+                ))}
               </div>
-            </motion.div>
-          </motion.div>
+              <span className="text-[10px] font-bold tracking-widest uppercase text-zinc-400">Trusted by <span className="text-zinc-900 dark:text-white">5,000+</span> creators</span>
+            </div>
+          </div>
+        </motion.div>
 
-          <motion.div 
-            initial={{ opacity: 0, scale: 0.8, rotate: 5 }}
-            animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        {/* Visual Mockup */}
+        <div className="mt-24 max-w-6xl mx-auto px-6 relative">
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            whileInView={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="relative"
+            viewport={{ once: true }}
+            className="relative rounded-[40px] border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900/50 p-4 shadow-2xl overflow-hidden"
           >
-            {/* Bento Grid Mockup */}
-            <div className="grid grid-cols-2 gap-4 relative z-10">
-              <Card className="bg-zinc-900/50 border-white/5 backdrop-blur-3xl p-6 rounded-[32px] transform -rotate-3 hover:rotate-0 transition-transform duration-500 group">
-                <div className="p-3 bg-indigo-500/10 rounded-2xl w-fit mb-4 group-hover:bg-indigo-500/20 transition-colors">
-                  <PieChart className="h-6 w-6 text-indigo-400" />
-                </div>
-                <h3 className="font-bold text-sm mb-2">Smart Insights</h3>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full w-[70%] bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]" />
-                </div>
-              </Card>
-
-              <Card className="bg-zinc-900/50 border-white/5 backdrop-blur-3xl p-6 rounded-[32px] transform translate-y-8 group">
-                <div className="p-3 bg-emerald-500/10 rounded-2xl w-fit mb-4 group-hover:bg-emerald-500/20 transition-colors">
-                  <Target className="h-6 w-6 text-emerald-400" />
-                </div>
-                <h3 className="font-bold text-sm mb-2">Goal Tracking</h3>
-                <div className="h-1.5 w-full bg-white/5 rounded-full overflow-hidden">
-                  <div className="h-full w-[45%] bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
-                </div>
-              </Card>
-
-              <Card className="col-span-2 bg-[#0a0a0a] border-white/5 backdrop-blur-3xl p-8 rounded-[40px] shadow-2xl space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="h-8 w-8 rounded-lg bg-indigo-500/20 flex items-center justify-center">
-                      <Sparkles className="h-4 w-4 text-indigo-400" />
-                    </div>
-                    <span className="text-xs font-bold tracking-widest text-zinc-400 uppercase">Visionary Forecast</span>
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-white dark:to-zinc-950 flex flex-col justify-end p-20 text-center pointer-events-none z-10">
+               <div className="bg-indigo-600 text-white rounded-full px-10 py-4 font-bold text-lg inline-flex items-center mx-auto mb-10 shadow-2xl">
+                 Live Preview Coming Soon
+               </div>
+            </div>
+            
+            <div className="grid grid-cols-12 gap-4 h-[600px] blur-sm grayscale-[0.2] opacity-50 dark:opacity-30">
+               <div className="col-span-3 bg-white dark:bg-zinc-800 rounded-3xl" />
+               <div className="col-span-9 space-y-4">
+                  <div className="h-40 bg-white dark:bg-zinc-800 rounded-3xl" />
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="h-80 bg-white dark:bg-zinc-800 rounded-3xl" />
+                    <div className="h-80 bg-white dark:bg-zinc-800 rounded-3xl" />
+                    <div className="h-80 bg-white dark:bg-zinc-800 rounded-3xl" />
                   </div>
-                  <Badge className="bg-white/5 border-white/10 text-zinc-500 text-[8px] tracking-widest uppercase">Live</Badge>
-                </div>
-                <p className="text-base font-bold italic leading-relaxed text-zinc-200">
-                  "Based on your current habits, your savings will grow by 42% by 2027. You're on track to become a millionaire by 2032!"
-                </p>
-              </Card>
+               </div>
             </div>
           </motion.div>
         </div>
-      </main>
-
-      {/* Features Rail */}
-      <section className="border-y border-white/5 bg-zinc-950/50 py-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 overflow-hidden">
-          <motion.div 
-            animate={{ x: [0, -100, 0] }}
-            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-            className="flex items-center gap-20 whitespace-nowrap opacity-20 grayscale brightness-200"
-          >
-            {['SMART TRACKING', 'EASY INSIGHTS', 'RECURRING BILLS', 'GOAL SETTING', 'ANY CURRENCY', 'FUTURE FORECAST'].map(f => (
-              <span key={f} className="text-2xl font-black italic tracking-widest">{f}</span>
-            ))}
-          </motion.div>
-        </div>
       </section>
 
-      {/* Bento Section */}
-      <section className="max-w-7xl mx-auto px-6 py-32 relative z-10">
-        <div className="text-center mb-20 space-y-4">
-          <h2 className="text-4xl sm:text-5xl font-black tracking-tight italic">HOW IT WORKS.</h2>
-          <p className="text-zinc-500 font-medium text-lg max-w-2xl mx-auto">Stop worrying about numbers. Let SpendWise AI handle the math while you focus on living.</p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          <BentoCard 
-            icon={<Calendar className="h-5 w-5 text-indigo-400" />}
-            title="Auto-Pilot Bills"
-            description="We track your recurring rent or subscriptions so you never miss a payment. Future months are automatically planned."
-            className="md:col-span-2"
-          />
-          <BentoCard 
-            icon={<Wallet className="h-5 w-5 text-emerald-400" />}
-            title="Global Currency"
-            description="Work anywhere, save anywhere. We convert all your expenses automatically to your local currency."
-          />
-          <BentoCard 
-            icon={<BrainCircuit className="h-5 w-5 text-purple-400" />}
-            title="AI Finance Assistant"
-            description="Just chat with your assistant to add an expense or ask: 'Can I afford a new phone this month?'."
-          />
-          <BentoCard 
-            icon={<LayoutDashboard className="h-5 w-5 text-rose-400" />}
-            title="Future Forecast"
-            description="See your net worth grow. Our AI predicts your future wealth based on how you save and spend today."
-            className="md:col-span-2"
-          />
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="max-w-5xl mx-auto px-6 py-32 relative z-10">
-        <div className="bg-gradient-to-br from-indigo-600 to-violet-700 rounded-[48px] p-12 sm:p-20 text-center space-y-10 relative overflow-hidden shadow-2xl">
-          <div className="absolute top-0 right-0 p-20 opacity-10">
-            <Bot className="h-64 w-64" />
+      {/* Feature Grids */}
+      <section id="features" className="py-32 px-6 bg-zinc-50/50 dark:bg-zinc-900/30 border-y border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid lg:grid-cols-2 gap-24 items-center mb-32">
+            <div className="space-y-8">
+              <Badge className="bg-indigo-100 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-none px-4 py-1">INTELLIGENCE</Badge>
+              <h2 className="text-5xl sm:text-6xl font-black tracking-tighter uppercase italic leading-[0.82]">Neural <br /> Recognition.</h2>
+              <p className="text-xl text-zinc-500 dark:text-zinc-400 font-medium leading-relaxed">
+                Manually tracking receipts is for the last decade. Our neural engine recognizes, 
+                categorizes, and analyzes every penny you spend with surgical precision. 
+                Focus on your goals, while we handle the data.
+              </p>
+              <ul className="space-y-4">
+                {[
+                  { icon: <BrainCircuit className="h-5 w-5" />, text: "Neural categorization of every receipt" },
+                  { icon: <BarChart3 className="h-5 w-5" />, text: "Predictive wealth forecasting" },
+                  { icon: <ShieldCheck className="h-5 w-5" />, text: "Fraud and anomaly detection" }
+                ].map((li, i) => (
+                  <motion.li 
+                    key={i}
+                    initial={{ x: -20, opacity: 0 }}
+                    whileInView={{ x: 0, opacity: 1 }}
+                    transition={{ delay: i * 0.1 }}
+                    className="flex items-center gap-3 text-sm font-bold tracking-tight"
+                  >
+                    <div className="p-2 bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg">{li.icon}</div>
+                    {li.text}
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
+            <div className="relative aspect-square bg-gradient-to-br from-indigo-100 to-emerald-100 dark:from-zinc-800 dark:to-zinc-900 rounded-[64px] overflow-hidden group">
+              <div className="absolute inset-0 flex items-center justify-center">
+                 <div className="w-[80%] h-[70%] bg-white dark:bg-zinc-950 rounded-[40px] shadow-2xl p-8 space-y-6 group-hover:scale-105 transition-transform duration-700">
+                    <div className="flex items-center justify-between">
+                      <div className="h-6 w-32 bg-zinc-100 dark:bg-zinc-800 rounded-full" />
+                      <Plus className="h-5 w-5 text-indigo-500" />
+                    </div>
+                    <div className="space-y-2">
+                       <div className="h-10 w-full bg-zinc-50 dark:bg-zinc-900 rounded-xl" />
+                       <div className="h-4 w-[60%] bg-zinc-100 dark:bg-zinc-800 rounded-full" />
+                    </div>
+                    <div className="pt-4 border-t border-zinc-100 dark:border-zinc-800">
+                       <div className="text-xs font-bold text-indigo-600 mb-2">AI Suggestion:</div>
+                       <div className="p-4 bg-indigo-50 dark:bg-indigo-500/10 rounded-2xl italic text-[11px] font-medium leading-relaxed">
+                         "You've spent 15% more on Coffee this month. Switch to a home brew to save <b>$120/mo</b>."
+                       </div>
+                    </div>
+                 </div>
+              </div>
+            </div>
           </div>
-          <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight italic leading-none">
-            READY TO SCALE <br />
-            YOUR WEALTH?
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FeatureCard 
+              icon={<CalendarClock className="h-6 w-6" />}
+              title="Predictive Dues"
+              description="Stop reacting to bills. We forecast your recurring obligations decades into the future, ensuring you're never surprised."
+              accent="rose"
+            />
+            <FeatureCard 
+              icon={<Globe className="h-6 w-6" />}
+              title="Global Capital"
+              description="Manage wealth in any currency. Live market integrations convert your global footprint into a single, unified truth."
+              accent="emerald"
+            />
+            <FeatureCard 
+              icon={<PieChart className="h-6 w-6" />}
+              title="Visual Limits"
+              description="Set boundary targets that adapt to your lifestyle. High-fidelity visualizations tell you exactly where your limit sits."
+              accent="amber"
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* Call to Action */}
+      <section className="py-44 px-6 relative overflow-hidden">
+        <div className="absolute inset-0 z-0">
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full h-full bg-indigo-500/5 dark:bg-indigo-500/10 blur-[200px] rounded-full" />
+        </div>
+        
+        <div className="max-w-4xl mx-auto text-center space-y-12 relative z-10">
+          <h2 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tighter uppercase italic leading-[0.85]">
+            Stop Guessing. <br />
+            <span className="text-indigo-600 dark:text-indigo-400">Start Growing.</span>
           </h2>
+          <p className="text-xl text-zinc-500 dark:text-zinc-400 font-medium max-w-xl mx-auto">
+            Join thousands of smart spenders who have gained full control over their financial destiny.
+          </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <Button 
               onClick={signIn}
-              className="bg-white text-black hover:bg-zinc-200 rounded-full h-16 px-12 text-[14px] font-bold tracking-widest uppercase shadow-2xl w-full sm:w-auto"
+              className="bg-indigo-600 hover:bg-indigo-500 text-white rounded-full h-20 px-16 text-lg font-bold tracking-widest uppercase shadow-2xl shadow-indigo-500/20"
             >
-              Get Started for Free
+              Start Free Trial
             </Button>
+            <div className="flex items-center gap-2 group cursor-pointer" onClick={signIn}>
+              <span className="text-sm font-bold tracking-[0.2em] uppercase">See Pricing</span>
+              <ChevronRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" />
+            </div>
           </div>
-          <p className="text-indigo-200/60 text-[10px] font-bold tracking-widest uppercase">No credit card required • Secure Google Login</p>
+          <div className="pt-10 flex items-center justify-center gap-8 text-[10px] font-bold tracking-widest uppercase text-zinc-400">
+             <span>No credit card needed</span>
+             <div className="h-1 w-1 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+             <span>GDPR Compliant</span>
+             <div className="h-1 w-1 bg-zinc-300 dark:bg-zinc-700 rounded-full" />
+             <span>ISO 27001</span>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/5 py-20 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-10">
-          <div className="flex items-center gap-2 grayscale group hover:grayscale-0 transition-all cursor-pointer">
-            <Logo className="h-8 w-8 !bg-zinc-800 group-hover:!bg-indigo-600" />
-            <span className="text-lg font-black tracking-tighter italic">SpendWise <span className="text-indigo-400">AI</span></span>
+      <footer className="py-20 px-6 border-t border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start gap-16">
+          <div className="space-y-6">
+            <div className="flex items-center gap-2.5">
+              <Logo className="h-8 w-8" />
+              <span className="text-lg font-black tracking-tighter uppercase italic">SpendWise</span>
+            </div>
+            <p className="max-w-xs text-sm font-medium text-zinc-500 leading-relaxed">
+              Redefining financial management with design-driven AI solutions.
+            </p>
+            <div className="flex gap-4">
+               {['X', 'INSTA', 'GH'].map(s => (
+                 <a key={s} href="#" className="text-[10px] font-bold tracking-widest uppercase text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors">{s}</a>
+               ))}
+            </div>
           </div>
-          <p className="text-zinc-600 text-[10px] font-bold tracking-[0.2em] uppercase">© 2026 SpendWise AI. Made for your future.</p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-20">
+             <div className="space-y-4">
+               <h4 className="text-[10px] font-bold tracking-widest uppercase text-zinc-900 dark:text-white">Product</h4>
+               <ul className="space-y-3 text-xs font-semibold text-zinc-500">
+                 <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white">Dashboard</a></li>
+                 <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white">Insights</a></li>
+                 <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white">Calendar</a></li>
+               </ul>
+             </div>
+             <div className="space-y-4">
+               <h4 className="text-[10px] font-bold tracking-widest uppercase text-zinc-900 dark:text-white">Company</h4>
+               <ul className="space-y-3 text-xs font-semibold text-zinc-500">
+                 <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white">About</a></li>
+                 <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white">Manifesto</a></li>
+                 <li><a href="#" className="hover:text-zinc-900 dark:hover:text-white">Privacy</a></li>
+               </ul>
+             </div>
+             <div className="hidden sm:block space-y-4">
+               <h4 className="text-[10px] font-bold tracking-widest uppercase text-zinc-900 dark:text-white">Newsletter</h4>
+               <div className="flex gap-2">
+                  <div className="h-10 bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-lg px-4 flex-1" />
+                  <div className="h-10 w-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white"><ArrowRight className="h-4 w-4" /></div>
+               </div>
+             </div>
+          </div>
+        </div>
+        <div className="mt-20 max-w-7xl mx-auto pt-10 border-t border-zinc-100 dark:border-zinc-800 flex justify-between items-center text-[10px] font-bold tracking-[0.2em] uppercase text-zinc-400">
+           <span>© 2026 SPENDWISE AI INC.</span>
+           <span>EST 2026 — SEOUL / LONDON / NY</span>
         </div>
       </footer>
     </div>
   );
 }
 
-function BentoCard({ icon, title, description, className = "" }: { icon: React.ReactNode, title: string, description: string, className?: string }) {
+function FeatureCard({ icon, title, description, accent }: { icon: React.ReactNode, title: string, description: string, accent: 'rose' | 'emerald' | 'amber' }) {
+  const accentClasses = {
+    rose: "bg-rose-50 dark:bg-rose-500/10 text-rose-600 dark:text-rose-400",
+    emerald: "bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    amber: "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  };
+
   return (
-    <Card className={`bg-white/[0.02] border-white/5 backdrop-blur-xl p-8 rounded-[32px] hover:bg-white/[0.05] transition-all hover:border-white/10 group ${className}`}>
-      <div className="p-3 bg-white/5 rounded-2xl w-fit mb-6 group-hover:scale-110 transition-transform duration-500">
+    <Card className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 p-10 rounded-[40px] hover:border-indigo-400/50 dark:hover:border-indigo-500/50 transition-all group">
+      <div className={`p-4 rounded-3xl w-fit mb-8 group-hover:scale-110 transition-transform duration-500 ${accentClasses[accent]}`}>
         {icon}
       </div>
-      <h3 className="text-xl font-bold mb-3 italic tracking-tight">{title}</h3>
-      <p className="text-zinc-500 text-sm leading-relaxed font-medium">{description}</p>
+      <h3 className="text-2xl font-bold mb-4 tracking-tight uppercase italic">{title}</h3>
+      <p className="text-zinc-500 font-medium leading-relaxed">{description}</p>
     </Card>
   );
 }

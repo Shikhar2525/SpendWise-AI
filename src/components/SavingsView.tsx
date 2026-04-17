@@ -5,12 +5,12 @@ import { useAuth } from '../contexts/AuthContext';
 import { useCurrency } from '../contexts/CurrencyContext';
 import { format, parseISO, isSameMonth } from 'date-fns';
 import { Logo } from './Logo';
-import { Trash2, Edit, Plus, PiggyBank, TrendingUp, CalendarClock, Target, Calendar, Sparkles, Filter } from 'lucide-react';
+import { Trash2, Edit, Plus, PiggyBank, TrendingUp, CalendarClock, Target, Calendar, Sparkles, Filter, CheckCircle2, ArrowUpRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { ConfirmDialog } from './ui/confirm-dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
-import { Progress } from './ui/progress';
+import { Progress, ProgressTrack, ProgressIndicator } from './ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
+import { cn } from '../lib/utils';
 
 interface SavingsViewProps {
   data: {
@@ -253,66 +254,73 @@ export default function SavingsView({ data }: SavingsViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm transition-colors duration-500">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-indigo-50 flex items-center justify-center text-indigo-600 shadow-sm border border-indigo-100/50">
+          <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-sm border border-indigo-100/50 dark:border-indigo-500/20">
             <PiggyBank className="h-6 w-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Savings & Wealth</h2>
+              <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight italic">Savings & Wealth</h2>
               <Logo className="h-5 w-5" />
             </div>
-            <p className="text-sm text-zinc-500 font-medium">Build your future and track long-term growth</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Build your future and track long-term growth</p>
           </div>
         </div>
         <div className="hidden md:flex items-center gap-4">
            <div className="flex flex-col items-end">
              <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Growth Phase</span>
-             <span className="text-sm font-black text-emerald-600 flex items-center gap-1">Active <TrendingUp className="h-3 w-3" /></span>
+             <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1 italic">Active <TrendingUp className="h-3 w-3" /></span>
            </div>
         </div>
       </div>
 
       <Tabs defaultValue="entries" className="w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-zinc-50/50 p-2 rounded-2xl border border-zinc-100/50">
-          <TabsList className="bg-zinc-100 p-1 rounded-xl">
-            <TabsTrigger value="entries" className="rounded-lg px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-              Savings Entries
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-zinc-50/50 dark:bg-zinc-900/50 p-2 rounded-2xl border border-zinc-100/50 dark:border-zinc-800/50">
+          <TabsList className="bg-zinc-100 dark:bg-zinc-950 p-1 rounded-xl h-auto border border-zinc-200 dark:border-zinc-800">
+            <TabsTrigger value="entries" className="rounded-lg px-8 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:shadow-lg dark:data-[state=active]:shadow-none font-bold uppercase text-[10px] tracking-widest transition-all">
+              History
             </TabsTrigger>
-            <TabsTrigger value="goals" className="rounded-lg px-6 py-2 data-[state=active]:bg-white data-[state=active]:shadow-sm">
-              Savings Goals
+            <TabsTrigger value="goals" className="rounded-lg px-8 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:shadow-lg dark:data-[state=active]:shadow-none font-bold uppercase text-[10px] tracking-widest transition-all">
+              Goals
             </TabsTrigger>
           </TabsList>
           
           <div className="flex gap-2">
             <TabsContent value="entries" className="mt-0">
               <Dialog open={isSavingDialogOpen} onOpenChange={setIsSavingDialogOpen}>
-                <DialogTrigger render={<Button onClick={openAddSavingDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2 rounded-xl"><Plus className="h-4 w-4" />Add Savings</Button>} />
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogTrigger 
+                  render={
+                    <Button onClick={openAddSavingDialog} className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 gap-2 h-11 rounded-xl shadow-lg shadow-zinc-200 dark:shadow-none font-black uppercase text-[10px] tracking-widest">
+                      <Plus className="h-4 w-4" /> Add Savings Entry
+                    </Button>
+                  }
+                />
+                <DialogContent className="sm:max-w-[425px] dark:bg-zinc-950 dark:border-zinc-800">
                   <DialogHeader>
-                    <DialogTitle>{editingSaving ? 'Edit Savings' : 'Add New Savings'}</DialogTitle>
+                    <DialogTitle className="font-black italic text-xl dark:text-white">{editingSaving ? 'Modify Entry' : 'New Capital Flow'}</DialogTitle>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
+                  <div className="grid gap-6 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="description">Description</Label>
+                      <Label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Name</Label>
                       <Input 
                         id="description" 
-                        placeholder="e.g. Monthly RD Contribution" 
+                        placeholder="e.g. Monthly Savings" 
+                        className="dark:bg-zinc-900 dark:border-zinc-800"
                         value={savingFormData.description}
                         onChange={(e) => setSavingFormData({...savingFormData, description: e.target.value})}
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="type">Savings Type</Label>
+                      <Label htmlFor="type" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Savings Type</Label>
                       <Select 
                         value={savingFormData.type} 
                         onValueChange={(v) => setSavingFormData({...savingFormData, type: v as Saving['type']})}
                       >
-                        <SelectTrigger>
+                        <SelectTrigger className="dark:bg-zinc-900 dark:border-zinc-800">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
                           {SAVING_TYPES.map(type => (
                             <SelectItem key={type} value={type}>{type}</SelectItem>
                           ))}
@@ -321,25 +329,26 @@ export default function SavingsView({ data }: SavingsViewProps) {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="amount">Amount</Label>
+                        <Label htmlFor="amount" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Amount</Label>
                         <Input 
                           id="amount" 
                           type="number" 
                           placeholder="0.00" 
+                          className="font-bold dark:bg-zinc-900 dark:border-zinc-800"
                           value={savingFormData.amount}
                           onChange={(e) => setSavingFormData({...savingFormData, amount: e.target.value})}
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="currency">Currency</Label>
+                        <Label htmlFor="currency" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Currency</Label>
                         <Select 
                           value={savingFormData.currency} 
                           onValueChange={(v) => setSavingFormData({...savingFormData, currency: v})}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="dark:bg-zinc-900 dark:border-zinc-800">
                             <SelectValue placeholder="Currency" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
                             {CURRENCIES.map(c => (
                               <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol})</SelectItem>
                             ))}
@@ -349,39 +358,41 @@ export default function SavingsView({ data }: SavingsViewProps) {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="startDate">Start Date</Label>
+                        <Label htmlFor="startDate" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Start Date</Label>
                         <Input 
                           id="startDate" 
                           type="date" 
+                          className="dark:bg-zinc-900 dark:border-zinc-800"
                           value={savingFormData.startDate}
                           onChange={(e) => setSavingFormData({...savingFormData, startDate: e.target.value})}
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="endDate">End Date (Optional)</Label>
+                        <Label htmlFor="endDate" className="text-xs font-bold uppercase tracking-widest text-zinc-500">End Date (Optional)</Label>
                         <Input 
                           id="endDate" 
                           type="date" 
+                          className="dark:bg-zinc-900 dark:border-zinc-800"
                           value={savingFormData.endDate}
                           onChange={(e) => setSavingFormData({...savingFormData, endDate: e.target.value})}
                         />
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 transition-all">
                       <input 
                         type="checkbox" 
                         id="isRecurring" 
                         checked={savingFormData.isRecurring}
                         onChange={(e) => setSavingFormData({...savingFormData, isRecurring: e.target.checked})}
-                        className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                        className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:ring-zinc-900"
                       />
-                      <Label htmlFor="isRecurring">Recurring Monthly</Label>
+                      <Label htmlFor="isRecurring" className="text-xs font-bold uppercase tracking-tighter cursor-pointer dark:text-zinc-300">Recurring Capital Injection</Label>
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsSavingDialogOpen(false)}>Cancel</Button>
-                    <Button className="bg-zinc-900 text-white" onClick={handleSaveSaving}>
-                      {editingSaving ? 'Update Savings' : 'Save Savings'}
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" className="dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsSavingDialogOpen(false)}>Cancel</Button>
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[10px] tracking-widest" onClick={handleSaveSaving}>
+                      {editingSaving ? 'Update Ledger' : 'Authorize Flow'}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -390,42 +401,50 @@ export default function SavingsView({ data }: SavingsViewProps) {
             
             <TabsContent value="goals" className="mt-0">
               <Dialog open={isGoalDialogOpen} onOpenChange={setIsGoalDialogOpen}>
-                <DialogTrigger render={<Button onClick={openAddGoalDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2 rounded-xl"><Plus className="h-4 w-4" />New Goal</Button>} />
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogTrigger 
+                  render={
+                    <Button onClick={openAddGoalDialog} className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 gap-2 h-11 rounded-xl shadow-lg shadow-zinc-200 dark:shadow-none font-black uppercase text-[10px] tracking-widest">
+                      <Plus className="h-4 w-4" /> Start New Goal
+                    </Button>
+                  }
+                />
+                <DialogContent className="sm:max-w-[425px] dark:bg-zinc-950 dark:border-zinc-800">
                   <DialogHeader>
-                    <DialogTitle>{editingGoal ? 'Edit Savings Goal' : 'Create Savings Goal'}</DialogTitle>
+                    <DialogTitle className="font-black italic text-xl dark:text-white uppercase tracking-tight">{editingGoal ? 'Edit Goal' : 'New Goal'}</DialogTitle>
                   </DialogHeader>
-                  <div className="grid gap-4 py-4">
+                  <div className="grid gap-6 py-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="name">Goal Name</Label>
+                      <Label htmlFor="name" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Goal Name</Label>
                       <Input 
                         id="name" 
                         placeholder="e.g. New Car, Emergency Fund" 
+                        className="dark:bg-zinc-900 dark:border-zinc-800"
                         value={goalFormData.name}
                         onChange={(e) => setGoalFormData({...goalFormData, name: e.target.value})}
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="grid gap-2">
-                        <Label htmlFor="target">Target Amount</Label>
+                        <Label htmlFor="target" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Goal Amount</Label>
                         <Input 
                           id="target" 
                           type="number" 
                           placeholder="0.00" 
+                          className="font-black dark:bg-zinc-900 dark:border-zinc-800"
                           value={goalFormData.targetAmount}
                           onChange={(e) => setGoalFormData({...goalFormData, targetAmount: e.target.value})}
                         />
                       </div>
                       <div className="grid gap-2">
-                        <Label htmlFor="currency">Currency</Label>
+                        <Label htmlFor="currency" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Currency</Label>
                         <Select 
                           value={goalFormData.currency} 
                           onValueChange={(v) => setGoalFormData({...goalFormData, currency: v})}
                         >
-                          <SelectTrigger>
+                          <SelectTrigger className="dark:bg-zinc-900 dark:border-zinc-800">
                             <SelectValue placeholder="Currency" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
                             {CURRENCIES.map(c => (
                               <SelectItem key={c.code} value={c.code}>{c.code}</SelectItem>
                             ))}
@@ -434,28 +453,30 @@ export default function SavingsView({ data }: SavingsViewProps) {
                       </div>
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="current">Initial Savings</Label>
+                      <Label htmlFor="current" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Starting Balance</Label>
                       <Input 
                         id="current" 
                         type="number" 
                         placeholder="0.00" 
+                        className="dark:bg-zinc-900 dark:border-zinc-800"
                         value={goalFormData.currentAmount}
                         onChange={(e) => setGoalFormData({...goalFormData, currentAmount: e.target.value})}
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="deadline">Deadline</Label>
+                      <Label htmlFor="deadline" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Target Date</Label>
                       <Input 
                         id="deadline" 
                         type="date" 
+                        className="dark:bg-zinc-900 dark:border-zinc-800"
                         value={goalFormData.deadline}
                         onChange={(e) => setGoalFormData({...goalFormData, deadline: e.target.value})}
                       />
                     </div>
                   </div>
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => setIsGoalDialogOpen(false)}>Cancel</Button>
-                    <Button className="bg-zinc-900 text-white" onClick={handleSaveGoal}>
+                  <DialogFooter className="gap-2 sm:gap-0">
+                    <Button variant="outline" className="dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsGoalDialogOpen(false)}>Cancel</Button>
+                    <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-black uppercase text-[10px] tracking-widest" onClick={handleSaveGoal}>
                       {editingGoal ? 'Update Goal' : 'Create Goal'}
                     </Button>
                   </DialogFooter>
@@ -465,53 +486,53 @@ export default function SavingsView({ data }: SavingsViewProps) {
           </div>
         </div>
 
-        <TabsContent value="entries" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <Card className="border-zinc-200 shadow-sm overflow-hidden">
+        <TabsContent value="entries" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden bg-white dark:bg-zinc-950 rounded-3xl">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-zinc-50 hover:bg-zinc-50">
-                    <TableHead>Start Date</TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Recurring</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
-                    <TableHead className="w-[100px]"></TableHead>
+                  <TableRow className="bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 border-b dark:border-zinc-800">
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest pl-6">Start Date</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Description</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Type</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Pipeline</TableHead>
+                    <TableHead className="text-right font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Amount</TableHead>
+                    <TableHead className="w-[100px] pr-6"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSavings.length > 0 ? (
                     filteredSavings.map((saving) => (
-                      <TableRow key={saving.id} className="hover:bg-zinc-50/50 transition-colors">
-                        <TableCell className="font-medium">
+                      <TableRow key={saving.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
+                        <TableCell className="font-bold text-zinc-900 dark:text-zinc-100 pl-6">
                           {format(parseISO(saving.startDate), 'MMM dd, yyyy')}
                         </TableCell>
-                        <TableCell>{saving.description}</TableCell>
+                        <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium">{saving.description}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary" className="font-normal">
+                          <Badge variant="outline" className="font-bold italic uppercase text-[9px] tracking-tight bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 px-2 py-0.5">
                             {saving.type}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           {saving.isRecurring ? (
-                            <span className="inline-flex items-center rounded-full bg-indigo-50 px-2 py-1 text-xs font-medium text-indigo-700">
-                              Yes
-                            </span>
+                            <Badge className="bg-indigo-50 dark:bg-indigo-500/10 text-indigo-700 dark:text-indigo-400 border-none font-bold uppercase text-[9px] tracking-widest px-2 py-0.5 shadow-none">
+                              Recurring
+                            </Badge>
                           ) : (
-                            <span className="inline-flex items-center rounded-full bg-zinc-100 px-2 py-1 text-xs font-medium text-zinc-600">
-                              No
-                            </span>
+                            <Badge variant="outline" className="text-zinc-400 dark:text-zinc-600 border-zinc-200 dark:border-zinc-800 font-bold uppercase text-[9px] tracking-widest px-2 py-0.5 shadow-none">
+                              One-off
+                            </Badge>
                           )}
                         </TableCell>
-                        <TableCell className="text-right font-bold text-indigo-600">
+                        <TableCell className="text-right font-black italic tracking-tighter text-indigo-600 dark:text-indigo-400 text-lg">
                           {formatAmount(saving.amount, saving.currency)}
                         </TableCell>
-                        <TableCell>
-                          <div className="flex justify-end gap-2">
+                        <TableCell className="pr-6">
+                          <div className="flex justify-end gap-1 opacity-10 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                              className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                               onClick={() => openEditSavingDialog(saving)}
                             >
                               <Edit className="h-4 w-4" />
@@ -519,7 +540,7 @@ export default function SavingsView({ data }: SavingsViewProps) {
                             <Button 
                               variant="ghost" 
                               size="icon" 
-                              className="h-8 w-8 text-zinc-400 hover:text-red-600"
+                              className="h-8 w-8 text-zinc-400 hover:text-rose-600"
                               onClick={() => setDeleteConfirmInfo({ id: saving.id, type: 'saving' })}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -530,8 +551,11 @@ export default function SavingsView({ data }: SavingsViewProps) {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="h-32 text-center text-zinc-500">
-                        No savings entries found. Start building your nest egg!
+                      <TableCell colSpan={6} className="h-40 text-center text-zinc-500 dark:text-zinc-600 italic">
+                        <div className="flex flex-col items-center justify-center gap-3">
+                           <PiggyBank className="h-10 w-10 opacity-10" />
+                           <p className="text-sm font-medium">No active capital flows identified.</p>
+                        </div>
                       </TableCell>
                     </TableRow>
                   )}
@@ -541,33 +565,38 @@ export default function SavingsView({ data }: SavingsViewProps) {
           </Card>
         </TabsContent>
 
-        <TabsContent value="goals" className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <div className="grid gap-6 md:grid-cols-2">
+        <TabsContent value="goals" className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid gap-8 md:grid-cols-2">
             {goals.length > 0 ? (
               goals.map((goal) => {
                 const progress = (goal.currentAmount / goal.targetAmount) * 100;
                 const isOverSaved = goal.currentAmount > goal.targetAmount;
+                const isComplete = progress >= 100;
+
                 return (
-                  <Card key={goal.id} className="border-zinc-200 shadow-sm overflow-hidden">
-                    <CardHeader className="bg-zinc-50/50 border-b border-zinc-100">
+                  <Card key={goal.id} className="border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-none bg-white dark:bg-zinc-950 rounded-[3rem] overflow-hidden group transition-all duration-500 hover:shadow-2xl dark:hover:border-indigo-500/30">
+                    <CardHeader className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 p-8">
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="rounded-lg bg-white p-2 shadow-sm">
-                            <Target className="h-5 w-5 text-zinc-900" />
+                        <div className="flex items-center gap-4">
+                          <div className={cn(
+                            "rounded-2xl p-3 shadow-xl transition-transform group-hover:scale-110 duration-500",
+                            isComplete ? "bg-emerald-500 text-white" : "bg-white dark:bg-zinc-950 text-indigo-600 dark:text-indigo-400 border border-zinc-100 dark:border-zinc-800"
+                          )}>
+                            {isComplete ? <CheckCircle2 className="h-6 w-6" /> : <Target className="h-6 w-6" />}
                           </div>
                           <div>
-                            <CardTitle className="text-lg">{goal.name}</CardTitle>
-                            <CardDescription className="flex items-center gap-1">
+                            <CardTitle className="text-xl font-black italic tracking-tight uppercase leading-none dark:text-white">{goal.name}</CardTitle>
+                            <CardDescription className="flex items-center gap-1.5 mt-1.5 font-bold text-zinc-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">
                               <Calendar className="h-3 w-3" />
                               By {format(parseISO(goal.deadline), 'MMMM yyyy')}
                             </CardDescription>
                           </div>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-1 opacity-20 group-hover:opacity-100 transition-opacity">
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="text-zinc-400 hover:text-zinc-900"
+                            className="h-9 w-9 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                             onClick={() => openEditGoalDialog(goal)}
                           >
                             <Edit className="h-4 w-4" />
@@ -575,7 +604,7 @@ export default function SavingsView({ data }: SavingsViewProps) {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="text-zinc-400 hover:text-red-600"
+                            className="h-9 w-9 text-zinc-400 hover:text-rose-600"
                             onClick={() => setDeleteConfirmInfo({ id: goal.id, type: 'goal' })}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -583,93 +612,110 @@ export default function SavingsView({ data }: SavingsViewProps) {
                         </div>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-6">
-                      <div className="space-y-4">
+                    <CardContent className="p-8">
+                      <div className="space-y-8">
                         <div className="flex items-end justify-between">
                           <div className="space-y-1">
-                            <p className="text-3xl font-bold">{formatAmount(goal.currentAmount, goal.currency)}</p>
-                            <p className="text-sm text-zinc-500">Saved of {formatAmount(goal.targetAmount, goal.currency)}</p>
+                            <p className="text-4xl font-black italic tracking-tighter text-zinc-900 dark:text-white">{formatAmount(goal.currentAmount, goal.currency)}</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">Saved · Goal {formatAmount(goal.targetAmount, goal.currency)}</p>
                           </div>
                           <div className="text-right">
-                            <p className={`text-lg font-bold ${progress >= 100 ? 'text-emerald-600' : 'text-zinc-900'}`}>{Math.round(progress)}%</p>
-                            <p className="text-xs text-zinc-500">
-                              {goal.currentAmount >= goal.targetAmount 
-                                ? 'Goal reached!' 
-                                : `${formatAmount(goal.targetAmount - goal.currentAmount, goal.currency)} left`}
+                            <p className={cn(
+                              "text-2xl font-black italic tracking-tighter",
+                              isComplete ? 'text-emerald-600 dark:text-emerald-400' : 'text-zinc-900 dark:text-white'
+                            )}>{Math.round(progress)}%</p>
+                            <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                              {isComplete 
+                                ? 'Status: Complete' 
+                                : `Remaining: ${formatAmount(goal.targetAmount - goal.currentAmount, goal.currency)}`}
                             </p>
                           </div>
                         </div>
-                        <div className="space-y-2">
-                          <div className="h-3 w-full bg-zinc-100 rounded-full overflow-hidden">
-                            <div 
-                              className={`h-full transition-all duration-500 ${progress >= 100 ? 'bg-emerald-500' : 'bg-rose-500'}`}
-                              style={{ width: `${Math.min(100, progress)}%` }}
-                            />
+
+                        <div className="space-y-3">
+                          <Progress value={Math.min(100, progress)} className="h-4 rounded-full overflow-hidden bg-zinc-100 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800">
+                             <ProgressTrack className="h-full w-full bg-transparent transition-all">
+                               <ProgressIndicator className={cn(
+                                 "h-full transition-all duration-1000 ease-out",
+                                 isComplete ? "bg-emerald-500 shadow-[0_0_20px_rgba(16,185,129,0.3)]" : "bg-indigo-600 shadow-[0_0_20px_rgba(79,70,229,0.3)]"
+                               )} />
+                             </ProgressTrack>
+                          </Progress>
+
+                          {isOverSaved && (
+                            <div className="p-4 rounded-[2rem] bg-emerald-50 dark:bg-emerald-500/5 border border-emerald-100 dark:border-emerald-500/20 flex items-center gap-3 animate-in fade-in duration-1000">
+                              <div className="h-8 w-8 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center">
+                                <Sparkles className="h-4 w-4" />
+                              </div>
+                              <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold leading-tight">
+                                Hyper-growth: Surplus identified. {formatAmount(goal.currentAmount - goal.targetAmount, goal.currency)} exceeded baseline.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {!isComplete && (
+                          <div className="grid grid-cols-3 gap-2 pt-2">
+                             {[100, 500, 1000].map(val => (
+                               <Button 
+                                 key={val}
+                                 variant="outline" 
+                                 size="sm" 
+                                 className="h-10 font-bold dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-all rounded-xl border-zinc-100"
+                                 onClick={() => handleUpdateGoalProgress(goal, val)}
+                               >
+                                 + {formatAmount(val, goal.currency)}
+                               </Button>
+                             ))}
                           </div>
-                  {isOverSaved && (
-                    <div className="mt-3 p-2 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center gap-2">
-                      <Sparkles className="h-3 w-3 text-emerald-600" />
-                      <p className="text-[10px] text-emerald-700 font-bold">
-                        Excellent! You have over-saved for {goal.name} with {formatAmount(goal.currentAmount - goal.targetAmount, goal.currency)} extra.
-                      </p>
-                    </div>
-                  )}
-                        </div>
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 min-w-[80px]"
-                            onClick={() => handleUpdateGoalProgress(goal, 100)}
-                          >
-                            + {formatAmount(100, goal.currency)}
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 min-w-[80px]"
-                            onClick={() => handleUpdateGoalProgress(goal, 500)}
-                          >
-                            + {formatAmount(500, goal.currency)}
-                          </Button>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="flex-1 min-w-[80px]"
-                            onClick={() => handleUpdateGoalProgress(goal, 1000)}
-                          >
-                            + {formatAmount(1000, goal.currency)}
-                          </Button>
-                        </div>
-                        <div className="flex gap-2">
-                          <Input 
-                            type="number" 
-                            placeholder="Custom amount" 
-                            className="h-8 text-xs"
-                            value={customAmounts[goal.id] || ''}
-                            onChange={(e) => handleCustomAmountChange(goal.id, e.target.value)}
-                          />
-                          <Button 
-                            size="sm" 
-                            className="h-8 bg-zinc-900 text-white"
-                            onClick={() => handleAddCustomAmount(goal)}
-                          >
-                            Add
-                          </Button>
-                        </div>
+                        )}
+
+                        {!isComplete && (
+                          <div className="flex gap-3 bg-zinc-50 dark:bg-zinc-900/50 p-2 rounded-2xl border border-zinc-100 dark:border-zinc-800">
+                            <Input 
+                              type="number" 
+                              placeholder="Inject capital..." 
+                              className="h-10 text-xs font-bold bg-transparent border-none shadow-none focus-visible:ring-0 px-4"
+                              value={customAmounts[goal.id] || ''}
+                              onChange={(e) => handleCustomAmountChange(goal.id, e.target.value)}
+                            />
+                            <Button 
+                              size="sm" 
+                              className="h-10 px-6 bg-zinc-950 dark:bg-white text-white dark:text-black font-black uppercase text-[10px] tracking-widest rounded-xl hover:scale-105 transition-transform"
+                              onClick={() => handleAddCustomAmount(goal)}
+                            >
+                              Add
+                            </Button>
+                          </div>
+                        )}
+                        
+                        {isComplete && (
+                           <div className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-emerald-500/20 rounded-[2.5rem] bg-emerald-500/5 text-center space-y-2">
+                              <div className="h-12 w-12 rounded-full bg-emerald-500/20 text-emerald-600 flex items-center justify-center mb-2">
+                                 <ArrowUpRight className="h-6 w-6" />
+                              </div>                               <h4 className="text-sm font-black italic uppercase tracking-tight text-emerald-600 dark:text-emerald-400">Goal Reached</h4>
+                              <p className="text-[10px] text-emerald-700/60 font-medium px-8 italic">Congratulations! You've reached your savings goal.</p>
+                           </div>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
                 );
               })
             ) : (
-              <div className="col-span-full flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-zinc-200 text-center">
-                <Target className="h-12 w-12 text-zinc-200 mb-4" />
-                <h3 className="text-lg font-semibold text-zinc-900">No savings goals yet</h3>
-                <p className="text-zinc-500 max-w-xs mx-auto mt-1">
-                  Dreaming of a vacation or a new home? Set a goal and start saving today.
+              <div className="col-span-full flex flex-col items-center justify-center py-24 bg-white dark:bg-zinc-950 rounded-[3rem] border-2 border-dashed border-zinc-100 dark:border-zinc-800 text-center">
+                <div className="h-20 w-20 rounded-[2.5rem] bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center text-zinc-200 dark:text-zinc-800 mb-8">
+                  <Target className="h-10 w-10" />
+                </div>
+                <h3 className="text-xl font-black italic uppercase tracking-tight text-zinc-900 dark:text-white">No active goals</h3>
+                <p className="text-zinc-500 dark:text-zinc-500 max-w-xs mx-auto mt-2 text-sm font-medium leading-relaxed">
+                  Start a new goal to track your savings progress.
                 </p>
+                <Button variant="outline" className="mt-10 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest px-10 h-12 rounded-2xl" onClick={openAddGoalDialog}>
+                  Start New Goal
+                </Button>
               </div>
+
             )}
           </div>
         </TabsContent>
@@ -678,8 +724,8 @@ export default function SavingsView({ data }: SavingsViewProps) {
       <ConfirmDialog 
         open={deleteConfirmInfo !== null}
         onOpenChange={(open) => !open && setDeleteConfirmInfo(null)}
-        title={`Delete ${deleteConfirmInfo?.type === 'saving' ? 'Savings Entry' : 'Goal'}`}
-        description={`Are you sure you want to delete this ${deleteConfirmInfo?.type === 'saving' ? 'savings entry' : 'savings goal'}? This action cannot be undone.`}
+        title={`Terminate ${deleteConfirmInfo?.type === 'saving' ? 'Capital Stream' : 'Mission'}`}
+        description={`Are you certain you wish to terminate this ${deleteConfirmInfo?.type === 'saving' ? 'savings entry' : 'mission'}? This action is irreversible.`}
         onConfirm={deleteConfirmInfo?.type === 'saving' ? handleDeleteSaving : handleDeleteGoal}
       />
     </div>

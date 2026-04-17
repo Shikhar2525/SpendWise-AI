@@ -64,6 +64,7 @@ export interface Budget {
   limit: number;
   currency: string;
   month: string; // YYYY-MM
+  isRecurring?: boolean;
 }
 
 export interface Goal {

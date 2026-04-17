@@ -22,6 +22,7 @@ import { useCallback } from 'react';
 import debounce from 'lodash/debounce';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
+import { cn } from '../lib/utils';
 
 interface DuesViewProps {
   data: {
@@ -272,36 +273,40 @@ export default function DuesView({ data }: DuesViewProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white p-6 rounded-2xl border border-zinc-100 shadow-sm">
+      <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm">
         <div className="flex items-center gap-4">
-          <div className="h-12 w-12 rounded-2xl bg-amber-50 flex items-center justify-center text-amber-600 shadow-sm border border-amber-100/50">
+          <div className="h-12 w-12 rounded-2xl bg-amber-50 dark:bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shadow-sm border border-amber-100/50 dark:border-amber-500/20">
             <CalendarClock className="h-6 w-6" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-zinc-900 tracking-tight">Bills & Dues</h2>
+              <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight italic">Bills</h2>
               <Logo className="h-5 w-5" />
             </div>
-            <p className="text-sm text-zinc-500 font-medium">Track and settle your recurring commitments</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Track and pay your regular bills</p>
           </div>
         </div>
         <div className="flex gap-2">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger render={<Button onClick={openAddDialog} className="bg-zinc-900 hover:bg-zinc-800 text-white gap-2 h-10 rounded-xl shadow-lg shadow-zinc-200">
-              <Plus className="h-4 w-4" /> Add Bill
-            </Button>} />
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogTrigger 
+              render={
+                <Button onClick={openAddDialog} className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 gap-2 h-10 rounded-xl shadow-lg shadow-zinc-200 dark:shadow-none font-black uppercase text-[10px] tracking-widest">
+                  <Plus className="h-4 w-4" /> Add Bill
+                </Button>
+              }
+            />
+            <DialogContent className="sm:max-w-[425px] dark:bg-zinc-950 dark:border-zinc-800">
               <DialogHeader>
-                <DialogTitle>{editingDue ? 'Edit Due' : 'Add New Due'}</DialogTitle>
+                <DialogTitle className="font-black italic text-xl dark:text-white">{editingDue ? 'Edit Bill' : 'New Bill'}</DialogTitle>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <div className="grid gap-6 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Bill Name</Label>
                   <div className="flex gap-2">
                     <Input 
                       id="description" 
-                      placeholder="e.g. Monthly Rent" 
-                      className="flex-1"
+                      placeholder="e.g. Rent, Electricity" 
+                      className="flex-1 dark:bg-zinc-900 dark:border-zinc-800"
                       value={formData.description}
                       onChange={(e) => setFormData({...formData, description: e.target.value})}
                     />
@@ -309,10 +314,10 @@ export default function DuesView({ data }: DuesViewProps) {
                       type="button" 
                       variant="outline" 
                       size="icon"
-                      className="shrink-0 text-zinc-900 border-zinc-200 hover:bg-zinc-50"
+                      className="shrink-0 text-zinc-900 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900"
                       onClick={handleSuggestCategory}
                       disabled={isSuggesting}
-                      title="Suggest category with AI"
+                      title="Auto-category"
                     >
                       <Sparkles className={`h-4 w-4 ${isSuggesting ? 'animate-pulse' : ''}`} />
                     </Button>
@@ -320,60 +325,46 @@ export default function DuesView({ data }: DuesViewProps) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Category</Label>
                   <div className="relative">
                     <Select 
                       value={formData.category} 
                       onValueChange={(v) => setFormData({...formData, category: v})}
                     >
-                      <SelectTrigger className={isAutoAssigning ? "border-zinc-900 ring-1 ring-zinc-900" : "border-zinc-200"}>
+                      <SelectTrigger className={cn("dark:bg-zinc-900 dark:border-zinc-800", isAutoAssigning ? "border-zinc-900 dark:border-zinc-400 ring-1 ring-zinc-900 dark:ring-zinc-400" : "border-zinc-200")}>
                         <SelectValue placeholder="Select category" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
                         {CATEGORIES.map(cat => (
                           <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
-                    <AnimatePresence>
-                      {isAutoAssigning && (
-                        <motion.div 
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          exit={{ opacity: 0, scale: 0.8 }}
-                          className="absolute -right-2 -top-2"
-                        >
-                          <Badge className="bg-zinc-900 text-white flex items-center gap-1 text-[10px] px-1.5 py-0.5">
-                            <Sparkles className="h-2.5 w-2.5 animate-pulse" />
-                            AI Auto-assigning...
-                          </Badge>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label htmlFor="amount">Amount</Label>
+                    <Label htmlFor="amount" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Amount</Label>
                     <Input 
                       id="amount" 
                       type="number" 
                       placeholder="0.00" 
+                      className="font-bold dark:bg-zinc-900 dark:border-zinc-800"
                       value={formData.amount}
                       onChange={(e) => setFormData({...formData, amount: e.target.value})}
                     />
                   </div>
                   <div className="grid gap-2">
-                    <Label htmlFor="currency">Currency</Label>
+                    <Label htmlFor="currency" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Currency</Label>
                     <Select 
                       value={formData.currency} 
                       onValueChange={(v) => setFormData({...formData, currency: v})}
                     >
-                      <SelectTrigger>
+                      <SelectTrigger className="dark:bg-zinc-900 dark:border-zinc-800">
                         <SelectValue placeholder="Currency" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
                         {CURRENCIES.map(c => (
                           <SelectItem key={c.code} value={c.code}>{c.code} ({c.symbol})</SelectItem>
                         ))}
@@ -383,40 +374,42 @@ export default function DuesView({ data }: DuesViewProps) {
                 </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="dueDate">Due Date</Label>
+                  <Label htmlFor="dueDate" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Due Date</Label>
                   <Input 
                     id="dueDate" 
                     type="date" 
+                    className="dark:bg-zinc-900 dark:border-zinc-800"
                     value={formData.dueDate}
                     onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
                   />
                 </div>
-                <div className="flex items-center gap-2 pt-2">
+                <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 transition-all">
                   <input 
                     type="checkbox" 
                     id="isRecurring" 
                     checked={formData.isRecurring}
                     onChange={(e) => setFormData({...formData, isRecurring: e.target.checked})}
-                    className="h-4 w-4 rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900"
+                    className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:ring-zinc-900"
                   />
-                  <Label htmlFor="isRecurring" className="text-sm font-medium">Recurring Monthly</Label>
+                  <Label htmlFor="isRecurring" className="text-xs font-bold uppercase tracking-tighter cursor-pointer dark:text-zinc-300">Recurring Bill</Label>
                 </div>
                 {formData.isRecurring && (
-                  <div className="grid gap-2 animate-in fade-in slide-in-from-top-2">
-                    <Label htmlFor="repeatUntil">Repeat Until (Optional)</Label>
+                  <div className="grid gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
+                    <Label htmlFor="repeatUntil" className="text-xs font-bold uppercase tracking-widest text-zinc-500">End Date (Optional)</Label>
                     <Input 
                       id="repeatUntil" 
                       type="date" 
+                      className="dark:bg-zinc-900 dark:border-zinc-800"
                       value={formData.repeatUntil}
                       onChange={(e) => setFormData({...formData, repeatUntil: e.target.value})}
                     />
                   </div>
                 )}
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                <Button className="bg-zinc-900 text-white" onClick={handleSaveDue}>
-                  {editingDue ? 'Update Due' : 'Save Due'}
+              <DialogFooter className="gap-2 sm:gap-0">
+                <Button variant="outline" className="dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button className="bg-zinc-900 dark:bg-white text-white dark:text-black font-black uppercase text-[10px] tracking-widest" onClick={handleSaveDue}>
+                  {editingDue ? 'Save Changes' : 'Add Bill'}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -426,58 +419,58 @@ export default function DuesView({ data }: DuesViewProps) {
 
       <div className="grid gap-6">
         {sortedDues.length > 0 ? (
-          <Card className="border-zinc-200 shadow-sm">
+          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm overflow-hidden bg-white dark:bg-zinc-950 rounded-2xl">
             <CardContent className="p-0">
               <Table>
                 <TableHeader>
-                  <TableRow className="bg-zinc-50 hover:bg-zinc-50">
+                  <TableRow className="bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 border-b dark:border-zinc-800">
                     <TableHead className="w-[50px]"></TableHead>
-                    <TableHead>Description</TableHead>
-                    <TableHead>Due Date</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Description</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Due Date</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Category</TableHead>
+                    <TableHead className="text-right font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Amount</TableHead>
                     <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sortedDues.map((due) => (
-                    <TableRow key={due.id} className={`hover:bg-zinc-50/50 transition-colors ${due.isPaid ? 'opacity-50' : ''}`}>
+                    <TableRow key={due.id} className={cn("hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group", due.isPaid && "opacity-50 grayscale-[0.5]")}>
                       <TableCell>
-                        <button onClick={() => handleTogglePaid(due)} className="text-zinc-400 hover:text-zinc-900 transition-colors">
+                        <button onClick={() => handleTogglePaid(due)} className="text-zinc-400 dark:text-zinc-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                           {due.isPaid ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                            <CheckCircle2 className="h-6 w-6 text-emerald-500" />
                           ) : (
-                            <Circle className="h-5 w-5" />
+                            <Circle className="h-6 w-6" />
                           )}
                         </button>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className={`font-medium ${due.isPaid ? 'line-through' : ''}`}>{due.description}</span>
+                          <span className={cn("font-bold tracking-tight text-zinc-900 dark:text-zinc-100", due.isPaid && "line-through text-zinc-400 dark:text-zinc-600")}>{due.description}</span>
                           {due.isRecurring && (
-                            <span className="text-[10px] text-zinc-400 uppercase tracking-widest flex items-center gap-1">
-                              <CalendarClock className="h-3 w-3" /> Recurring
+                            <span className="text-[9px] text-zinc-400 font-bold uppercase tracking-widest flex items-center gap-1 mt-0.5">
+                              <CalendarClock className="h-2.5 w-2.5" /> Recurring
                             </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-xs font-bold text-zinc-600 dark:text-zinc-400">
                         {format(parseISO(due.dueDate), 'MMM dd, yyyy')}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="outline" className="font-normal">
+                        <Badge variant="outline" className="font-bold italic uppercase text-[9px] tracking-tight bg-zinc-50 dark:bg-zinc-900 text-zinc-500 dark:text-zinc-400 border-zinc-200 dark:border-zinc-800 px-2">
                           {due.category}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right font-bold">
+                      <TableCell className="text-right font-black italic tracking-tighter text-zinc-900 dark:text-white text-lg">
                         {formatAmount(due.amount, due.currency)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1 opacity-10 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-zinc-400 hover:text-zinc-900"
+                            className="h-8 w-8 text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
                             onClick={() => openEditDialog(due)}
                           >
                             <Edit className="h-4 w-4" />
@@ -485,7 +478,7 @@ export default function DuesView({ data }: DuesViewProps) {
                           <Button 
                             variant="ghost" 
                             size="icon" 
-                            className="h-8 w-8 text-zinc-400 hover:text-red-600"
+                            className="h-8 w-8 text-zinc-400 hover:text-rose-600"
                             onClick={() => setDeleteConfirmId(due.id)}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -499,16 +492,16 @@ export default function DuesView({ data }: DuesViewProps) {
             </CardContent>
           </Card>
         ) : (
-          <div className="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-dashed border-zinc-200 text-center">
-            <div className="rounded-full bg-zinc-50 p-4 mb-4">
-              <CalendarClock className="h-8 w-8 text-zinc-300" />
+          <div className="flex flex-col items-center justify-center py-20 bg-white dark:bg-zinc-950 rounded-2xl border-2 border-dashed border-zinc-100 dark:border-zinc-800 text-center">
+            <div className="h-16 w-16 rounded-3xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center text-zinc-300 dark:text-zinc-700 mb-6">
+              <CalendarClock className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-semibold text-zinc-900">No upcoming dues</h3>
-            <p className="text-zinc-500 max-w-xs mx-auto mt-1">
-              Keep track of your bills and recurring payments here.
+            <h3 className="text-lg font-black italic uppercase tracking-tight text-zinc-900 dark:text-white">No bills found</h3>
+            <p className="text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto mt-2 text-xs font-medium">
+              You have no active bills registered for this period.
             </p>
-            <Button variant="outline" className="mt-6" onClick={openAddDialog}>
-              Add your first due
+            <Button variant="outline" className="mt-8 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest" onClick={openAddDialog}>
+              Add Bill
             </Button>
           </div>
         )}

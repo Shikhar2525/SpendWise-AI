@@ -62,8 +62,8 @@ export function VisionaryForecast({ income, expenses }: VisionaryForecastProps) 
 
   const colors = {
     positive: "from-emerald-500/10 to-indigo-500/10 border-emerald-500/20 text-emerald-700 dark:text-emerald-400",
-    neutral: "from-indigo-500/10 to-purple-500/10 border-indigo-500/20 text-indigo-700 dark:text-indigo-400",
-    warning: "from-rose-500/10 to-amber-500/10 border-rose-500/20 text-rose-700 dark:text-rose-400"
+    neutral: "from-indigo-500/10 via-purple-500/5 to-transparent border-indigo-500/20 text-indigo-700 dark:text-indigo-400 dark:bg-zinc-950",
+    warning: "from-rose-500/10 via-amber-500/5 to-transparent border-rose-500/20 text-rose-700 dark:text-rose-400 dark:bg-zinc-950"
   };
 
   const icons = {
@@ -76,19 +76,19 @@ export function VisionaryForecast({ income, expenses }: VisionaryForecastProps) 
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className={`relative overflow-hidden rounded-[2rem] border bg-gradient-to-br transition-all p-6 ${colors[forecast.type]}`}
+      className={`relative overflow-hidden rounded-[2.5rem] border bg-gradient-to-br transition-all p-8 ${colors[forecast.type]}`}
     >
-      <div className="absolute top-0 right-0 p-8 opacity-10 transform scale-150 rotate-12">
-        <Sparkles className="h-24 w-24" />
+      <div className="absolute top-0 right-0 p-12 opacity-5 transform scale-[2.5] rotate-12 -translate-y-8">
+        <Sparkles className="h-32 w-32" />
       </div>
       
-      <div className="relative z-10 flex items-center gap-4">
-        <div className={`shrink-0 h-10 w-10 rounded-xl flex items-center justify-center bg-white dark:bg-zinc-900 shadow-xl border border-current opacity-80`}>
+      <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-6">
+        <div className={`shrink-0 h-14 w-14 rounded-2xl flex items-center justify-center bg-white dark:bg-zinc-900 shadow-2xl border border-current/20`}>
           {icons[forecast.type]}
         </div>
         <div>
-          <h4 className="text-[10px] font-bold uppercase tracking-widest opacity-60 mb-1">Visionary Forecast</h4>
-          <p className="text-sm font-bold tracking-tight leading-relaxed">
+          <h4 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-50 mb-2">Advanced Prediction Engine</h4>
+          <p className="text-xl font-black tracking-tight leading-tight italic uppercase">
             {forecast.text}
           </p>
         </div>

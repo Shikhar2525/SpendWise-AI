@@ -42,6 +42,8 @@ import { MonthFilter } from './components/MonthFilter';
 import { getMonthSuggestions } from './lib/utils/monthUtils';
 import { FinancialPeriodProvider, useFinancialPeriod } from './contexts/FinancialPeriodContext';
 import { TooltipProvider } from './components/ui/tooltip';
+import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeToggle } from './components/ThemeToggle';
 
 import { CurrencyProvider, useCurrency } from './contexts/CurrencyContext';
 import { CURRENCIES } from './types';
@@ -78,13 +80,13 @@ function AppContent() {
 
   const navItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-    { id: 'insights', label: 'AI Insights', icon: Sparkles },
-    { id: 'expenses', label: 'Expenses', icon: Receipt },
-    { id: 'dues', label: 'Bills & Dues', icon: CalendarClock },
     { id: 'salaries', label: 'Income', icon: Wallet },
-    { id: 'savings', label: 'Savings', icon: PiggyBank },
+    { id: 'expenses', label: 'Expenses', icon: Receipt },
     { id: 'budgets', label: 'Budgets', icon: PieChart },
+    { id: 'dues', label: 'Bills', icon: CalendarClock },
+    { id: 'savings', label: 'Savings & Goals', icon: PiggyBank },
     { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
+    { id: 'insights', label: 'AI Intelligence', icon: Sparkles },
   ];
 
   const monthSuggestions = getMonthSuggestions(financialData);
@@ -104,159 +106,170 @@ function AppContent() {
   };
 
   return (
-    <div className="flex h-screen bg-zinc-50 text-zinc-900 overflow-hidden font-sans">
+    <div className="flex h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 overflow-hidden font-sans transition-colors duration-500">
       {!isConnected && (
-        <div className="fixed top-0 left-0 right-0 z-[100] bg-rose-600 text-white px-4 py-2 text-center text-sm font-medium shadow-lg">
+        <div className="fixed top-0 left-0 right-0 z-[100] bg-rose-600 text-white px-4 py-2 text-center text-sm font-bold shadow-xl animate-in slide-in-from-top duration-500">
           <div className="flex items-center justify-center gap-2">
             <AlertTriangle className="h-4 w-4" />
-            <span>Firebase Connection Error: Please check your Project ID and ensure Firestore is enabled in your console.</span>
+            <span>Infrastructure Sync Error: Check Firebase configuration and Firestore permissions.</span>
           </div>
         </div>
       )}
       {/* Desktop Sidebar */}
-      <aside className="hidden w-64 flex-col border-r border-zinc-200 bg-white lg:flex">
-        <div className="flex h-16 items-center gap-2 px-6 border-b border-zinc-100">
+      <aside className="hidden w-64 flex-col border-r border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 lg:flex transition-colors">
+        <div className="flex h-20 items-center justify-center gap-3 px-6 border-b border-zinc-100 dark:border-zinc-800">
           <Logo className="h-8 w-8" />
-          <span className="text-xl font-bold tracking-tight text-zinc-900 line-clamp-1">SpendWise AI</span>
+          <span className="text-xl font-black tracking-tighter uppercase italic text-zinc-900 dark:text-white">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
         </div>
-        <ScrollArea className="flex-1 px-4 py-4">
-          <nav className="space-y-1">
+        <ScrollArea className="flex-1 px-4 py-6">
+          <nav className="space-y-1.5">
             {navItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}
-                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${
+                className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-tight transition-all duration-300 ${
                   activeTab === item.id 
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-100 translate-x-1' 
-                    : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
+                    ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-2xl shadow-zinc-200 dark:shadow-none translate-x-1' 
+                    : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white'
                 }`}
               >
-                <item.icon className={`h-4 w-4 ${activeTab === item.id ? 'text-white' : 'text-zinc-400'}`} />
-                {item.label}
+                <item.icon className={`h-4.5 w-4.5 transition-transform group-hover:scale-110 ${activeTab === item.id ? (item.id === 'insights' ? 'text-indigo-400 dark:text-indigo-600' : 'text-current') : 'text-zinc-400 flex-shrink-0'}`} />
+                <span className="text-[11px] tracking-widest">{item.label}</span>
               </button>
             ))}
           </nav>
         </ScrollArea>
-        <div className="border-t border-zinc-100 p-4 bg-zinc-50/50">
-          <div className="flex items-center gap-3 px-2 py-2 mb-4">
-            <div className="h-10 w-10 rounded-full bg-indigo-100 border-2 border-white shadow-sm flex items-center justify-center text-indigo-700 font-bold text-sm">
+        <div className="border-t border-zinc-100 dark:border-zinc-800 p-4 bg-zinc-50/50 dark:bg-zinc-900/10">
+          <div className="flex items-center gap-3 px-2 py-2 mb-4 bg-white dark:bg-zinc-900 rounded-2xl border border-zinc-100 dark:border-zinc-800 shadow-sm transition-colors">
+            <div className="h-9 w-9 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 shadow-sm flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-black text-base italic">
               {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
             </div>
             <div className="flex-1 overflow-hidden">
-              <p className="truncate text-sm font-semibold text-zinc-900">{userProfile?.displayName || 'User'}</p>
-              <p className="truncate text-xs text-zinc-500">{userProfile?.email}</p>
+              <p className="truncate text-[10px] font-black italic uppercase tracking-tight text-zinc-900 dark:text-white">{userProfile?.displayName || 'Active User'}</p>
+              <p className="truncate text-[9px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter">{userProfile?.email}</p>
             </div>
           </div>
-          <div className="px-2 mb-4">
+          <div className="px-1 mb-4 flex items-center justify-between gap-2">
             <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
-              <SelectTrigger className="w-full h-9 text-xs border-zinc-200">
+              <SelectTrigger className="flex-1 h-9 text-[9px] font-black uppercase tracking-widest border-zinc-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm rounded-xl">
                 <SelectValue placeholder="Currency" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
                 {CURRENCIES.map(c => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.symbol} {c.code} - {c.name}
+                  <SelectItem key={c.code} value={c.code} className="text-[9px] font-bold uppercase tracking-widest">
+                    {c.symbol} {c.code}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <ThemeToggle />
           </div>
-          <Button variant="ghost" className="w-full justify-start gap-3 text-zinc-500 hover:text-red-600 hover:bg-red-50" onClick={logout}>
-            <LogOut className="h-4 w-4" />
-            Logout
+          <Button variant="ghost" className="w-full justify-start gap-3 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold uppercase text-[9px] tracking-widest h-9 rounded-xl transition-all" onClick={logout}>
+            <LogOut className="h-3.5 w-3.5" />
+            Logout Account
           </Button>
         </div>
       </aside>
 
       {/* Mobile Header */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <header className="flex h-16 items-center justify-between border-b border-zinc-200 bg-white px-4 lg:hidden">
+        <header className="flex h-20 items-center justify-between border-b border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-6 lg:hidden transition-colors">
           <div className="flex items-center gap-4">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger 
-                className="lg:hidden"
                 render={
-                  <button className="p-2 text-zinc-500 hover:bg-zinc-100 rounded-lg transition-colors">
-                    <Menu className="h-6 w-6" />
+                  <button className="p-2 text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 rounded-xl transition-all">
+                    <Menu className="h-7 w-7" />
                   </button>
-                } 
+                }
               />
-              <SheetContent side="left" className="w-64 p-0 flex flex-col">
-                <div className="flex h-16 items-center gap-2 px-6 border-b">
+              <SheetContent side="left" className="w-72 h-full p-0 flex flex-col bg-white dark:bg-zinc-950 border-r border-zinc-200 dark:border-zinc-800">
+                <div className="flex h-20 items-center justify-center gap-3 px-6 border-b border-zinc-100 dark:border-zinc-800 shrink-0">
                   <Logo className="h-8 w-8" />
-                  <span className="text-xl font-bold">SpendWise AI</span>
+                  <span className="text-xl font-black tracking-tighter uppercase italic dark:text-white">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
                 </div>
                 <ScrollArea className="flex-1">
-                  <nav className="space-y-1 p-4">
-                    {navItems.map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => {
-                          setActiveTab(item.id);
-                          setIsMobileMenuOpen(false);
-                        }}
-                        className={`flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-                          activeTab === item.id 
-                            ? 'bg-zinc-900 text-white shadow-md' 
-                            : 'text-zinc-500 hover:bg-zinc-100 hover:text-zinc-900'
-                        }`}
-                      >
-                        <item.icon className="h-4 w-4" />
-                        {item.label}
-                      </button>
-                    ))}
-                  </nav>
-                </ScrollArea>
-                <div className="border-t border-zinc-200 p-4 space-y-4">
-                  <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
-                    <SelectTrigger className="w-full h-9 text-xs border-zinc-200">
-                      <SelectValue placeholder="Currency" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map(c => (
-                        <SelectItem key={c.code} value={c.code}>
-                          {c.symbol} {c.code} - {c.name}
-                        </SelectItem>
+                  <div className="flex flex-col min-h-full">
+                    <nav className="space-y-2 p-6 flex-1">
+                      {navItems.map((item) => (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setActiveTab(item.id);
+                            setIsMobileMenuOpen(false);
+                          }}
+                          className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-bold uppercase tracking-tight transition-all ${
+                            activeTab === item.id 
+                              ? 'bg-zinc-900 dark:bg-white text-white dark:text-black shadow-2xl' 
+                              : 'text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-900 border border-transparent'
+                          }`}
+                        >
+                          <item.icon className="h-5 w-5" />
+                          <span className="text-[11px] tracking-widest">{item.label}</span>
+                        </button>
                       ))}
-                    </SelectContent>
-                  </Select>
-                  <Button variant="ghost" className="w-full justify-start gap-3 text-zinc-500 hover:text-red-600" onClick={logout}>
-                    <LogOut className="h-4 w-4" />
-                    Logout
-                  </Button>
-                </div>
+                    </nav>
+                    <div className="mt-auto border-t border-zinc-100 dark:border-zinc-800 p-4 space-y-4 bg-zinc-50/50 dark:bg-zinc-900/10">
+                      <div className="flex items-center gap-3">
+                        <Select value={preferredCurrency.code} onValueChange={setPreferredCurrency}>
+                          <SelectTrigger className="flex-1 h-10 text-[9px] font-black uppercase tracking-widest border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white rounded-xl shadow-sm">
+                            <SelectValue placeholder="Currency" />
+                          </SelectTrigger>
+                          <SelectContent className="dark:bg-zinc-950 dark:border-zinc-800">
+                            {CURRENCIES.map(c => (
+                              <SelectItem key={c.code} value={c.code} className="text-[9px] font-bold uppercase tracking-widest">
+                                {c.symbol} {c.code}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <ThemeToggle />
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        className="w-full justify-start gap-3 text-zinc-500 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-500/10 font-bold uppercase text-[9px] tracking-widest h-10 rounded-xl transition-all" 
+                        onClick={logout}
+                      >
+                        <LogOut className="h-4 w-4" />
+                        Logout Account
+                      </Button>
+                    </div>
+                  </div>
+                </ScrollArea>
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-2">
-              <Logo className="h-8 w-8" />
-              <span className="text-lg font-bold">SpendWise AI</span>
+              <Logo className="h-7 w-7" />
+              <span className="text-lg font-black tracking-tighter uppercase italic dark:text-white">SpendWise</span>
             </div>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          <div className="mx-auto max-w-6xl space-y-8">
-            <div className="flex items-center justify-between">
+        <main className="flex-1 overflow-y-auto p-4 lg:p-10 bg-white dark:bg-zinc-950 transition-colors">
+          <div className="mx-auto max-w-6xl space-y-10">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div>
-                <h2 className="text-3xl font-bold tracking-tight text-zinc-900">
+                <h2 className="text-4xl font-black italic tracking-tighter text-zinc-900 dark:text-white uppercase leading-none">
                   {navItems.find(i => i.id === activeTab)?.label}
                 </h2>
-                <p className="text-zinc-500">
-                  {activeTab === 'dashboard' ? `Welcome back, ${userProfile?.displayName || 'User'}` : `Manage your ${activeTab}`}
+                <p className="text-sm font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest mt-2">
+                  {activeTab === 'dashboard' ? `Welcome back, ${userProfile?.displayName || 'User'}` : `Managing your ${activeTab}`}
                 </p>
               </div>
+              
+              {activeTab !== 'calendar' && activeTab !== 'insights' && (
+                <MonthFilter 
+                  selectedMonth={selectedMonth} 
+                  onMonthChange={setSelectedMonth} 
+                  suggestions={monthSuggestions} 
+                />
+              )}
             </div>
-
-            {activeTab !== 'calendar' && activeTab !== 'insights' && (
-              <MonthFilter 
-                selectedMonth={selectedMonth} 
-                onMonthChange={setSelectedMonth} 
-                suggestions={monthSuggestions} 
-              />
-            )}
             
-            {renderContent()}
+            <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
+              {renderContent()}
+            </div>
           </div>
         </main>
       </div>
@@ -267,15 +280,17 @@ function AppContent() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <CurrencyProvider>
-        <FinancialPeriodProvider>
-          <TooltipProvider>
-            <AppContent />
-            <Toaster position="top-right" richColors />
-          </TooltipProvider>
-        </FinancialPeriodProvider>
-      </CurrencyProvider>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <CurrencyProvider>
+          <FinancialPeriodProvider>
+            <TooltipProvider>
+              <AppContent />
+              <Toaster position="top-right" richColors />
+            </TooltipProvider>
+          </FinancialPeriodProvider>
+        </CurrencyProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }

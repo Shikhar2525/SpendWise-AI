@@ -51,7 +51,7 @@ export default function FloatingChat({ data }: FloatingChatProps) {
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  const INTRO_MESSAGE = "Intelligence link established. I'm monitoring your financial fabric. \n\nHow can I optimize your trajectory?";
+    const INTRO_MESSAGE = "Hello! I'm your AI finance assistant. How can I help you manage your money today?";
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -240,14 +240,14 @@ export default function FloatingChat({ data }: FloatingChatProps) {
             </AnimatePresence>
 
             {/* Header */}
-            <div className="p-6 border-b border-zinc-100 dark:border-zinc-900 bg-zinc-950 dark:bg-white text-white dark:text-black flex items-center justify-between shrink-0">
+            <div className="p-5 border-b border-zinc-100 dark:border-zinc-900 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-between shrink-0">
                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-white/20 dark:bg-black/10 flex items-center justify-center">
-                    <Terminal className="h-5 w-5" />
+                  <div className="h-10 w-10 rounded-2xl bg-white/10 dark:bg-black/5 flex items-center justify-center">
+                    <Bot className="h-5 w-5" />
                   </div>
                   <div>
-                    <h3 className="text-xs font-bold leading-none">Assistant</h3>
-                    <p className="text-[10px] opacity-60 font-medium mt-1">AI Financial Hub</p>
+                    <h3 className="text-xs font-black uppercase tracking-widest">SpendWise AI</h3>
+                    <p className="text-[10px] opacity-70 font-bold mt-0.5">Financial Assistant</p>
                   </div>
                </div>
                <div className="flex items-center gap-1">
@@ -287,44 +287,46 @@ export default function FloatingChat({ data }: FloatingChatProps) {
                   className="flex-1 flex flex-col overflow-hidden"
                 >
                   {/* Messages Area */}
-                  <ScrollArea className="flex-1 p-6 bg-zinc-50 dark:bg-black/20">
-                    <div className="space-y-6 pb-4">
-                      {messages.map((msg, i) => (
-                        <motion.div 
-                          key={i}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={cn(
-                            "flex w-full",
-                            msg.role === 'user' ? "justify-end" : "justify-start"
-                          )}
-                        >
-                          <div className={cn(
-                            "max-w-[85%] rounded-[1.5rem] px-5 py-4 text-[13px] font-medium leading-relaxed relative",
-                            msg.role === 'user' 
-                              ? "bg-zinc-900 dark:bg-white text-white dark:text-black rounded-tr-none shadow-xl" 
-                              : "bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none shadow-sm"
-                          )}>
-                             <div className="markdown-body prose prose-sm dark:prose-invert max-w-none">
-                               <ReactMarkdown>{msg.content}</ReactMarkdown>
-                             </div>
-                             {msg.error && <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest">Link Lost.</p>}
-                             <p className="text-[8px] opacity-40 mt-2 font-black tracking-widest uppercase">
-                               {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                             </p>
+                  <div className="flex-1 min-h-0 relative">
+                    <ScrollArea className="h-full w-full bg-zinc-50 dark:bg-zinc-900/30">
+                      <div className="p-6 space-y-6 pb-4">
+                        {messages.map((msg, i) => (
+                          <motion.div 
+                            key={i}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className={cn(
+                              "flex w-full",
+                              msg.role === 'user' ? "justify-end" : "justify-start"
+                            )}
+                          >
+                            <div className={cn(
+                              "max-w-[85%] rounded-[1.5rem] px-5 py-4 text-[13px] font-medium leading-relaxed relative",
+                              msg.role === 'user' 
+                                ? "bg-zinc-900 dark:bg-white text-white dark:text-black rounded-tr-none shadow-xl" 
+                                : "bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none shadow-sm"
+                            )}>
+                               <div className="prose prose-sm dark:prose-invert max-w-none">
+                                 <ReactMarkdown>{msg.content}</ReactMarkdown>
+                               </div>
+                               {msg.error && <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest">Network Error.</p>}
+                               <p className="text-[8px] opacity-40 mt-2 font-black tracking-widest uppercase">
+                                 {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                               </p>
+                            </div>
+                          </motion.div>
+                        ))}
+                        {isTyping && (
+                          <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl w-fit shadow-lg">
+                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                           </div>
-                        </motion.div>
-                      ))}
-                      {isTyping && (
-                        <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl w-fit shadow-lg">
-                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                          <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                        </div>
-                      )}
-                      <div ref={bottomRef} className="h-2" />
-                    </div>
-                  </ScrollArea>
+                        )}
+                        <div ref={bottomRef} className="h-2" />
+                      </div>
+                    </ScrollArea>
+                  </div>
 
                   {/* Input Box */}
                   <div className="p-6 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
@@ -348,7 +350,7 @@ export default function FloatingChat({ data }: FloatingChatProps) {
                     </form>
                     <div className="mt-4 flex items-center justify-center gap-4 opacity-40">
                        <ShieldCheck className="h-3 w-3 text-emerald-600" />
-                       <span className="text-[8px] font-medium">Neural Link Verified</span>
+                       <span className="text-[8px] font-medium whitespace-nowrap">Secure Financial Link</span>
                        <Zap className="h-3 w-3 text-indigo-500" />
                     </div>
                   </div>
