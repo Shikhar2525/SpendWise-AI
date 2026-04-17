@@ -57,7 +57,7 @@ interface DashboardProps {
 export default function Dashboard({ data, setActiveTab }: DashboardProps) {
   const { expenses, dues, salaries, budgets, goals } = data;
   const { preferredCurrency, formatAmount, convert } = useCurrency();
-  const { selectedMonth } = useFinancialPeriod();
+  const { selectedMonth, setSelectedMonth } = useFinancialPeriod();
   const { resolvedTheme } = useTheme();
 
   const isDark = resolvedTheme === 'dark';
@@ -359,11 +359,8 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
          {/* Upcoming Dues */}
-         <Card 
-          className="border-zinc-200 dark:border-zinc-800 shadow-sm cursor-pointer hover:border-indigo-400 dark:hover:border-indigo-500 transition-colors bg-white dark:bg-zinc-950"
-          onClick={() => setActiveTab('dues')}
-        >
-          <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-900 mb-6">
+         <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-950">
+           <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-900 mb-6 cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => setActiveTab('dues')}>
             <div>
               <CardTitle className="text-lg font-black tracking-tight italic uppercase">Upcoming Bills</CardTitle>
               <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Bills due soon</CardDescription>
@@ -374,7 +371,17 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
             <div className="space-y-6">
               {upcomingDues.length > 0 ? (
                 upcomingDues.map((due) => (
-                  <div key={due.id} className="flex items-center justify-between group">
+                  <div 
+                    key={due.id} 
+                    className="flex items-center justify-between group cursor-pointer"
+                    onClick={() => {
+                      const month = format(parseISO(due.dueDate), 'yyyy-MM');
+                      if (month !== selectedMonth) {
+                        setSelectedMonth(month);
+                      }
+                      setActiveTab('dues');
+                    }}
+                  >
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-10 rounded-xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 flex items-center justify-center text-zinc-400 dark:text-zinc-600 transition-colors group-hover:bg-amber-50 group-hover:text-amber-500 dark:group-hover:bg-amber-500/10">
                         <CalendarClock className="h-5 w-5" />
@@ -406,7 +413,11 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
             </div>
             {upcomingDues.length > 0 && (
               <div className="mt-8 pt-6 border-t border-zinc-50 dark:border-zinc-900">
-                <Button variant="ghost" className="w-full text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 hover:text-indigo-600">
+                <Button 
+                  variant="ghost" 
+                  className="w-full text-[10px] font-bold uppercase tracking-[0.2em] text-zinc-400 hover:text-indigo-600"
+                  onClick={() => setActiveTab('calendar')}
+                >
                   Full Calendar View
                 </Button>
               </div>
