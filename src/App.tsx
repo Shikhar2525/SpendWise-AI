@@ -140,7 +140,7 @@ function AppContent() {
     { id: 'salaries', label: 'Income', icon: Wallet },
     { id: 'expenses', label: 'Expenses', icon: Receipt },
     { id: 'budgets', label: 'Budgets', icon: PieChart },
-    { id: 'dues', label: 'Bills', icon: CalendarClock },
+    { id: 'dues', label: 'Bills & Dues', icon: CalendarClock },
     { id: 'savings', label: 'Savings & Goals', icon: PiggyBank },
     { id: 'calendar', label: 'Calendar', icon: CalendarIcon },
     { id: 'insights', label: 'AI Intelligence', icon: Sparkles },
@@ -400,8 +400,8 @@ function AppContent() {
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 lg:p-10 bg-white dark:bg-zinc-950 transition-colors">
-          <div className="mx-auto max-w-6xl space-y-10">
+        <main className="flex-1 overflow-y-auto p-4 lg:px-10 lg:py-8 bg-white dark:bg-zinc-950 transition-colors">
+          <div className="mx-auto max-w-6xl space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div>
                 <div className="flex items-center gap-3 mb-2">

@@ -31,7 +31,7 @@ interface SavingsViewProps {
   activeSubTab?: string;
 }
 
-const SAVING_TYPES = ['RD', 'FD', 'Mutual Fund', 'Stocks', 'Crypto', 'Gold', 'Provident Fund', 'Other'];
+const SAVING_TYPES = ['RD', 'Capital Injection', 'FD', 'Mutual Fund', 'Stocks', 'Crypto', 'Gold', 'Provident Fund', 'Other'];
 
 export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   const { user } = useAuth();
@@ -53,6 +53,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   // Savings State
   const [isSavingDialogOpen, setIsSavingDialogOpen] = useState(false);
   const [editingSaving, setEditingSaving] = useState<Saving | null>(null);
+  const [savingEditMode, setSavingEditMode] = useState<'all' | 'single'>('all');
   const [savingFormData, setSavingFormData] = useState({
     amount: '',
     currency: preferredCurrency.code,
@@ -90,11 +91,12 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   // Savings Handlers
   const openAddSavingDialog = () => {
     setEditingSaving(null);
+    setSavingEditMode('all');
     setSavingFormData({
       amount: '',
       currency: preferredCurrency.code,
       type: 'RD',
-      startDate: format(new Date(), 'yyyy-MM-dd'),
+      startDate: format(monthDate, 'yyyy-MM-dd'),
       endDate: '',
       description: '',
       isRecurring: true
@@ -104,6 +106,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
 
   const openEditSavingDialog = (saving: Saving) => {
     setEditingSaving(saving);
+    setSavingEditMode('all');
     setSavingFormData({
       amount: saving.amount.toString(),
       currency: saving.currency || 'USD',
@@ -124,26 +127,57 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
     }
 
     try {
-      const savingData = {
-        uid: user.uid,
-        amount: parseFloat(savingFormData.amount),
-        currency: savingFormData.currency,
-        type: savingFormData.type,
-        startDate: savingFormData.startDate,
-        endDate: savingFormData.endDate || null,
-        description: formatInputText(savingFormData.description),
-        isRecurring: savingFormData.isRecurring,
-        updatedAt: new Date().toISOString()
-      };
-
       if (editingSaving) {
-        await updateDoc(doc(db, 'savings', editingSaving.id), savingData);
-        toast.success('Savings entry updated');
+        if (editingSaving.isRecurring && savingEditMode === 'single') {
+          // Exclude this instance
+          const updatedExcluded = [...(editingSaving.excludedDates || []), savingFormData.startDate];
+          await updateDoc(doc(db, 'savings', editingSaving.id), {
+            excludedDates: updatedExcluded,
+            updatedAt: new Date().toISOString()
+          });
+
+          // Create one-off override
+          const newSavingData = {
+            uid: user.uid,
+            amount: parseFloat(savingFormData.amount),
+            currency: savingFormData.currency,
+            type: savingFormData.type,
+            startDate: savingFormData.startDate,
+            description: formatInputText(savingFormData.description),
+            isRecurring: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          await addDoc(collection(db, 'savings'), newSavingData);
+          toast.success('Instance updated (Override created)');
+        } else {
+          const savingData = {
+            amount: parseFloat(savingFormData.amount),
+            currency: savingFormData.currency,
+            type: savingFormData.type,
+            startDate: savingFormData.startDate,
+            endDate: savingFormData.endDate || null,
+            description: formatInputText(savingFormData.description),
+            isRecurring: savingFormData.isRecurring,
+            updatedAt: new Date().toISOString()
+          };
+          await updateDoc(doc(db, 'savings', editingSaving.id), savingData);
+          toast.success('Savings entry updated');
+        }
       } else {
-        await addDoc(collection(db, 'savings'), {
-          ...savingData,
-          createdAt: new Date().toISOString()
-        });
+        const savingData = {
+          uid: user.uid,
+          amount: parseFloat(savingFormData.amount),
+          currency: savingFormData.currency,
+          type: savingFormData.type,
+          startDate: savingFormData.startDate,
+          endDate: savingFormData.endDate || null,
+          description: formatInputText(savingFormData.description),
+          isRecurring: savingFormData.isRecurring,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'savings'), savingData);
         toast.success('Savings entry added');
       }
       setIsSavingDialogOpen(false);
@@ -270,7 +304,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight italic">Savings & Wealth</h2>
+              <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight italic">My Savings</h2>
               <Logo className="h-5 w-5" />
             </div>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Build your future and track long-term growth</p>
@@ -278,14 +312,14 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
         </div>
         <div className="hidden md:flex items-center gap-4">
            <div className="flex flex-col items-end">
-             <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Growth Phase</span>
+             <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Progress Status</span>
              <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 flex items-center gap-1 italic">Active <TrendingUp className="h-3 w-3" /></span>
            </div>
         </div>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-zinc-50/50 dark:bg-zinc-900/50 p-2 rounded-2xl border border-zinc-100/50 dark:border-zinc-800/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 bg-zinc-50/50 dark:bg-zinc-900/50 p-2 rounded-2xl border border-zinc-100/50 dark:border-zinc-800/50">
           <TabsList className="bg-zinc-100 dark:bg-zinc-950 p-1 rounded-xl h-auto border border-zinc-200 dark:border-zinc-800">
             <TabsTrigger value="entries" className="rounded-lg px-8 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:shadow-lg dark:data-[state=active]:shadow-none font-bold uppercase text-[10px] tracking-widest transition-all">
               History
@@ -301,13 +335,13 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                 <DialogTrigger 
                   render={
                     <Button onClick={openAddSavingDialog} className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 gap-2 h-11 rounded-xl shadow-lg shadow-zinc-200 dark:shadow-none font-black uppercase text-[10px] tracking-widest">
-                      <Plus className="h-4 w-4" /> Add Savings Entry
+                      <Plus className="h-4 w-4" /> Add Savings
                     </Button>
                   }
                 />
                 <DialogContent className="sm:max-w-[425px] dark:bg-zinc-950 dark:border-zinc-800">
                   <DialogHeader>
-                    <DialogTitle className="font-black italic text-xl dark:text-white">{editingSaving ? 'Modify Entry' : 'New Capital Flow'}</DialogTitle>
+                    <DialogTitle className="font-black italic text-xl dark:text-white">{editingSaving ? 'Edit Savings' : 'Add New Savings'}</DialogTitle>
                   </DialogHeader>
                   <div className="grid gap-6 py-4">
                     <div className="grid gap-2">
@@ -321,10 +355,17 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                       />
                     </div>
                     <div className="grid gap-2">
-                      <Label htmlFor="type" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Savings Type</Label>
+                      <Label htmlFor="type" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Category</Label>
                       <Select 
                         value={savingFormData.type} 
-                        onValueChange={(v) => setSavingFormData({...savingFormData, type: v as Saving['type']})}
+                        onValueChange={(v) => {
+                          const type = v as Saving['type'];
+                          setSavingFormData({
+                            ...savingFormData, 
+                            type,
+                            isRecurring: (type === 'Capital Injection' || type === 'RD') ? true : savingFormData.isRecurring
+                          });
+                        }}
                       >
                         <SelectTrigger className="dark:bg-zinc-900 dark:border-zinc-800">
                           <SelectValue placeholder="Select type" />
@@ -387,13 +428,54 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                         />
                       </div>
                     </div>
+
+                    {editingSaving?.isRecurring && (
+                      <div className="grid gap-3 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Recurring Options</Label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            type="button"
+                            variant={savingEditMode === 'all' ? 'default' : 'outline'}
+                            onClick={() => setSavingEditMode('all')}
+                            className={cn(
+                              "h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                              savingEditMode === 'all' 
+                                ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                                : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                            )}
+                          >
+                            All Instances
+                          </Button>
+                          <Button
+                            type="button"
+                            variant={savingEditMode === 'single' ? 'default' : 'outline'}
+                            onClick={() => setSavingEditMode('single')}
+                            className={cn(
+                              "h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                              savingEditMode === 'single' 
+                                ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                                : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                            )}
+                          >
+                            This Instance
+                          </Button>
+                        </div>
+                        <p className="text-[10px] text-indigo-600/60 dark:text-indigo-400/60 font-medium leading-tight">
+                          {savingEditMode === 'all' 
+                            ? "Changes will apply to all months in the series." 
+                            : "Creates a one-off override for this specific month."}
+                        </p>
+                      </div>
+                    )}
+
                     <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 transition-all">
                       <input 
                         type="checkbox" 
                         id="isRecurring" 
-                        checked={savingFormData.isRecurring}
+                        disabled={savingFormData.type === 'Capital Injection' || savingFormData.type === 'RD'}
+                        checked={savingFormData.isRecurring || savingFormData.type === 'Capital Injection' || savingFormData.type === 'RD'}
                         onChange={(e) => setSavingFormData({...savingFormData, isRecurring: e.target.checked})}
-                        className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:ring-zinc-900"
+                        className="h-4 w-4 rounded border-zinc-300 dark:border-zinc-700 text-zinc-900 dark:text-white focus:ring-zinc-900 disabled:opacity-50"
                       />
                       <Label htmlFor="isRecurring" className="text-xs font-bold uppercase tracking-tighter cursor-pointer dark:text-zinc-300">Recurring Capital Injection</Label>
                     </div>
@@ -503,8 +585,8 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                   <TableRow className="bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 border-b dark:border-zinc-800">
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest pl-6">Start Date</TableHead>
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Description</TableHead>
-                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Type</TableHead>
-                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Pipeline</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Category</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Status</TableHead>
                     <TableHead className="text-right font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Amount</TableHead>
                     <TableHead className="w-[100px] pr-6"></TableHead>
                   </TableRow>
@@ -565,7 +647,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                       <TableCell colSpan={6} className="h-40 text-center text-zinc-500 dark:text-zinc-600 italic">
                         <div className="flex flex-col items-center justify-center gap-3">
                            <PiggyBank className="h-10 w-10 opacity-10" />
-                           <p className="text-sm font-medium">No active capital flows identified.</p>
+                           <p className="text-sm font-medium">No savings records found.</p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -585,8 +667,8 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                 const isComplete = progress >= 100;
 
                 return (
-                  <Card key={goal.id} className="border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-none bg-white dark:bg-zinc-950 rounded-[3rem] overflow-hidden group transition-all duration-500 hover:shadow-2xl dark:hover:border-indigo-500/30">
-                    <CardHeader className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 p-8">
+                  <Card key={goal.id} className="border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-none bg-white dark:bg-zinc-950 rounded-[2rem] overflow-hidden group transition-all duration-500 hover:shadow-2xl dark:hover:border-indigo-500/30">
+                    <div className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 px-8 py-5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className={cn(
@@ -596,10 +678,10 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                             {isComplete ? <CheckCircle2 className="h-6 w-6" /> : <Target className="h-6 w-6" />}
                           </div>
                           <div>
-                            <CardTitle className="text-xl font-black italic tracking-tight uppercase leading-none dark:text-white uppercase whitespace-nowrap">
+                            <CardTitle className="text-xl font-black italic tracking-tight uppercase leading-none dark:text-white whitespace-nowrap">
                               {formatInputText(goal.name)}
                             </CardTitle>
-                            <CardDescription className="flex items-center gap-1.5 mt-1.5 font-bold text-zinc-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">
+                            <CardDescription className="flex items-center gap-1.5 mt-2 font-bold text-zinc-400 dark:text-zinc-500 text-[10px] uppercase tracking-widest">
                               <Calendar className="h-3 w-3" />
                               By {format(parseISO(goal.deadline), 'MMMM yyyy')}
                             </CardDescription>
@@ -624,8 +706,8 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                           </Button>
                         </div>
                       </div>
-                    </CardHeader>
-                    <CardContent className="p-8">
+                    </div>
+                    <CardContent className="px-8 pt-8 pb-8">
                       <div className="space-y-8">
                         <div className="flex items-end justify-between">
                           <div className="space-y-1">

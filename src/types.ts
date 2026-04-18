@@ -31,8 +31,10 @@ export interface Due {
   dueDate: string;
   category: string;
   description: string;
+  type?: 'Bill' | 'Due';
   isRecurring: boolean;
   repeatUntil?: string;
+  excludedDates?: string[]; // Dates (YYYY-MM-DD) to exclude from recurrence expansion
   isPaid: boolean;
   settledExpenseId?: string | null;
   createdAt: string;
@@ -46,6 +48,7 @@ export interface Salary {
   date: string;
   isRecurring: boolean;
   repeatUntil?: string;
+  excludedDates?: string[]; // Dates (YYYY-MM-DD) to exclude from recurrence expansion
   description: string;
   createdAt: string;
 }
@@ -55,11 +58,12 @@ export interface Saving {
   uid: string;
   amount: number;
   currency: string;
-  type: 'RD' | 'FD' | 'Mutual Fund' | 'Stocks' | 'Crypto' | 'Gold' | 'Provident Fund' | 'Other';
+  type: 'Capital Injection' | 'RD' | 'FD' | 'Mutual Fund' | 'Stocks' | 'Crypto' | 'Gold' | 'Provident Fund' | 'Other';
   description: string;
   isRecurring: boolean;
   startDate: string;
   endDate?: string;
+  excludedDates?: string[]; // Dates (YYYY-MM-DD) to exclude from recurrence expansion
   createdAt: string;
 }
 

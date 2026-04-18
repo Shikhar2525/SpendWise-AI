@@ -39,6 +39,7 @@ export default function DuesView({ data }: DuesViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingDue, setEditingDue] = useState<Due | null>(null);
+  const [editMode, setEditMode] = useState<'all' | 'single'>('all');
   const [isAutoAssigning, setIsAutoAssigning] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
 
@@ -49,6 +50,7 @@ export default function DuesView({ data }: DuesViewProps) {
     category: 'Utilities',
     dueDate: format(new Date(), 'yyyy-MM-dd'),
     description: '',
+    type: 'Bill' as 'Bill' | 'Due',
     isRecurring: false,
     repeatUntil: ''
   });
@@ -102,12 +104,14 @@ export default function DuesView({ data }: DuesViewProps) {
 
   const openAddDialog = () => {
     setEditingDue(null);
+    setEditMode('all');
     setFormData({
       amount: '',
       currency: preferredCurrency.code,
       category: 'Utilities',
-      dueDate: format(new Date(), 'yyyy-MM-dd'),
+      dueDate: format(monthDate, 'yyyy-MM-dd'),
       description: '',
+      type: 'Bill',
       isRecurring: false,
       repeatUntil: ''
     });
@@ -116,12 +120,14 @@ export default function DuesView({ data }: DuesViewProps) {
 
   const openEditDialog = (due: Due) => {
     setEditingDue(due);
+    setEditMode('all');
     setFormData({
       amount: due.amount.toString(),
       currency: due.currency || 'USD',
       category: due.category,
       dueDate: due.dueDate,
       description: due.description,
+      type: due.type || 'Bill',
       isRecurring: due.isRecurring,
       repeatUntil: due.repeatUntil || ''
     });
@@ -136,30 +142,66 @@ export default function DuesView({ data }: DuesViewProps) {
     }
 
     try {
-      const dueData = {
-        uid: user.uid,
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        category: formData.category,
-        dueDate: formData.dueDate,
-        description: formatInputText(formData.description),
-        isRecurring: formData.isRecurring,
-        repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
-        updatedAt: new Date().toISOString()
-      };
-
       if (editingDue) {
-        await updateDoc(doc(db, 'dues', editingDue.id), dueData);
-        toast.success('Due updated successfully');
+        if (editingDue.isRecurring && editMode === 'single') {
+          // Exclude this instance from recurring series
+          const updatedExcluded = [...(editingDue.excludedDates || []), formData.dueDate];
+          await updateDoc(doc(db, 'dues', editingDue.id), {
+            excludedDates: updatedExcluded,
+            updatedAt: new Date().toISOString()
+          });
+
+          // Create new one-off override
+          const newDueData = {
+            uid: user.uid,
+            amount: parseFloat(formData.amount),
+            currency: formData.currency,
+            category: formData.category,
+            dueDate: formData.dueDate,
+            description: formatInputText(formData.description),
+            type: formData.type,
+            isRecurring: false,
+            isPaid: editingDue.isPaid,
+            settledExpenseId: editingDue.settledExpenseId || null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          await addDoc(collection(db, 'dues'), newDueData);
+          toast.success('Instance updated successfully (Override created)');
+        } else {
+          // Update the original recurring item or a normal one-off
+          const dueData = {
+            amount: parseFloat(formData.amount),
+            currency: formData.currency,
+            category: formData.category,
+            dueDate: formData.dueDate,
+            description: formatInputText(formData.description),
+            type: formData.type,
+            isRecurring: formData.isRecurring,
+            repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
+            updatedAt: new Date().toISOString()
+          };
+          await updateDoc(doc(db, 'dues', editingDue.id), dueData);
+          toast.success('Record updated successfully');
+        }
       } else {
-        await addDoc(collection(db, 'dues'), {
-          ...dueData,
+        const dueData = {
+          uid: user.uid,
+          amount: parseFloat(formData.amount),
+          currency: formData.currency,
+          category: formData.category,
+          dueDate: formData.dueDate,
+          description: formatInputText(formData.description),
+          type: formData.type,
+          isRecurring: formData.isRecurring,
+          repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
           isPaid: false,
-          createdAt: new Date().toISOString()
-        });
-        toast.success('Due added successfully');
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'dues'), dueData);
+        toast.success('New entry registered');
       }
-      setIsDialogOpen(true);
       setIsDialogOpen(false);
     } catch (error) {
       handleFirestoreError(error, editingDue ? OperationType.UPDATE : OperationType.CREATE, 'dues');
@@ -177,14 +219,19 @@ export default function DuesView({ data }: DuesViewProps) {
           amount: due.amount,
           currency: due.currency || preferredCurrency.code,
           category: due.category,
-          date: due.dueDate, // Use the due's date for the expense record
+          date: due.dueDate,
           description: `Settled: ${due.description}`,
           createdAt: new Date().toISOString()
         });
 
         if (due.isRecurring) {
-          // If it's a recurring due, we create a one-off PAID record for this specific month
-          // and keep the original recurring entry as-is (unpaid) for other months.
+          // USE EXCLUSION LOGIC INSTEAD OF SHADOW LOGIC
+          const updatedExcluded = [...(due.excludedDates || []), due.dueDate];
+          await updateDoc(doc(db, 'dues', due.id), {
+            excludedDates: updatedExcluded,
+            updatedAt: new Date().toISOString()
+          });
+
           await addDoc(collection(db, 'dues'), {
             uid: user?.uid,
             amount: due.amount,
@@ -192,16 +239,19 @@ export default function DuesView({ data }: DuesViewProps) {
             category: due.category,
             dueDate: due.dueDate,
             description: due.description,
+            type: due.type || 'Bill',
             isPaid: true,
             isRecurring: false,
             settledExpenseId: expenseDoc.id,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
           });
-          toast.success('Recurring instance settled for this month');
+          toast.success('Instance paid and override created');
         } else {
           await updateDoc(doc(db, 'dues', due.id), {
             isPaid: true,
-            settledExpenseId: expenseDoc.id
+            settledExpenseId: expenseDoc.id,
+            updatedAt: new Date().toISOString()
           });
           toast.success('Due settled and expense recorded');
         }
@@ -215,23 +265,27 @@ export default function DuesView({ data }: DuesViewProps) {
           }
         }
 
-        // If it was a one-off paid record for a recurring item, delete the record entirely
-        // The recurring item will reappear as unpaid.
-        // We identify a "shadow" record by it being non-recurring and having been created from a recurring context 
-        // (usually description matches and it's paid, but since we're unsettling, we just check if it's the one we clicked)
-        if (!due.isRecurring && due.isPaid) {
-          // Check if this was a shadow record by looking for a recurring buddy
-          const hasRecurringOriginal = dues.some(d => d.isRecurring && d.description === due.description);
-          if (hasRecurringOriginal) {
+        // If it was a one-off paid record for a recurring item, we might want to "restore" the recurring one
+        // Check if this was an override
+        if (!due.isRecurring) {
+          // Look for the original recurring due that has this date in excludedDates
+          const original = dues.find(d => d.isRecurring && d.description === due.description && d.excludedDates?.includes(due.dueDate));
+          if (original) {
+            const updatedExcluded = original.excludedDates?.filter(d => d !== due.dueDate) || [];
+            await updateDoc(doc(db, 'dues', original.id), {
+              excludedDates: updatedExcluded,
+              updatedAt: new Date().toISOString()
+            });
             await deleteDoc(doc(db, 'dues', due.id));
-            toast.success('Settlement record removed');
+            toast.success('Restored to recurring series (unpaid)');
             return;
           }
         }
 
         await updateDoc(doc(db, 'dues', due.id), {
           isPaid: false,
-          settledExpenseId: null
+          settledExpenseId: null,
+          updatedAt: new Date().toISOString()
         });
         toast.success('Marked as unpaid');
       }
@@ -252,20 +306,6 @@ export default function DuesView({ data }: DuesViewProps) {
   };
 
   const sortedDues = expandRecurringItems(dues, monthDate)
-    .filter(d => {
-      // If it's a virtual instance of a recurring item, check if we've already created a 
-      // one-off settled record for it in this month.
-      if (d.isRecurring) {
-        const isAlreadySettled = dues.some(realDue => 
-          !realDue.isRecurring && 
-          realDue.isPaid && 
-          isSameMonth(parseISO(realDue.dueDate), monthDate) &&
-          realDue.description === d.description
-        );
-        return !isAlreadySettled;
-      }
-      return true;
-    })
     .sort((a, b) => {
       if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
       return parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime();
@@ -280,10 +320,10 @@ export default function DuesView({ data }: DuesViewProps) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight italic">Bills</h2>
+              <h2 className="text-2xl font-black text-zinc-900 dark:text-white tracking-tight italic">Bills & Dues</h2>
               <Logo className="h-5 w-5" />
             </div>
-            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Track and pay your regular bills</p>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 font-medium">Track and pay your regular bills and dues</p>
           </div>
         </div>
         <div className="flex gap-2">
@@ -291,17 +331,51 @@ export default function DuesView({ data }: DuesViewProps) {
             <DialogTrigger 
               render={
                 <Button onClick={openAddDialog} className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 gap-2 h-10 rounded-xl shadow-lg shadow-zinc-200 dark:shadow-none font-black uppercase text-[10px] tracking-widest">
-                  <Plus className="h-4 w-4" /> Add Bill
+                  <Plus className="h-4 w-4" /> Add Record
                 </Button>
               }
             />
             <DialogContent className="sm:max-w-[425px] dark:bg-zinc-950 dark:border-zinc-800">
               <DialogHeader>
-                <DialogTitle className="font-black italic text-xl dark:text-white">{editingDue ? 'Edit Bill' : 'New Bill'}</DialogTitle>
+                <DialogTitle className="font-black italic text-xl dark:text-white uppercase tracking-tight">{editingDue ? 'Edit Record' : 'New Record'}</DialogTitle>
               </DialogHeader>
               <div className="grid gap-6 py-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Bill Name</Label>
+                  <Label className="text-xs font-bold uppercase tracking-widest text-zinc-500">Entry Type</Label>
+                  <div className="flex gap-2 p-1 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800">
+                    <Button
+                      type="button"
+                      variant={formData.type === 'Bill' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setFormData({...formData, type: 'Bill'})}
+                      className={cn(
+                        "flex-1 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                        formData.type === 'Bill' 
+                          ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm" 
+                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                      )}
+                    >
+                      Bill
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={formData.type === 'Due' ? 'default' : 'ghost'}
+                      size="sm"
+                      onClick={() => setFormData({...formData, type: 'Due'})}
+                      className={cn(
+                        "flex-1 h-8 rounded-lg text-[10px] font-black uppercase tracking-widest transition-all",
+                        formData.type === 'Due' 
+                          ? "bg-white dark:bg-zinc-800 text-zinc-900 dark:text-white shadow-sm" 
+                          : "text-zinc-500 hover:text-zinc-900 dark:hover:text-zinc-100"
+                      )}
+                    >
+                      Due
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="description" className="text-xs font-bold uppercase tracking-widest text-zinc-500">Description</Label>
                   <div className="flex gap-2">
                     <Input 
                       id="description" 
@@ -383,6 +457,46 @@ export default function DuesView({ data }: DuesViewProps) {
                     onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
                   />
                 </div>
+
+                {editingDue?.isRecurring && (
+                  <div className="grid gap-3 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Recurring Update Mode</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant={editMode === 'all' ? 'default' : 'outline'}
+                        onClick={() => setEditMode('all')}
+                        className={cn(
+                          "h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                          editMode === 'all' 
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        )}
+                      >
+                        All Instances
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editMode === 'single' ? 'default' : 'outline'}
+                        onClick={() => setEditMode('single')}
+                        className={cn(
+                          "h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                          editMode === 'single' 
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        )}
+                      >
+                        This Instance
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-indigo-600/60 dark:text-indigo-400/60 font-medium leading-tight">
+                      {editMode === 'all' 
+                        ? "Changes will apply to all months in the series." 
+                        : "Creates a one-off override for this specific month."}
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 transition-all">
                   <input 
                     type="checkbox" 
@@ -409,7 +523,7 @@ export default function DuesView({ data }: DuesViewProps) {
               <DialogFooter className="gap-2 sm:gap-0">
                 <Button variant="outline" className="dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
                 <Button className="bg-zinc-900 dark:bg-white text-white dark:text-black font-black uppercase text-[10px] tracking-widest" onClick={handleSaveDue}>
-                  {editingDue ? 'Save Changes' : 'Add Bill'}
+                  {editingDue ? 'Save Changes' : `Add ${formData.type}`}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -425,6 +539,7 @@ export default function DuesView({ data }: DuesViewProps) {
                 <TableHeader>
                   <TableRow className="bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 border-b dark:border-zinc-800">
                     <TableHead className="w-[50px]"></TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Type</TableHead>
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Description</TableHead>
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Due Date</TableHead>
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Category</TableHead>
@@ -443,6 +558,16 @@ export default function DuesView({ data }: DuesViewProps) {
                             <Circle className="h-6 w-6" />
                           )}
                         </button>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline" className={cn(
+                          "font-black uppercase text-[8px] tracking-[0.15em] px-2 py-0 border-none",
+                          due.type === 'Due' 
+                            ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" 
+                            : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        )}>
+                          {due.type || 'Bill'}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -498,12 +623,12 @@ export default function DuesView({ data }: DuesViewProps) {
             <div className="h-16 w-16 rounded-3xl bg-zinc-50 dark:bg-zinc-900 flex items-center justify-center text-zinc-300 dark:text-zinc-700 mb-6">
               <CalendarClock className="h-8 w-8" />
             </div>
-            <h3 className="text-lg font-black italic uppercase tracking-tight text-zinc-900 dark:text-white">No bills found</h3>
+            <h3 className="text-lg font-black italic uppercase tracking-tight text-zinc-900 dark:text-white">No records found</h3>
             <p className="text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto mt-2 text-xs font-medium">
-              You have no active bills registered for this period.
+              You have no active bills or dues registered for this period.
             </p>
             <Button variant="outline" className="mt-8 dark:bg-zinc-900 dark:border-zinc-800 dark:text-zinc-400 font-bold uppercase text-[10px] tracking-widest" onClick={openAddDialog}>
-              Add Bill
+              Add Record
             </Button>
           </div>
         )}

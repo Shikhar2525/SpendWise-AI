@@ -36,6 +36,7 @@ export default function SalariesView({ data }: SalariesViewProps) {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingSalary, setEditingSalary] = useState<Salary | null>(null);
+  const [editMode, setEditMode] = useState<'all' | 'single'>('all');
 
   const monthDate = parseISO(`${selectedMonth}-01`);
   const [formData, setFormData] = useState({
@@ -55,10 +56,11 @@ export default function SalariesView({ data }: SalariesViewProps) {
 
   const openAddDialog = () => {
     setEditingSalary(null);
+    setEditMode('all');
     setFormData({
       amount: '',
       currency: preferredCurrency.code,
-      date: format(new Date(), 'yyyy-MM-dd'),
+      date: format(monthDate, 'yyyy-MM-dd'),
       description: 'Monthly Salary',
       isRecurring: true,
       repeatUntil: ''
@@ -68,6 +70,9 @@ export default function SalariesView({ data }: SalariesViewProps) {
 
   const openEditDialog = (salary: Salary) => {
     setEditingSalary(salary);
+    // If we are editing a recurring salary, we default to 'all' usually,
+    // but we'll show the toggle in the UI.
+    setEditMode('all');
     setFormData({
       amount: salary.amount.toString(),
       currency: salary.currency || 'USD',
@@ -87,25 +92,55 @@ export default function SalariesView({ data }: SalariesViewProps) {
     }
 
     try {
-      const salaryData = {
-        uid: user.uid,
-        amount: parseFloat(formData.amount),
-        currency: formData.currency,
-        date: formData.date,
-        description: formatInputText(formData.description),
-        isRecurring: formData.isRecurring,
-        repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
-        updatedAt: new Date().toISOString()
-      };
-
       if (editingSalary) {
-        await updateDoc(doc(db, 'salaries', editingSalary.id), salaryData);
-        toast.success('Income updated successfully');
+        if (editingSalary.isRecurring && editMode === 'single') {
+          // 1. Exclude this date from the recurring series
+          const updatedExcluded = [...(editingSalary.excludedDates || []), formData.date];
+          await updateDoc(doc(db, 'salaries', editingSalary.id), {
+            excludedDates: updatedExcluded,
+            updatedAt: new Date().toISOString()
+          });
+
+          // 2. Add a new one-off item for this month
+          const newSalaryData = {
+            uid: user.uid,
+            amount: parseFloat(formData.amount),
+            currency: formData.currency,
+            date: formData.date,
+            description: formatInputText(formData.description),
+            isRecurring: false,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+          await addDoc(collection(db, 'salaries'), newSalaryData);
+          toast.success('Instance updated successfully (One-off override created)');
+        } else {
+          // Normal update
+          const salaryData = {
+            amount: parseFloat(formData.amount),
+            currency: formData.currency,
+            date: formData.date,
+            description: formatInputText(formData.description),
+            isRecurring: formData.isRecurring,
+            repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
+            updatedAt: new Date().toISOString()
+          };
+          await updateDoc(doc(db, 'salaries', editingSalary.id), salaryData);
+          toast.success('Income updated successfully');
+        }
       } else {
-        await addDoc(collection(db, 'salaries'), {
-          ...salaryData,
-          createdAt: new Date().toISOString()
-        });
+        const salaryData = {
+          uid: user.uid,
+          amount: parseFloat(formData.amount),
+          currency: formData.currency,
+          date: formData.date,
+          description: formatInputText(formData.description),
+          isRecurring: formData.isRecurring,
+          repeatUntil: formData.isRecurring ? formData.repeatUntil : null,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        await addDoc(collection(db, 'salaries'), salaryData);
         toast.success('Income added successfully');
       }
       setIsDialogOpen(false);
@@ -206,6 +241,46 @@ export default function SalariesView({ data }: SalariesViewProps) {
                     onChange={(e) => setFormData({...formData, date: e.target.value})}
                   />
                 </div>
+
+                {editingSalary?.isRecurring && (
+                  <div className="grid gap-3 p-4 rounded-2xl bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-100 dark:border-indigo-500/20">
+                    <Label className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400">Recurring Update Mode</Label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button
+                        type="button"
+                        variant={editMode === 'all' ? 'default' : 'outline'}
+                        onClick={() => setEditMode('all')}
+                        className={cn(
+                          "h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                          editMode === 'all' 
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        )}
+                      >
+                        All Instances
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={editMode === 'single' ? 'default' : 'outline'}
+                        onClick={() => setEditMode('single')}
+                        className={cn(
+                          "h-9 rounded-xl text-[10px] font-bold uppercase tracking-widest transition-all",
+                          editMode === 'single' 
+                            ? "bg-indigo-600 hover:bg-indigo-700 text-white shadow-md shadow-indigo-200 dark:shadow-none" 
+                            : "bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800 text-zinc-600 dark:text-zinc-400"
+                        )}
+                      >
+                        This Instance
+                      </Button>
+                    </div>
+                    <p className="text-[10px] text-indigo-600/60 dark:text-indigo-400/60 font-medium leading-tight">
+                      {editMode === 'all' 
+                        ? "Changes will apply to all months in the series." 
+                        : "Creates a one-off override for this specific month."}
+                    </p>
+                  </div>
+                )}
+
                 <div className="flex items-center gap-3 p-3 rounded-xl bg-zinc-50 dark:bg-zinc-900/50 border border-zinc-100 dark:border-zinc-800 transition-all">
                   <input 
                     type="checkbox" 

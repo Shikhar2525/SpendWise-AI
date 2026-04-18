@@ -363,8 +363,8 @@ export default function Dashboard({ data, setActiveTab, setActiveSubTab }: Dashb
          <Card className="border-zinc-200 dark:border-zinc-800 shadow-sm bg-white dark:bg-zinc-950">
            <CardHeader className="flex flex-row items-center justify-between border-b border-zinc-50 dark:border-zinc-900 mb-6 cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => setActiveTab('dues')}>
             <div>
-              <CardTitle className="text-lg font-black tracking-tight italic uppercase">Upcoming Bills</CardTitle>
-              <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Bills due soon</CardDescription>
+              <CardTitle className="text-lg font-black tracking-tight italic uppercase">Upcoming Records</CardTitle>
+              <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Bills & Dues due soon</CardDescription>
             </div>
             <CalendarClock className="h-5 w-5 text-zinc-300 dark:text-zinc-700" />
           </CardHeader>
@@ -388,9 +388,19 @@ export default function Dashboard({ data, setActiveTab, setActiveSubTab }: Dashb
                         <CalendarClock className="h-5 w-5" />
                       </div>
                       <div className="space-y-0.5">
-                        <p className="text-sm font-black text-zinc-900 dark:text-white uppercase italic tracking-tight">
-                          {formatInputText(due.description)}
-                        </p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-black text-zinc-900 dark:text-white uppercase italic tracking-tight">
+                            {formatInputText(due.description)}
+                          </p>
+                          <Badge variant="outline" className={cn(
+                            "text-[7px] h-3 px-1 font-black uppercase tracking-widest border-none rounded-sm",
+                            due.type === 'Due' 
+                              ? "bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" 
+                              : "bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          )}>
+                            {due.type || 'Bill'}
+                          </Badge>
+                        </div>
                         <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">{format(parseISO(due.dueDate), 'MMM dd, yyyy')}</p>
                       </div>
                     </div>
@@ -408,7 +418,7 @@ export default function Dashboard({ data, setActiveTab, setActiveSubTab }: Dashb
                     <CalendarClock className="h-8 w-8 text-zinc-300 dark:text-zinc-700" />
                   </div>
                   <p className="text-xs font-bold uppercase tracking-widest text-zinc-500">All caught up</p>
-                  <p className="text-[10px] text-zinc-400 italic">No upcoming bills found</p>
+                  <p className="text-[10px] text-zinc-400 italic">No upcoming bills or dues found</p>
                 </div>
               )}
             </div>

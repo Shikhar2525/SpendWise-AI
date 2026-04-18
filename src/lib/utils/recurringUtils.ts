@@ -8,6 +8,7 @@ export function expandRecurringItems<T extends {
   id: string;
   isRecurring: boolean; 
   repeatUntil?: string; 
+  excludedDates?: string[];
   dueDate?: string; 
   date?: string; 
   startDate?: string;
@@ -53,6 +54,11 @@ export function expandRecurringItems<T extends {
       
       const virtualDate = setDate(targetStart, virtualDay);
       const virtualDateStr = format(virtualDate, 'yyyy-MM-dd');
+
+      // Check for excluded dates
+      if (item.excludedDates?.includes(virtualDateStr)) {
+        return;
+      }
 
       // Special handling for Dues 'isPaid' status:
       // If it's a recurring due, we need to handle the fact that the 'isPaid' flag in DB
