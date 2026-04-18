@@ -668,7 +668,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
 
                 return (
                   <Card key={goal.id} className="border-zinc-200 dark:border-zinc-800 shadow-xl dark:shadow-none bg-white dark:bg-zinc-950 rounded-[2rem] overflow-hidden group transition-all duration-500 hover:shadow-2xl dark:hover:border-indigo-500/30">
-                    <div className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 px-8 py-5">
+                    <div  style={{marginTop:-16}} className="bg-zinc-50/50 dark:bg-zinc-900/50 border-b border-zinc-100 dark:border-zinc-800 px-8 py-5">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4">
                           <div className={cn(
@@ -769,7 +769,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                           <div className="flex gap-3 bg-zinc-50 dark:bg-zinc-900/50 p-2 rounded-2xl border border-zinc-100 dark:border-zinc-800">
                             <Input 
                               type="number" 
-                              placeholder="Inject capital..." 
+                              placeholder="Load more capital..." 
                               className="h-10 text-xs font-bold bg-transparent border-none shadow-none focus-visible:ring-0 px-4"
                               value={customAmounts[goal.id] || ''}
                               onChange={(e) => handleCustomAmountChange(goal.id, e.target.value)}
