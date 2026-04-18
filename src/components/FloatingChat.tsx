@@ -6,7 +6,8 @@ import { ScrollArea } from './ui/scroll-area';
 import { 
   MessageSquare, Send, Bot, Trash2, 
   Terminal, ShieldCheck, X, Sparkles,
-  ChevronDown, Minus, Maximize2, Zap
+  ChevronDown, Minus, Maximize2, Zap,
+  Mic, MicOff
 } from 'lucide-react';
 import { chatWithFinanceAI } from '../services/geminiService';
 import ReactMarkdown from 'react-markdown';
@@ -14,7 +15,7 @@ import { Expense, Due, Salary, Budget, Goal } from '../types';
 import { Badge } from './ui/badge';
 import { ConfirmDialog } from './ui/confirm-dialog';
 import { useCurrency } from '../contexts/CurrencyContext';
-import { db, collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db, collection, addDoc, query, where, getDocs, orderBy, deleteDoc, doc, updateDoc, handleFirestoreError, OperationType } from '../lib/firebase';
 import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
@@ -50,7 +51,164 @@ export default function FloatingChat({ data }: FloatingChatProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [isClearConfirmOpen, setIsClearConfirmOpen] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    // Note: Speech recognition now initialized on-demand in toggleListening for improved robustness
+  }, []);
+
+  const toggleListening = async () => {
+    if (isListening) {
+      mediaRecorderRef.current?.stop();
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorderRef.current = new MediaRecorder(stream);
+        chunksRef.current = [];
+
+        mediaRecorderRef.current.ondataavailable = (e) => {
+          if (e.data.size > 0) chunksRef.current.push(e.data);
+        };
+
+        mediaRecorderRef.current.onstop = () => {
+          const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+          setAudioBlob(blob);
+          setIsListening(false);
+          toast.success('Voice captured. Analysis in progress...', { id: 'voice-toast' });
+          
+          // Automatically send the voice message
+          handleVoiceMessage(blob);
+          
+          // Stop all tracks to release mic
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorderRef.current.start();
+        setIsListening(true);
+        toast.info('Recording... Click again to send.', { 
+          id: 'voice-toast',
+          icon: <Mic className="h-4 w-4 animate-pulse text-indigo-500" /> 
+        });
+      } catch (err) {
+        console.error('Mic access error:', err);
+        toast.error('Mic access denied. Please allow microphone permissions.');
+      }
+    }
+  };
+
+  const handleVoiceMessage = async (blob: Blob) => {
+    if (!user) return;
+
+    setIsTyping(true);
+    try {
+      // Convert blob to base64
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = async () => {
+        const base64String = (reader.result as string).split(',')[1];
+        
+        const userMessage: Message = { 
+          role: 'user', 
+          content: "[Deep Voice Analysis]", 
+          uid: user.uid, 
+          createdAt: new Date().toISOString() 
+        };
+        
+        setMessages(prev => [...prev, userMessage]);
+        
+        const geminiResponse = await chatWithFinanceAI(
+          "", // Empty text, use audio
+          preferredCurrency.code, 
+          data, 
+          messages.map(m => ({ role: m.role, content: m.content })),
+          { data: base64String, mimeType: 'audio/webm' }
+        );
+        
+        processGeminiResponse(geminiResponse);
+      };
+    } catch (error) {
+      toast.error('Voice analysis failed.');
+      setIsTyping(false);
+    }
+  };
+
+  const processGeminiResponse = async (geminiResponse: any) => {
+    if (!user) return;
+    
+    const functionCalls = geminiResponse.functionCalls;
+    let finalContent = geminiResponse.text || '';
+    
+    if (functionCalls) {
+      for (const call of functionCalls) {
+        try {
+          if (call.name === 'addFinancialEntry') {
+            const { type, amount, description, ...others } = call.args as any;
+            const collectionMap: Record<string, string> = {
+              'expense': 'expenses',
+              'income': 'salaries',
+              'saving': 'savings',
+              'goal': 'goals',
+              'due': 'dues',
+              'budget': 'budgets'
+            };
+            const collectionName = collectionMap[type];
+            if (!collectionName) throw new Error('Invalid entry type');
+
+            const entryData: any = {
+              amount,
+              description,
+              uid: user.uid,
+              createdAt: new Date().toISOString(),
+              currency: preferredCurrency.code,
+              ...others
+            };
+
+            if (type === 'due' && others.dueDate) entryData.dueDate = others.dueDate;
+            if (type === 'goal' && others.deadline) entryData.deadline = others.deadline;
+            if (type === 'goal' && others.targetAmount) entryData.targetAmount = others.targetAmount;
+            if (type === 'saving' && others.savingType) entryData.type = others.savingType;
+            if (type === 'budget' && others.month) entryData.month = others.month;
+            if (type === 'income') entryData.date = others.date || new Date().toISOString().split('T')[0];
+            if (type === 'expense') entryData.date = others.date || new Date().toISOString().split('T')[0];
+
+            await addDoc(collection(db, collectionName), entryData);
+            toast.success(`Entry added: ${description} (${amount})`);
+            if (!finalContent) finalContent = `Confirmed. I've added that ${type} to your records.`;
+          }
+
+          if (call.name === 'editFinancialEntry') {
+            const { id, collection: colName, updates } = call.args as any;
+            const docRef = doc(db, colName, id);
+            await updateDoc(docRef, {
+              ...updates,
+              updatedAt: new Date().toISOString()
+            });
+            toast.success(`Entry updated successfully.`);
+            if (!finalContent) finalContent = `Understood. I've updated the ${colName.slice(0, -1)} for you.`;
+          }
+        } catch (err) {
+          console.error('Tool execution error:', err);
+          finalContent += "\n\n(Note: I tried to update your records but encountered a small sync issue.)";
+        }
+      }
+    }
+
+    if (!finalContent) finalContent = "I've processed your voice command.";
+
+    const aiMessage: Message = { 
+      role: 'model', 
+      content: finalContent, 
+      uid: user.uid, 
+      createdAt: new Date().toISOString() 
+    };
+    setMessages(prev => [...prev, aiMessage]);
+    await addDoc(collection(db, 'chats'), aiMessage);
+    setIsTyping(false);
+  };
 
     const INTRO_MESSAGE = "Hello! I'm your AI finance assistant. How can I help you manage your money today?";
 
@@ -110,54 +268,14 @@ export default function FloatingChat({ data }: FloatingChatProps) {
 
     try {
       await addDoc(collection(db, 'chats'), userMessage);
-      const response = await chatWithFinanceAI(
+      const geminiResponse = await chatWithFinanceAI(
         messageText, 
         preferredCurrency.code, 
         data, 
         messages.map(m => ({ role: m.role, content: m.content }))
       );
       
-      const actionMatch = response.match(/\[ACTION:(\w+)\|(.+)\]/);
-      let finalContent = response;
-      
-      if (actionMatch) {
-        const action = actionMatch[1];
-        const actionData = JSON.parse(actionMatch[2]);
-        finalContent = response.replace(/\[ACTION:(\w+)\|(.+)\]/, '').trim();
-        
-        try {
-          const collections: Record<string, string> = {
-            'ADD_EXPENSE': 'expenses',
-            'ADD_INCOME': 'salaries',
-            'ADD_SAVING': 'savings',
-            'ADD_GOAL': 'goals'
-          };
-
-          if (collections[action]) {
-            const extraData = action === 'ADD_GOAL' ? { currentAmount: 0 } : {};
-            await addDoc(collection(db, collections[action]), { 
-              ...actionData, 
-              ...extraData,
-              uid: user.uid, 
-              createdAt: new Date().toISOString() 
-            });
-            toast.success(`System updated: ${action.replace('ADD_', '').toLowerCase()} recorded.`);
-          }
-          
-          if (!finalContent) finalContent = `Confirmed. Data point established in systems.`;
-        } catch (err) {
-          finalContent += "\n\n(Sync Warning: Peripheral failure detected. Verify manually.)";
-        }
-      }
-
-      const aiMessage: Message = { 
-        role: 'model', 
-        content: finalContent, 
-        uid: user.uid, 
-        createdAt: new Date().toISOString() 
-      };
-      setMessages(prev => [...prev, aiMessage]);
-      await addDoc(collection(db, 'chats'), aiMessage);
+      processGeminiResponse(geminiResponse);
     } catch (error) {
       toast.error('Intelligence link failed.');
       setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, error: true } : m));
@@ -332,24 +450,36 @@ export default function FloatingChat({ data }: FloatingChatProps) {
 
                     {/* Input Box */}
                     <div className="p-6 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
-                      <form 
-                        onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-                        className="flex gap-3 px-4 py-3 bg-zinc-100 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all"
-                      >
-                        <Input 
-                          placeholder="Type a message..." 
-                          value={input}
-                          onChange={(e) => setInput(e.target.value)}
-                          className="bg-transparent border-none p-0 h-8 focus-visible:ring-0 text-[14px] font-medium"
-                        />
-                        <Button 
-                          size="icon" 
-                          disabled={!input.trim() || isTyping}
-                          className="h-8 w-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl shrink-0"
-                        >
-                          <Send className="h-4 w-4" />
-                        </Button>
-                      </form>
+                  <form 
+                    onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                    className="flex gap-2 px-3 py-2 bg-zinc-100 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all"
+                  >
+                    <Button 
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleListening}
+                      className={cn(
+                        "h-9 w-9 rounded-xl shrink-0 transition-all",
+                        isListening ? "bg-indigo-500 text-white animate-pulse" : "text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+                      )}
+                    >
+                      {isListening ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
+                    </Button>
+                    <Input 
+                      placeholder={isListening ? "Listening..." : "Type a message..."}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      className="bg-transparent border-none p-0 h-9 focus-visible:ring-0 text-[14px] font-medium"
+                    />
+                    <Button 
+                      size="icon" 
+                      disabled={!input.trim() || isTyping}
+                      className="h-9 w-9 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl shrink-0"
+                    >
+                      <Send className="h-4 w-4" />
+                    </Button>
+                  </form>
                       <div className="mt-4 flex items-center justify-center gap-4 opacity-40">
                         <ShieldCheck className="h-3 w-3 text-emerald-600" />
                         <span className="text-[8px] font-medium whitespace-nowrap">Secure Financial Link</span>

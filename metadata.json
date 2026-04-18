@@ -1,6 +1,8 @@
 {
   "name": "SpendWise AI",
   "description": "Smart monthly expense planner with AI-powered insights, budget tracking, and financial goal management.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": [
+    "microphone"
+  ],
   "majorCapabilities": []
 }
