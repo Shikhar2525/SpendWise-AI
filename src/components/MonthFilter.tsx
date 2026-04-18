@@ -35,32 +35,18 @@ export function MonthFilter({ selectedMonth, onMonthChange, suggestions }: Month
         </div>
         <div className="h-6 w-px bg-zinc-200 dark:bg-zinc-800 hidden sm:block mx-1" />
         <div className="relative group">
-          <button 
-            id="period-toggle"
-            onClick={() => {
-              const input = document.getElementById('period-input') as HTMLInputElement;
-              if (input) {
-                try {
-                  input.showPicker();
-                } catch (e) {
-                  input.click();
-                }
-              }
-            }}
-            className="flex items-center gap-2 h-9 w-[180px] rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 text-[11px] font-bold uppercase transition-all hover:border-zinc-400 shadow-sm text-zinc-900 dark:text-white relative overflow-hidden group"
-          >
-            <Calendar className="h-3.5 w-3.5 text-zinc-400 group-hover:text-indigo-500 transition-colors" />
-            <span className="flex-1 text-left">{format(parseISO(`${selectedMonth}-01`), 'MMMM yyyy')}</span>
+          <div className="relative flex items-center gap-2 h-9 w-[180px] rounded-full border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 text-[11px] font-bold uppercase transition-all hover:border-zinc-400 shadow-sm text-zinc-900 dark:text-white overflow-hidden group">
+            <Calendar className="h-3.5 w-3.5 text-zinc-400 group-hover:text-indigo-500 transition-colors pointer-events-none z-10" />
+            <span className="flex-1 text-left pointer-events-none z-10">{format(parseISO(`${selectedMonth}-01`), 'MMMM yyyy')}</span>
             <input 
               id="period-input"
               type="month" 
               value={selectedMonth}
               onChange={(e) => onMonthChange(e.target.value)}
-              className="absolute inset-0 opacity-0 cursor-pointer pointer-events-none"
-              style={{ width: '100%', height: '100%', left: 0, top: 0 }}
-              tabIndex={-1}
+              className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-20"
+              title="Select month"
             />
-          </button>
+          </div>
         </div>
       </div>
     </div>

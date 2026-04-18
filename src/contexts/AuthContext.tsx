@@ -11,6 +11,8 @@ interface AuthContextType {
   signIn: () => Promise<void>;
   logout: () => Promise<void>;
   markTutorialSeen: () => Promise<void>;
+  redeemCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
+  updatePlan: (plan: 'Essential' | 'Intelligent' | 'Architect', months?: number) => Promise<void>;
 }
 
 const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
@@ -24,16 +26,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     const checkConnection = async () => {
       try {
-        // We just need to see if we can reach the server
         await getDocFromServer(doc(db, '_connection_test_', 'ping'));
         setIsConnected(true);
       } catch (error: any) {
-        // If it's a permission error, it means we reached the server but rules blocked us
-        // If it's "offline", it means we couldn't reach the server
         if (error?.message?.includes('offline')) {
           setIsConnected(false);
         } else {
-          // Other errors (like permission denied on the test path) still mean we are "connected" to the backend
           setIsConnected(true);
         }
       }
@@ -48,7 +46,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (userDoc.exists()) {
           const profile = userDoc.data() as UserProfile;
-          // Sync photoURL if it exists in auth but not in profile
           let updated = false;
           let updatedProfile = { ...profile };
 
@@ -57,10 +54,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             updated = true;
           }
 
-          // Ensure hasSeenTutorial exists (for older users)
           if (profile.hasSeenTutorial === undefined) {
             updatedProfile.hasSeenTutorial = false;
             updated = true;
+          }
+
+          if (profile.plan === undefined) {
+            updatedProfile.plan = 'Essential';
+            updated = true;
+          }
+
+          // Check for plan expiration
+          if (profile.plan !== 'Essential' && profile.planExpiresAt) {
+            if (new Date(profile.planExpiresAt) < new Date()) {
+              updatedProfile.plan = 'Essential';
+              updatedProfile.planExpiresAt = null;
+              updated = true;
+            }
           }
 
           if (updated) {
@@ -77,6 +87,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             photoURL: user.photoURL || undefined,
             preferredCurrency: 'USD',
             hasSeenTutorial: false,
+            plan: 'Essential',
             createdAt: new Date().toISOString(),
           };
           await setDoc(userDocRef, newProfile);
@@ -118,8 +129,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updatePlan = async (plan: 'Essential' | 'Intelligent' | 'Architect', months?: number) => {
+    if (!user || !userProfile) return;
+    try {
+      const userDocRef = doc(db, 'users', user.uid);
+      let expiresAt = null;
+      if (months) {
+        const date = new Date();
+        date.setMonth(date.getMonth() + months);
+        expiresAt = date.toISOString();
+      }
+      const updates = { plan, planExpiresAt: expiresAt };
+      await setDoc(userDocRef, updates, { merge: true });
+      setUserProfile({ ...userProfile, ...updates });
+    } catch (error) {
+      console.error('Error updating plan:', error);
+    }
+  };
+
+  const redeemCoupon = async (code: string) => {
+    if (!user || !userProfile) return { success: false, message: 'Not logged in' };
+    
+    if (code === 'SPENDWISENEW100') {
+      await updatePlan('Intelligent', 1);
+      return { success: true, message: 'Coupon redeemed! You now have 1 month of Intelligent features.' };
+    }
+    
+    return { success: false, message: 'Invalid coupon code' };
+  };
+
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen, updatePlan, redeemCoupon }}>
       {children}
     </AuthContext.Provider>
   );

@@ -53,9 +53,10 @@ interface DashboardProps {
     loading: boolean;
   };
   setActiveTab: (tab: string) => void;
+  setActiveSubTab: (tab: string | undefined) => void;
 }
 
-export default function Dashboard({ data, setActiveTab }: DashboardProps) {
+export default function Dashboard({ data, setActiveTab, setActiveSubTab }: DashboardProps) {
   const { expenses, dues, salaries, budgets, goals } = data;
   const { preferredCurrency, formatAmount, convert } = useCurrency();
   const { selectedMonth, setSelectedMonth } = useFinancialPeriod();
@@ -440,7 +441,10 @@ export default function Dashboard({ data, setActiveTab }: DashboardProps) {
                 <Card 
                   key={goal.id} 
                   className="border-zinc-200 dark:border-zinc-800 shadow-sm cursor-pointer hover:scale-[1.02] transition-all bg-white dark:bg-zinc-950 group"
-                  onClick={() => setActiveTab('savings')}
+                  onClick={() => {
+                    setActiveTab('savings');
+                    setActiveSubTab('goals');
+                  }}
                 >
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between mb-6">

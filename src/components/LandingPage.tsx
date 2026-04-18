@@ -293,58 +293,44 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {[
               { 
                 name: 'Essential', 
                 price: '$0', 
-                desc: 'Free to everyone', 
-                features: ['Basic Tracking', 'Manual Entry', 'Single Device', 'Community Support'],
+                desc: 'Standard tools for everyone', 
+                features: ['Complete Tracking', 'Financial Period Filters', 'Multi-Device Sync', 'Savings & Goals Toolkit'],
                 cta: 'Start Forever Free',
                 active: false
               },
               { 
                 name: 'Intelligent', 
-                price: '$0', 
+                price: '$5', 
                 desc: 'Includes everything in Essential', 
-                features: ['All Essential Features', 'Smart Auto-Tracking', 'Balance Forecasting', 'Saving Tips', 'Bank Sync'],
-                cta: 'Try Free Right Now',
+                features: ['AI Intelligence Hub', 'Real-time Forecasts', 'Infinite AI Chat Counsel', 'Auto-Category Analysis', 'Global Support'],
+                cta: 'Get Intelligent',
                 active: true,
-                badge: 'Special Offer'
-              },
-              { 
-                name: 'Architect', 
-                price: '$29', 
-                desc: 'For serious money managers', 
-                features: ['Everything in Intelligent', 'Dedicated Assistant', 'Personalized Advice', 'Custom Data Export', 'Priority Help'],
-                cta: 'Coming Soon',
-                active: false,
-                locked: true
+                badge: 'Most Popular'
               }
             ].map((plan, i) => (
               <div 
                 key={i} 
-                className={`relative p-10 rounded-[40px] border transition-all duration-500 flex flex-col ${plan.active ? 'bg-zinc-900 border-zinc-800 text-white scale-105 shadow-2xl z-10' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-white hover:border-indigo-400 opacity-90'} ${plan.locked ? 'grayscale-[0.2]' : ''}`}
+                className={`relative p-10 rounded-[40px] border transition-all duration-500 flex flex-col ${plan.active ? 'bg-zinc-900 border-zinc-800 text-white scale-105 shadow-2xl z-10' : 'bg-white dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-white hover:border-indigo-400 opacity-90'}`}
               >
                 {plan.badge && (
                   <div className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl">
                     {plan.badge}
                   </div>
                 )}
-                {plan.locked && (
-                  <div className="absolute inset-0 bg-white/30 dark:bg-zinc-950/30 backdrop-blur-[1px] rounded-[40px] z-20 flex items-center justify-center p-6 text-center group">
-                    <div className="space-y-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                       <ShieldCheck className="h-8 w-8 text-indigo-500 mx-auto" />
-                       <p className="text-[10px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">Coming Q3 2026</p>
-                    </div>
-                  </div>
-                )}
                 <div className="mb-8">
                   <h3 className="text-sm font-black uppercase tracking-widest opacity-60 mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1">
                     <span className="text-5xl font-black italic tracking-tighter">{plan.price}</span>
-                    <span className="text-xs font-bold opacity-40 uppercase tracking-widest">/ Year</span>
+                    <span className="text-xs font-bold opacity-40 uppercase tracking-widest">/ Month</span>
                   </div>
+                  {plan.name === 'Intelligent' && (
+                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Or $49 / Year (Save 20%)</p>
+                  )}
                   <p className="mt-4 text-xs font-bold opacity-60 uppercase tracking-tight italic leading-relaxed">{plan.desc}</p>
                 </div>
                 
@@ -361,7 +347,6 @@ export default function LandingPage() {
 
                 <Button 
                   onClick={signIn}
-                  disabled={plan.locked}
                   className={`w-full rounded-2xl h-14 text-xs font-black uppercase tracking-widest transition-all ${plan.active ? 'bg-white text-black hover:bg-zinc-100 shadow-xl' : 'bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100'}`}
                 >
                   {plan.cta}

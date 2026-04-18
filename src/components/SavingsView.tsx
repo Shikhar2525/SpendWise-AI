@@ -28,15 +28,24 @@ interface SavingsViewProps {
     goals: Goal[];
     loading: boolean;
   };
+  activeSubTab?: string;
 }
 
 const SAVING_TYPES = ['RD', 'FD', 'Mutual Fund', 'Stocks', 'Crypto', 'Gold', 'Provident Fund', 'Other'];
 
-export default function SavingsView({ data }: SavingsViewProps) {
+export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   const { user } = useAuth();
   const { preferredCurrency, formatAmount } = useCurrency();
   const { selectedMonth } = useFinancialPeriod();
   const { savings, goals } = data;
+  
+  const [activeTab, setActiveTab] = useState(activeSubTab || 'entries');
+
+  useEffect(() => {
+    if (activeSubTab) {
+      setActiveTab(activeSubTab);
+    }
+  }, [activeSubTab]);
   
   // Confirmation state
   const [deleteConfirmInfo, setDeleteConfirmInfo] = useState<{ id: string, type: 'saving' | 'goal' } | null>(null);
@@ -275,7 +284,7 @@ export default function SavingsView({ data }: SavingsViewProps) {
         </div>
       </div>
 
-      <Tabs defaultValue="entries" className="w-full">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 bg-zinc-50/50 dark:bg-zinc-900/50 p-2 rounded-2xl border border-zinc-100/50 dark:border-zinc-800/50">
           <TabsList className="bg-zinc-100 dark:bg-zinc-950 p-1 rounded-xl h-auto border border-zinc-200 dark:border-zinc-800">
             <TabsTrigger value="entries" className="rounded-lg px-8 py-2.5 data-[state=active]:bg-white dark:data-[state=active]:bg-zinc-900 data-[state=active]:shadow-lg dark:data-[state=active]:shadow-none font-bold uppercase text-[10px] tracking-widest transition-all">

@@ -1,3 +1,5 @@
+export type PlanType = 'Essential' | 'Intelligent' | 'Architect';
+
 export interface UserProfile {
   uid: string;
   email: string;
@@ -6,6 +8,8 @@ export interface UserProfile {
   createdAt: string;
   preferredCurrency: string;
   hasSeenTutorial: boolean;
+  plan: PlanType;
+  planExpiresAt?: string | null;
 }
 
 export interface Expense {

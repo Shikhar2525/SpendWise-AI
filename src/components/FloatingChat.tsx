@@ -19,6 +19,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'motion/react';
 import { cn } from '../lib/utils';
+import { PlanGate } from './PlanGate';
 
 interface Message {
   role: 'user' | 'model';
@@ -185,222 +186,224 @@ export default function FloatingChat({ data }: FloatingChatProps) {
       {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className={cn(
-              "w-[90vw] sm:w-[450px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-[2.5rem] overflow-hidden flex flex-col pointer-events-auto",
-              isMinimized ? "h-20" : "h-[600px] max-h-[calc(100vh-120px)]"
-            )}
-          >
-            <AnimatePresence>
-              {isClearConfirmOpen && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="absolute inset-0 z-[100] bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center p-6 text-center"
-                >
+          <PlanGate featureName="AI Assistant">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className={cn(
+                "w-[90vw] sm:w-[450px] bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 shadow-2xl rounded-[2.5rem] overflow-hidden flex flex-col pointer-events-auto shadow-indigo-500/10 dark:shadow-none",
+                isMinimized ? "h-20" : "h-[600px] max-h-[calc(100vh-120px)]"
+              )}
+            >
+              <AnimatePresence>
+                {isClearConfirmOpen && (
                   <motion.div 
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl space-y-4 max-w-[280px]"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="absolute inset-0 z-[100] bg-zinc-950/80 backdrop-blur-sm flex items-center justify-center p-6 text-center"
                   >
-                    <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto">
-                      <Trash2 className="h-6 w-6" />
+                    <motion.div 
+                      initial={{ scale: 0.9, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      className="bg-white dark:bg-zinc-900 rounded-3xl p-6 shadow-2xl space-y-4 max-w-[280px]"
+                    >
+                      <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 text-rose-600 flex items-center justify-center mx-auto">
+                        <Trash2 className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-zinc-900 dark:text-white">Cognitive Reset</h4>
+                        <p className="text-[11px] text-zinc-500 mt-2 leading-relaxed">
+                          Proceeding will permanently erase all message logs. This cannot be undone.
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 pt-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => setIsClearConfirmOpen(false)}
+                          className="rounded-xl h-10 border-zinc-200 dark:border-zinc-800"
+                        >
+                          Abort
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm" 
+                          onClick={() => { clearChat(); setIsClearConfirmOpen(false); }}
+                          className="rounded-xl h-10 bg-rose-600 hover:bg-rose-700 text-white border-none"
+                        >
+                          Purge
+                        </Button>
+                      </div>
+                    </motion.div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* Header */}
+              <div className="p-5 border-b border-zinc-100 dark:border-zinc-900 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-2xl bg-white/10 dark:bg-black/5 flex items-center justify-center">
+                      <Bot className="h-5 w-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-zinc-900 dark:text-white">Cognitive Reset</h4>
-                      <p className="text-[11px] text-zinc-500 mt-2 leading-relaxed">
-                        Proceeding will permanently erase all message logs. This cannot be undone.
-                      </p>
+                      <h3 className="text-xs font-black uppercase tracking-widest">SpendWise AI</h3>
+                      <p className="text-[10px] opacity-70 font-bold mt-0.5">Financial Assistant</p>
                     </div>
-                    <div className="grid grid-cols-2 gap-2 pt-2">
-                       <Button 
-                         variant="outline" 
-                         size="sm" 
-                         onClick={() => setIsClearConfirmOpen(false)}
-                         className="rounded-xl h-10 border-zinc-200 dark:border-zinc-800"
-                       >
-                         Abort
-                       </Button>
-                       <Button 
-                         variant="destructive" 
-                         size="sm" 
-                         onClick={() => { clearChat(); setIsClearConfirmOpen(false); }}
-                         className="rounded-xl h-10 bg-rose-600 hover:bg-rose-700 text-white border-none"
-                       >
-                         Purge
-                       </Button>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 hover:bg-white/10" 
+                    onClick={() => setIsMinimized(!isMinimized)}
+                  >
+                    {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 hover:bg-white/10" 
+                    onClick={() => setIsClearConfirmOpen(true)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-8 w-8 hover:bg-white/10" 
+                    onClick={() => setIsOpen(false)}
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {!isMinimized && (
+                  <motion.div 
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    className="flex-1 flex flex-col overflow-hidden"
+                  >
+                    {/* Messages Area */}
+                    <div className="flex-1 min-h-0 relative">
+                      <ScrollArea className="h-full w-full bg-zinc-50 dark:bg-zinc-900/30">
+                        <div className="p-6 space-y-6 pb-4">
+                          {messages.map((msg, i) => (
+                            <motion.div 
+                              key={i}
+                              initial={{ opacity: 0, y: 10 }}
+                              animate={{ opacity: 1, y: 0 }}
+                              className={cn(
+                                "flex w-full",
+                                msg.role === 'user' ? "justify-end" : "justify-start"
+                              )}
+                            >
+                              <div className={cn(
+                                "max-w-[85%] rounded-[1.5rem] px-5 py-4 text-[13px] font-medium leading-relaxed relative",
+                                msg.role === 'user' 
+                                  ? "bg-zinc-900 dark:bg-white text-white dark:text-black rounded-tr-none shadow-xl" 
+                                  : "bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none shadow-sm"
+                              )}>
+                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                  <ReactMarkdown>{msg.content}</ReactMarkdown>
+                                </div>
+                                {msg.error && <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest">Network Error.</p>}
+                                <p className="text-[8px] opacity-40 mt-2 font-black tracking-widest uppercase">
+                                  {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                </p>
+                              </div>
+                            </motion.div>
+                          ))}
+                          {isTyping && (
+                            <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl w-fit shadow-lg">
+                              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                              <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
+                            </div>
+                          )}
+                          <div ref={bottomRef} className="h-2" />
+                        </div>
+                      </ScrollArea>
+                    </div>
+
+                    {/* Input Box */}
+                    <div className="p-6 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
+                      <form 
+                        onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+                        className="flex gap-3 px-4 py-3 bg-zinc-100 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all"
+                      >
+                        <Input 
+                          placeholder="Type a message..." 
+                          value={input}
+                          onChange={(e) => setInput(e.target.value)}
+                          className="bg-transparent border-none p-0 h-8 focus-visible:ring-0 text-[14px] font-medium"
+                        />
+                        <Button 
+                          size="icon" 
+                          disabled={!input.trim() || isTyping}
+                          className="h-8 w-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl shrink-0"
+                        >
+                          <Send className="h-4 w-4" />
+                        </Button>
+                      </form>
+                      <div className="mt-4 flex items-center justify-center gap-4 opacity-40">
+                        <ShieldCheck className="h-3 w-3 text-emerald-600" />
+                        <span className="text-[8px] font-medium whitespace-nowrap">Secure Financial Link</span>
+                        <Zap className="h-3 w-3 text-indigo-500" />
+                      </div>
                     </div>
                   </motion.div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* Header */}
-            <div className="p-5 border-b border-zinc-100 dark:border-zinc-900 bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center justify-between shrink-0">
-               <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-2xl bg-white/10 dark:bg-black/5 flex items-center justify-center">
-                    <Bot className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-black uppercase tracking-widest">SpendWise AI</h3>
-                    <p className="text-[10px] opacity-70 font-bold mt-0.5">Financial Assistant</p>
-                  </div>
-               </div>
-               <div className="flex items-center gap-1">
-                 <Button 
-                   variant="ghost" 
-                   size="icon" 
-                   className="h-8 w-8 hover:bg-white/10" 
-                   onClick={() => setIsMinimized(!isMinimized)}
-                 >
-                   {isMinimized ? <Maximize2 className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
-                 </Button>
-                 <Button 
-                   variant="ghost" 
-                   size="icon" 
-                   className="h-8 w-8 hover:bg-white/10" 
-                   onClick={() => setIsClearConfirmOpen(true)}
-                 >
-                   <Trash2 className="h-4 w-4" />
-                 </Button>
-                 <Button 
-                   variant="ghost" 
-                   size="icon" 
-                   className="h-8 w-8 hover:bg-white/10" 
-                   onClick={() => setIsOpen(false)}
-                 >
-                   <X className="h-5 w-5" />
-                 </Button>
-               </div>
-            </div>
-
-            <AnimatePresence>
-              {!isMinimized && (
-                <motion.div 
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="flex-1 flex flex-col overflow-hidden"
-                >
-                  {/* Messages Area */}
-                  <div className="flex-1 min-h-0 relative">
-                    <ScrollArea className="h-full w-full bg-zinc-50 dark:bg-zinc-900/30">
-                      <div className="p-6 space-y-6 pb-4">
-                        {messages.map((msg, i) => (
-                          <motion.div 
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className={cn(
-                              "flex w-full",
-                              msg.role === 'user' ? "justify-end" : "justify-start"
-                            )}
-                          >
-                            <div className={cn(
-                              "max-w-[85%] rounded-[1.5rem] px-5 py-4 text-[13px] font-medium leading-relaxed relative",
-                              msg.role === 'user' 
-                                ? "bg-zinc-900 dark:bg-white text-white dark:text-black rounded-tr-none shadow-xl" 
-                                : "bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none shadow-sm"
-                            )}>
-                               <div className="prose prose-sm dark:prose-invert max-w-none">
-                                 <ReactMarkdown>{msg.content}</ReactMarkdown>
-                               </div>
-                               {msg.error && <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest">Network Error.</p>}
-                               <p className="text-[8px] opacity-40 mt-2 font-black tracking-widest uppercase">
-                                 {msg.createdAt && new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                               </p>
-                            </div>
-                          </motion.div>
-                        ))}
-                        {isTyping && (
-                          <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl w-fit shadow-lg">
-                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.2 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                            <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1, delay: 0.4 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
-                          </div>
-                        )}
-                        <div ref={bottomRef} className="h-2" />
-                      </div>
-                    </ScrollArea>
-                  </div>
-
-                  {/* Input Box */}
-                  <div className="p-6 border-t border-zinc-100 dark:border-zinc-900 bg-white dark:bg-zinc-950">
-                    <form 
-                      onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-                      className="flex gap-3 px-4 py-3 bg-zinc-100 dark:bg-black border border-zinc-200 dark:border-zinc-800 rounded-2xl focus-within:ring-2 focus-within:ring-indigo-500/20 transition-all"
-                    >
-                      <Input 
-                        placeholder="Type a message..." 
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        className="bg-transparent border-none p-0 h-8 focus-visible:ring-0 text-[14px] font-medium"
-                      />
-                      <Button 
-                        size="icon" 
-                        disabled={!input.trim() || isTyping}
-                        className="h-8 w-8 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl shrink-0"
-                      >
-                        <Send className="h-4 w-4" />
-                      </Button>
-                    </form>
-                    <div className="mt-4 flex items-center justify-center gap-4 opacity-40">
-                       <ShieldCheck className="h-3 w-3 text-emerald-600" />
-                       <span className="text-[8px] font-medium whitespace-nowrap">Secure Financial Link</span>
-                       <Zap className="h-3 w-3 text-indigo-500" />
-                    </div>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </PlanGate>
         )}
       </AnimatePresence>
 
       {/* Floating Action Button */}
       <motion.button
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
-        onClick={() => setIsOpen(!isOpen)}
-        className="h-16 w-16 bg-zinc-950 dark:bg-white text-white dark:text-black rounded-3xl shadow-2xl flex items-center justify-center relative group pointer-events-auto"
-      >
-        <AnimatePresence mode="wait">
-          {isOpen ? (
-            <motion.div 
-               key="close" 
-               initial={{ rotate: -90, opacity: 0 }} 
-               animate={{ rotate: 0, opacity: 1 }} 
-               exit={{ rotate: 90, opacity: 0 }}
-            >
-              <ChevronDown className="h-8 w-8" />
-            </motion.div>
-          ) : (
-            <motion.div 
-               key="open" 
-               initial={{ rotate: 90, opacity: 0 }} 
-               animate={{ rotate: 0, opacity: 1 }} 
-               exit={{ rotate: -90, opacity: 0 }}
-               className="relative"
-            >
-              <MessageSquare className="h-7 w-7" />
-              <div className="absolute -top-1 -right-1 h-3 w-3 bg-indigo-500 rounded-full animate-pulse border-2 border-white dark:border-black" />
-            </motion.div>
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={() => setIsOpen(!isOpen)}
+          className="h-16 w-16 bg-zinc-950 dark:bg-white text-white dark:text-black rounded-3xl shadow-2xl flex items-center justify-center relative group pointer-events-auto"
+        >
+          <AnimatePresence mode="wait">
+            {isOpen ? (
+              <motion.div 
+                key="close" 
+                initial={{ rotate: -90, opacity: 0 }} 
+                animate={{ rotate: 0, opacity: 1 }} 
+                exit={{ rotate: 90, opacity: 0 }}
+              >
+                <X className="h-7 w-7" />
+              </motion.div>
+            ) : (
+              <motion.div 
+                key="open" 
+                initial={{ rotate: 90, opacity: 0 }} 
+                animate={{ rotate: 0, opacity: 1 }} 
+                exit={{ rotate: -90, opacity: 0 }}
+                className="relative"
+              >
+                <MessageSquare className="h-7 w-7" />
+                <div className="absolute -top-1 -right-1 h-3 w-3 bg-indigo-500 rounded-full animate-pulse border-2 border-white dark:border-black" />
+              </motion.div>
+            )}
+          </AnimatePresence>
+          
+          {/* Sparkle effect on hover */}
+          {!isOpen && (
+            <div className="absolute flex items-center gap-1 -top-8 bg-zinc-900 text-white text-[8px] font-bold px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                <Sparkles className="h-3 w-3 text-indigo-400" />
+                Assistant
+            </div>
           )}
-        </AnimatePresence>
-        
-        {/* Sparkle effect on hover */}
-        {!isOpen && (
-           <div className="absolute flex items-center gap-1 -top-8 bg-zinc-900 text-white text-[8px] font-bold px-3 py-1.5 rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
-              <Sparkles className="h-3 w-3 text-indigo-400" />
-              Assistant
-           </div>
-        )}
-      </motion.button>
+        </motion.button>
 
-    </div>
+      </div>
   );
 }
