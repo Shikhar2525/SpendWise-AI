@@ -17,7 +17,8 @@ import {
   TrendingDown,
   Target,
   Zap,
-  Check
+  Check,
+  Copy
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Card } from './ui/card';
@@ -26,6 +27,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { Logo } from './Logo';
 import { useTheme } from '../contexts/ThemeContext';
 import { ThemeToggle } from './ThemeToggle';
+import { toast } from 'sonner';
+import { cn } from '../lib/utils';
 
 export default function LandingPage() {
   const { signIn } = useAuth();
@@ -39,6 +42,15 @@ export default function LandingPage() {
   const opacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.5], [1, 0.95]);
 
+  const copyCode = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    navigator.clipboard.writeText('SPENDWISENEW100');
+    toast.success('Promo code copied!', {
+      description: 'Use it at checkout to unlock Intelligent for free.',
+      duration: 3000,
+    });
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-white selection:bg-indigo-500/30 font-sans transition-colors duration-500 overflow-x-hidden">
       {/* Dynamic Background */}
@@ -47,9 +59,10 @@ export default function LandingPage() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-500/5 dark:bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" style={{ animationDelay: '2s' }} />
       </div>
 
-      {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 transition-colors">
-        <div className="flex items-center justify-between px-6 h-20 max-w-7xl mx-auto">
+      {/* Fixed Sticky Header (Nav + Promo Stripe) */}
+      <header className="fixed top-0 left-0 right-0 z-50 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md transition-colors">
+        {/* Nav */}
+        <nav className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <Logo className="h-9 w-9" />
             <span className="text-xl font-black tracking-tighter uppercase italic">
@@ -71,11 +84,37 @@ export default function LandingPage() {
               Sign In
             </Button>
           </div>
-        </div>
-      </nav>
+        </nav>
+
+        {/* Indigo Announcement Stripe - Attached to Nav */}
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-indigo-600 dark:bg-indigo-500 py-1.5 px-6 flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-8 border-t border-white/10"
+        >
+          <div className="flex items-center gap-2">
+             <div className="h-1 w-1 rounded-full bg-white animate-pulse" />
+             <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white whitespace-nowrap">
+               Launch Deal: Intelligent is <span className="underline decoration-white/50 underline-offset-4 decoration-2">FREE</span> for first 100
+             </p>
+          </div>
+          
+          <button 
+            onClick={() => copyCode()}
+            className="flex items-center gap-2 bg-black/20 hover:bg-black/30 backdrop-blur-sm border border-white/20 rounded-lg px-3 py-1 transition-all active:scale-95 group"
+          >
+             <span className="text-[10px] font-mono font-black text-white tracking-widest">SPENDWISENEW100</span>
+             <div className="h-3 w-[1px] bg-white/20 mx-0.5" />
+             <div className="flex items-center gap-1.5">
+                <span className="text-[7px] font-black uppercase tracking-[0.2em] text-white/70 group-hover:text-white transition-colors">Copy</span>
+                <Copy className="h-2.5 w-2.5 text-white/50 group-hover:text-white" />
+             </div>
+          </button>
+        </motion.div>
+      </header>
 
       {/* Hero Section */}
-      <section ref={targetRef} className="relative pt-44 pb-24 px-6 overflow-hidden">
+      <section ref={targetRef} className="relative pt-56 pb-24 px-6 overflow-hidden">
         <motion.div 
           style={{ opacity, scale }}
           className="max-w-7xl mx-auto text-center space-y-10"
@@ -329,7 +368,32 @@ export default function LandingPage() {
                     <span className="text-xs font-bold opacity-40 uppercase tracking-widest">/ Month</span>
                   </div>
                   {plan.name === 'Intelligent' && (
-                    <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Or $49 / Year (Save 20%)</p>
+                    <div className="mt-2 flex flex-col gap-2">
+                      <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest leading-none">Or $49 / Year (Save 20%)</p>
+                      
+                      {/* Promotional Callout Card */}
+                      <div className="p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 space-y-3 relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 p-2 opacity-20">
+                          <Zap className="h-12 w-12 text-indigo-500 -mr-4 -mt-4 rotate-12" />
+                        </div>
+                        <div className="relative z-10">
+                          <p className="text-[8px] font-black uppercase tracking-[0.2em] text-indigo-400 mb-1">Launch Privilege</p>
+                          <p className="text-[10px] font-bold text-indigo-100 leading-tight">
+                            Access all features for free. Limited to first 100 creators.
+                          </p>
+                        </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); copyCode(e); }}
+                          className="w-full h-9 flex items-center justify-between px-3 bg-zinc-900 border border-white/10 rounded-xl transition-all hover:bg-black active:scale-[0.98] group/btn"
+                        >
+                          <span className="text-[9px] font-mono font-black text-indigo-400">SPENDWISENEW100</span>
+                          <div className="flex items-center gap-2">
+                             <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500 group-hover/btn:text-white transition-colors">Apply</span>
+                             <Copy className="h-3 w-3 text-zinc-600 group-hover/btn:text-indigo-400" />
+                          </div>
+                        </button>
+                      </div>
+                    </div>
                   )}
                   <p className="mt-4 text-xs font-bold opacity-60 uppercase tracking-tight italic leading-relaxed">{plan.desc}</p>
                 </div>
@@ -357,7 +421,7 @@ export default function LandingPage() {
 
           <div className="mt-20 p-8 border border-dashed border-zinc-200 dark:border-zinc-800 rounded-3xl text-center">
              <p className="text-sm font-bold text-zinc-400 tracking-tight uppercase italic">
-               Note: All premium features are currently <span className="text-indigo-600 dark:text-indigo-400">completely free</span> during our global expansion phase. Enjoy elite wealth management at zero cost.
+               Note: The <span className="text-indigo-600 dark:text-indigo-400">Intelligent</span> plan is currently available for free to our first 100 users. Use code <span className="text-zinc-900 dark:text-white underline decoration-2 underline-offset-4">SPENDWISENEW100</span> at checkout.
              </p>
           </div>
         </div>
