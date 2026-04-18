@@ -323,7 +323,7 @@ function AppContent() {
           <div className="flex items-center gap-4">
              {/* Profile Dropdown Section in Top Right */}
              <DropdownMenu>
-               <DropdownMenuTrigger className="flex items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 p-1 rounded-2xl transition-all outline-none group border-r border-zinc-100 dark:border-zinc-800 pr-4 mr-2">
+               <DropdownMenuTrigger className="flex items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 p-1 rounded-2xl transition-all outline-none group">
                   <div className="hidden sm:flex flex-col items-end text-right">
                     <p className="text-[10px] font-black uppercase tracking-tight text-zinc-900 dark:text-white leading-none">{userProfile?.displayName || 'Active User'}</p>
                     <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter mt-1">{userProfile?.email}</p>
