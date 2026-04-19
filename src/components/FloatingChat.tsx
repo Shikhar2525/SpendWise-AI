@@ -44,7 +44,7 @@ interface FloatingChatProps {
 
 export default function FloatingChat({ data }: FloatingChatProps) {
   const { user } = useAuth();
-  const { preferredCurrency } = useCurrency();
+  const { preferredCurrency, liveRates } = useCurrency();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
@@ -118,13 +118,15 @@ export default function FloatingChat({ data }: FloatingChatProps) {
           createdAt: new Date().toISOString() 
         };
         
-        setMessages(prev => [...prev, userMessage]);
+        const docRef = await addDoc(collection(db, 'chats'), userMessage);
+        setMessages(prev => [...prev, { ...userMessage, id: docRef.id }]);
         
         const geminiResponse = await chatWithFinanceAI(
           "", // Empty text, use audio
           preferredCurrency.code, 
           data, 
           messages.map(m => ({ role: m.role, content: m.content })),
+          liveRates,
           { data: base64String, mimeType: 'audio/webm' }
         );
         
@@ -133,6 +135,8 @@ export default function FloatingChat({ data }: FloatingChatProps) {
     } catch (error) {
       toast.error('Voice analysis failed.');
       setIsTyping(false);
+      // Remove the placeholder if failed
+      setMessages(prev => prev.filter(m => m.content !== "[Deep Voice Analysis]"));
     }
   };
 
@@ -141,6 +145,29 @@ export default function FloatingChat({ data }: FloatingChatProps) {
     
     const functionCalls = geminiResponse.functionCalls;
     let finalContent = geminiResponse.text || '';
+    
+    // Extract transcription if present
+    const transcriptionMatch = finalContent.match(/\[TRANSCRIPTION: (.*?)\]/);
+    if (transcriptionMatch) {
+      const transcription = transcriptionMatch[1];
+      // Update the last user message with the transcribed text
+      setMessages(prev => {
+        const newMessages = [...prev];
+        for (let i = newMessages.length - 1; i >= 0; i--) {
+          if (newMessages[i].role === 'user' && newMessages[i].content === "[Deep Voice Analysis]") {
+            newMessages[i] = { ...newMessages[i], content: transcription };
+            // Update in Firestore too
+            if (newMessages[i].id) {
+              updateDoc(doc(db, 'chats', newMessages[i].id!), { content: transcription });
+            }
+            break;
+          }
+        }
+        return newMessages;
+      });
+      // Remove the transcription tag from the AI's response
+      finalContent = finalContent.replace(/\[TRANSCRIPTION: (.*?)\]/, '').trim();
+    }
     
     if (functionCalls) {
       for (const call of functionCalls) {
@@ -272,7 +299,8 @@ export default function FloatingChat({ data }: FloatingChatProps) {
         messageText, 
         preferredCurrency.code, 
         data, 
-        messages.map(m => ({ role: m.role, content: m.content }))
+        messages.map(m => ({ role: m.role, content: m.content })),
+        liveRates
       );
       
       processGeminiResponse(geminiResponse);
@@ -473,9 +501,13 @@ export default function FloatingChat({ data }: FloatingChatProps) {
                       className="bg-transparent border-none p-0 h-9 focus-visible:ring-0 text-[14px] font-medium"
                     />
                     <Button 
+                      type="submit"
                       size="icon" 
-                      disabled={!input.trim() || isTyping}
-                      className="h-9 w-9 bg-zinc-900 dark:bg-white text-white dark:text-black rounded-xl shrink-0"
+                      disabled={isTyping || !input.trim()}
+                      className={cn(
+                        "h-9 w-9 bg-zinc-900 border-none dark:bg-white text-white dark:text-black rounded-xl shrink-0 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
+                        !input.trim() && "opacity-50 cursor-not-allowed"
+                      )}
                     >
                       <Send className="h-4 w-4" />
                     </Button>

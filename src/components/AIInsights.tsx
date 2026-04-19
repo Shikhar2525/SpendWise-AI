@@ -35,7 +35,7 @@ const INSIGHT_SHORTCUTS = [
 ];
 
 export default function AIInsights({ data }: AIInsightsProps) {
-  const { preferredCurrency } = useCurrency();
+  const { preferredCurrency, liveRates } = useCurrency();
   const [insights, setInsights] = useState<{ overspending: string[], suggestions: string[], prediction: string } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -43,7 +43,7 @@ export default function AIInsights({ data }: AIInsightsProps) {
   const generateInsights = async () => {
     setIsGenerating(true);
     try {
-      const result = await getFinancialInsights(data, preferredCurrency.code);
+      const result = await getFinancialInsights(data, preferredCurrency.code, liveRates);
       setInsights(result);
       toast.success('Financial audit complete.');
     } catch (err) {

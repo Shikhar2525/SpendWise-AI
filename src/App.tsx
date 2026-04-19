@@ -1,4 +1,13 @@
 import * as React from 'react';
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useNavigate,
+  useSearchParams
+} from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { useFinancialData } from './hooks/useFinancialData';
 import { 
@@ -76,8 +85,14 @@ function AppContent() {
   const { preferredCurrency, setPreferredCurrency } = useCurrency();
   const { selectedMonth, setSelectedMonth } = useFinancialPeriod();
   const financialData = useFinancialData();
-  const [activeTab, setActiveTab] = React.useState('dashboard');
-  const [activeSubTab, setActiveSubTab] = React.useState<string | undefined>(undefined);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  
+  // Derive active tab from pathname
+  const activeTab = location.pathname === '/' ? 'dashboard' : location.pathname.substring(1);
+  const activeSubTab = searchParams.get('sub') || undefined;
+  
   const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
   const [showTutorial, setShowTutorial] = React.useState(false);
   const [isTutorialReplay, setIsTutorialReplay] = React.useState(false);
@@ -105,20 +120,19 @@ function AppContent() {
     };
     const targetTab = stepToTab[stepIndex];
     if (targetTab && activeTab !== targetTab) {
-      setActiveTab(targetTab);
+      navigate(`/${targetTab}`);
     }
   };
 
   React.useEffect(() => {
     const handleSwitchTab = (e: any) => {
       if (e.detail && typeof e.detail === 'string') {
-        setActiveTab(e.detail);
-        setActiveSubTab(undefined);
+        navigate(`/${e.detail}`);
       }
     };
     window.addEventListener('switch-tab', handleSwitchTab);
     return () => window.removeEventListener('switch-tab', handleSwitchTab);
-  }, []);
+  }, [navigate]);
 
   if (loading) {
     return (
@@ -147,25 +161,6 @@ function AppContent() {
   ];
 
   const monthSuggestions = getMonthSuggestions(financialData);
-
-  const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard': return <Dashboard data={financialData} setActiveTab={setActiveTab} setActiveSubTab={setActiveSubTab} />;
-      case 'expenses': return <ExpensesView data={financialData} />;
-      case 'dues': return <DuesView data={financialData} />;
-      case 'salaries': return <SalariesView data={financialData} />;
-      case 'savings': return <SavingsView data={financialData} activeSubTab={activeSubTab} />;
-      case 'budgets': return <BudgetsView data={financialData} />;
-      case 'insights': return (
-        <PlanGate featureName="AI Insights">
-          <AIInsights data={financialData} />
-        </PlanGate>
-      );
-      case 'calendar': return <CalendarView data={financialData} />;
-      case 'plans': return <PlansView />;
-      default: return <Dashboard data={financialData} setActiveTab={setActiveTab} setActiveSubTab={setActiveSubTab} />;
-    }
-  };
 
   return (
     <div className="flex h-screen bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 overflow-hidden font-sans transition-colors duration-500">
@@ -197,8 +192,7 @@ function AppContent() {
                 key={item.id}
                 id={`nav-${item.id}`}
                 onClick={() => {
-                  setActiveTab(item.id);
-                  setActiveSubTab(undefined);
+                  navigate(`/${item.id}`);
                 }}
                 className={`flex w-full items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold uppercase tracking-tight transition-all duration-300 ${
                   activeTab === item.id 
@@ -219,7 +213,7 @@ function AppContent() {
             className={`w-full justify-start gap-3 font-bold uppercase text-[9px] tracking-widest h-9 rounded-xl transition-all ${
               activeTab === 'plans' ? 'bg-zinc-900 dark:bg-white text-white dark:text-black' : 'text-zinc-500 hover:text-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-500/10'
             }`}
-            onClick={() => setActiveTab('plans')}
+            onClick={() => navigate('/plans')}
           >
             <ShieldCheck className="h-3.5 w-3.5" />
             My Subscription
@@ -264,8 +258,7 @@ function AppContent() {
                       <button
                         key={item.id}
                         onClick={() => {
-                          setActiveTab(item.id);
-                          setActiveSubTab(undefined);
+                          navigate(`/${item.id}`);
                           setIsMobileMenuOpen(false);
                         }}
                         className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-bold uppercase tracking-tight transition-all ${
@@ -280,7 +273,7 @@ function AppContent() {
                     ))}
                     <button
                       onClick={() => {
-                        setActiveTab('plans');
+                        navigate('/plans');
                         setIsMobileMenuOpen(false);
                       }}
                       className={`flex w-full items-center gap-4 rounded-xl px-4 py-3.5 text-sm font-bold uppercase tracking-tight transition-all ${
@@ -426,7 +419,28 @@ function AppContent() {
             </div>
             
             <div className="animate-in fade-in slide-in-from-bottom-6 duration-1000">
-              {renderContent()}
+              <Routes>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<Dashboard data={financialData} setActiveTab={(tab) => navigate(`/${tab}`)} setActiveSubTab={(sub) => navigate(`/savings?sub=${sub}`)} />} />
+                <Route path="/salaries" element={<SalariesView data={financialData} />} />
+                <Route path="/income" element={<Navigate to="/salaries" replace />} />
+                <Route path="/expenses" element={<ExpensesView data={financialData} />} />
+                <Route path="/expense" element={<Navigate to="/expenses" replace />} />
+                <Route path="/budgets" element={<BudgetsView data={financialData} />} />
+                <Route path="/budget" element={<Navigate to="/budgets" replace />} />
+                <Route path="/dues" element={<DuesView data={financialData} />} />
+                <Route path="/due" element={<Navigate to="/dues" replace />} />
+                <Route path="/savings" element={<SavingsView data={financialData} activeSubTab={activeSubTab} />} />
+                <Route path="/saving" element={<Navigate to="/savings" replace />} />
+                <Route path="/calendar" element={<CalendarView data={financialData} />} />
+                <Route path="/insights" element={
+                  <PlanGate featureName="AI Insights">
+                    <AIInsights data={financialData} />
+                  </PlanGate>
+                } />
+                <Route path="/plans" element={<PlansView />} />
+                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+              </Routes>
             </div>
           </div>
         </main>
@@ -450,17 +464,19 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <CurrencyProvider>
-          <FinancialPeriodProvider>
-            <TooltipProvider>
-              <AppContent />
-              <Toaster position="top-right" richColors />
-            </TooltipProvider>
-          </FinancialPeriodProvider>
-        </CurrencyProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <Router>
+      <ThemeProvider>
+        <AuthProvider>
+          <CurrencyProvider>
+            <FinancialPeriodProvider>
+              <TooltipProvider>
+                <AppContent />
+                <Toaster position="top-right" richColors />
+              </TooltipProvider>
+            </FinancialPeriodProvider>
+          </CurrencyProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
   );
 }

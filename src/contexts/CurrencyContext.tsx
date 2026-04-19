@@ -8,13 +8,53 @@ interface CurrencyContextType {
   setPreferredCurrency: (code: string) => Promise<void>;
   convert: (amount: number, from: string, to: string) => number;
   formatAmount: (amount: number, code?: string) => string;
+  liveRates: Record<string, number>;
 }
 
 const CurrencyContext = React.createContext<CurrencyContextType | undefined>(undefined);
 
+const RATES_CACHE_KEY = 'spendwise_currency_rates';
+const CACHE_DURATION = 1000 * 60 * 60; // 1 hour
+
 export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const [preferredCode, setPreferredCode] = React.useState('USD');
+  const [liveRates, setLiveRates] = React.useState<Record<string, number>>({});
+
+  // Fetch live rates
+  React.useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        // Try to load from cache first
+        const cached = localStorage.getItem(RATES_CACHE_KEY);
+        if (cached) {
+          const { rates, timestamp } = JSON.parse(cached);
+          if (Date.now() - timestamp < CACHE_DURATION) {
+            setLiveRates(rates);
+            return;
+          }
+        }
+
+        const response = await fetch('https://open.er-api.com/v6/latest/USD');
+        const data = await response.json();
+        
+        if (data && data.rates) {
+          setLiveRates(data.rates);
+          localStorage.setItem(RATES_CACHE_KEY, JSON.stringify({
+            rates: data.rates,
+            timestamp: Date.now()
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching currency rates:', error);
+        // Fallback is handled by using static rates if liveRates is empty
+      }
+    };
+
+    fetchRates();
+    const interval = setInterval(fetchRates, CACHE_DURATION);
+    return () => clearInterval(interval);
+  }, []);
 
   React.useEffect(() => {
     if (!user) return;
@@ -46,25 +86,36 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   };
 
   const convert = (amount: number, from: string, to: string) => {
-    const fromCurrency = CURRENCIES.find(c => c.code === from) || CURRENCIES[0];
-    const toCurrency = CURRENCIES.find(c => c.code === to) || CURRENCIES[0];
+    if (from === to) return amount;
+    
+    // Get rates (prefer live, fallback to static)
+    const getRate = (code: string) => {
+      if (liveRates[code]) return liveRates[code];
+      const staticCurr = CURRENCIES.find(c => c.code === code);
+      return staticCurr ? staticCurr.rate : 1;
+    };
+
+    const fromRate = getRate(from);
+    const toRate = getRate(to);
     
     // Convert to USD first (base), then to target
-    const inUSD = amount / fromCurrency.rate;
-    return inUSD * toCurrency.rate;
+    const inUSD = amount / fromRate;
+    return inUSD * toRate;
   };
 
   const formatAmount = (amount: number, code?: string) => {
-    const currency = CURRENCIES.find(c => c.code === (code || preferredCode)) || preferredCurrency;
+    const targetCode = code || preferredCode;
+    const currency = CURRENCIES.find(c => c.code === targetCode) || preferredCurrency;
+    
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: currency.code,
+      currency: targetCode,
       currencyDisplay: 'symbol'
     }).format(amount);
   };
 
   return (
-    <CurrencyContext.Provider value={{ preferredCurrency, setPreferredCurrency, convert, formatAmount }}>
+    <CurrencyContext.Provider value={{ preferredCurrency, setPreferredCurrency, convert, formatAmount, liveRates }}>
       {children}
     </CurrencyContext.Provider>
   );

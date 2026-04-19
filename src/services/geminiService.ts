@@ -78,17 +78,19 @@ const editEntryTool: FunctionDeclaration = {
   },
 };
 
-export async function getFinancialInsights(data: any, preferredCurrency: string) {
+export async function getFinancialInsights(data: any, preferredCurrency: string, liveRates?: Record<string, number>) {
   try {
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: `Analyze the following financial data and provide insights on overspending, saving suggestions, and future balance predictions. 
       The user's preferred currency is ${preferredCurrency}. Please ensure all monetary values in your insights are expressed in or relative to this currency.
+      ${liveRates ? `Real-time Exchange Rates (Base USD): ${JSON.stringify(liveRates)}` : ''}
       Return the response in a structured JSON format.
       
       Data: ${JSON.stringify(data)}`,
       config: {
         responseMimeType: "application/json",
+        temperature: 0.2, // Increased precision
         responseSchema: {
           type: Type.OBJECT,
           properties: {
@@ -124,6 +126,7 @@ export async function chatWithFinanceAI(
   preferredCurrency: string, 
   data: any, 
   history: { role: 'user' | 'model', content: string }[],
+  liveRates?: Record<string, number>,
   audioData?: { data: string, mimeType: string }
 ) {
   try {
@@ -147,22 +150,30 @@ export async function chatWithFinanceAI(
       ],
       config: {
         tools: [{ functionDeclarations: [addEntryTool, editEntryTool] }],
-        systemInstruction: `You are SpendWise AI, a helpful financial advisor. 
+        temperature: 0.3, // Lower temperature for more precise financial advice
+        systemInstruction: `You are SpendWise AI, a highly precise financial advisor. 
         User Preferred Currency: ${preferredCurrency}
         Current UTC Time: ${new Date().toISOString()}
+        ${liveRates ? `Real-time Exchange Rates (Base USD): ${JSON.stringify(liveRates)}` : ''}
         
         Capabilities:
-        1. Answer questions about the user's finances using the provided data.
+        1. Answer questions about the user's finances using ONLY the provided data.
         2. Add new entries (Expenses, Salaries, Savings, Goals, Bills/Dues, Budgets).
         3. Edit existing entries.
-        4. Provide advice on saving and budgeting.
+        4. Provide advice on saving and budgeting based on real trends.
         
-        Voice Commands:
+        Voice Commands & Transcription:
         - You may receive audio input. Listen carefully to the user's intent.
-        - Transcribe the intent and perform the requested financial action.
+        - IMPORTANT: If audio input is provided, you MUST begin your response with the following format:
+          [TRANSCRIPTION: <your accurate transcription of the user's speech>]
+          After the transcription tag, proceed with your actual response.
+        - perform the requested financial action based on the voice intent.
         
         Guidelines:
-        - Be concise, professional, and encouraging.
+        - Be concise, professional, and data-driven. 
+        - When performing currency conversions, use the provided Real-time Exchange Rates.
+        - If the user's question is not related to their provided finances or general financial best practices, politely steer them back to their budget.
+        - NEVER hallucinate data. If a transaction isn't in the data, say you don't see it.
         - If the user provides incomplete info for adding/editing an entry, ASK for the missing fields clearly. 
         - DO NOT call the tool until you have the necessary information.
         
