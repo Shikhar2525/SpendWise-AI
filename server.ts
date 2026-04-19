@@ -4,22 +4,70 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import admin from 'firebase-admin';
+import { getFirestore, FieldValue } from 'firebase-admin/firestore';
+import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
 
 dotenv.config();
+
+// Initialize Firebase Admin
+if (!admin.apps.length) {
+  console.log('Initializing Firebase Admin for project:', firebaseConfig.projectId);
+  admin.initializeApp({
+    projectId: firebaseConfig.projectId
+  });
+}
+
+console.log('Targeting Firestore Database ID:', firebaseConfig.firestoreDatabaseId);
+const db = getFirestore(undefined, firebaseConfig.firestoreDatabaseId);
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Create reusable transporter object using the default SMTP transport
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST,
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: process.env.SMTP_SECURE === 'true', // true for 465, false for other ports
-  auth: {
-    user: process.env.SMTP_USER,
-    pass: process.env.SMTP_PASS,
-  },
-});
+/**
+ * Fetches SMTP configuration conditionally.
+ * 1. Checks environment variables first.
+ * 2. If missing, attempts to fetch from Firestore config/mail.
+ */
+async function getSMTPConfig() {
+  // Check Env first
+  if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+    return {
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587'),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      },
+      from: process.env.SMTP_FROM || `"SpendWise AI" <${process.env.SMTP_USER}>`
+    };
+  }
+
+  // Fallback to Firestore
+  try {
+    const configDoc = await db.collection('config').doc('mail').get();
+    if (configDoc.exists) {
+      const data = configDoc.data();
+      if (data?.user && data?.pass) {
+        return {
+          host: data.host || 'smtp.gmail.com',
+          port: parseInt(data.port || '587'),
+          secure: data.secure === true,
+          auth: {
+            user: data.user,
+            pass: data.pass,
+          },
+          from: data.from || `"SpendWise AI" <${data.user}>`
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching SMTP config from Firestore:', error);
+  }
+
+  return null;
+}
 
 async function startServer() {
   const app = express();
@@ -27,16 +75,48 @@ async function startServer() {
 
   app.use(express.json());
 
+  app.post('/api/admin/test-smtp', async (req, res) => {
+    const { host, port, secure, user, pass } = req.body;
+    
+    if (!user || !pass) {
+      return res.status(400).json({ error: 'User and Pass are required' });
+    }
+
+    try {
+      const transporter = nodemailer.createTransport({
+        host: host || 'smtp.gmail.com',
+        port: port || 587,
+        secure: secure === true,
+        auth: { user, pass }
+      });
+
+      await transporter.verify();
+      res.json({ success: true, message: 'SMTP connection successful' });
+    } catch (error) {
+      console.error('SMTP Test Error:', error);
+      res.status(500).json({ success: false, error: error instanceof Error ? error.message : 'SMTP verification failed' });
+    }
+  });
+
   // API Routes
   app.post('/api/notify', async (req, res) => {
     const { to, subject, templateName, data } = req.body;
 
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
-      console.warn('SMTP credentials are not set. Email not sent.');
+    const smtpConfig = await getSMTPConfig();
+
+    if (!smtpConfig) {
+      console.warn('SMTP configuration not found in Env or Firestore. Email not sent.');
       return res.status(200).json({ success: false, message: 'Email service not configured' });
     }
 
     try {
+      const transporter = nodemailer.createTransport({
+        host: smtpConfig.host,
+        port: smtpConfig.port,
+        secure: smtpConfig.secure,
+        auth: smtpConfig.auth
+      });
+
       let html = '';
       const mainColor = '#4f46e5';
       const secondaryColor = '#8b5cf6';
@@ -149,7 +229,7 @@ async function startServer() {
       }
 
       await transporter.sendMail({
-        from: process.env.SMTP_FROM || '"SpendWise AI" <notifications@spendwise.ai>',
+        from: smtpConfig.from,
         to: to,
         subject: subject,
         html: html,

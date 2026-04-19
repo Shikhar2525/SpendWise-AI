@@ -19,7 +19,12 @@ import {
   ArrowRight,
   Eye,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Server,
+  Lock,
+  Mail,
+  RefreshCcw,
+  Save
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
@@ -55,7 +60,7 @@ import {
   DialogTitle, 
   DialogDescription,
 } from './ui/dialog';
-import { updateDoc, doc as firestoreDoc } from 'firebase/firestore';
+import { updateDoc, doc as firestoreDoc, getDoc as getFirestoreDoc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { toast } from 'sonner';
 
 export default function AdminView() {
@@ -72,9 +77,35 @@ export default function AdminView() {
   const [planFilter, setPlanFilter] = React.useState<string>('ALL');
   const [selectedUser, setSelectedUser] = React.useState<UserProfile | null>(null);
   const [isInspectOpen, setIsInspectOpen] = React.useState(false);
+  
+  // SMTP Config State
+  const [smtpConfig, setSmtpConfig] = React.useState({
+    host: 'smtp.gmail.com',
+    port: '587',
+    secure: false,
+    user: '',
+    pass: '',
+    from: ''
+  });
+  const [isTestingSmtp, setIsTestingSmtp] = React.useState(false);
+  const [isSavingSmtp, setIsSavingSmtp] = React.useState(false);
 
   const fetchAdminData = async () => {
     try {
+      // Fetch existing SMTP config from Firestore doc config/mail
+      const smtpSnap = await getFirestoreDoc(firestoreDoc(db, 'config', 'mail'));
+      if (smtpSnap.exists()) {
+        const data = smtpSnap.data();
+        setSmtpConfig({
+          host: data.host || 'smtp.gmail.com',
+          port: String(data.port || '587'),
+          secure: data.secure || false,
+          user: data.user || '',
+          pass: data.pass || '',
+          from: data.from || ''
+        });
+      }
+
       const usersSnap = await getDocs(query(collection(db, 'users'), orderBy('createdAt', 'desc')));
       const usersList: UserProfile[] = [];
       let intCount = 0;
@@ -145,11 +176,59 @@ export default function AdminView() {
   };
 
   const filteredUsers = users.filter(u => {
-    const matchesSearch = u.email.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                         u.displayName.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = u.email?.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                         u.displayName?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesPlan = planFilter === 'ALL' || u.plan === planFilter;
     return matchesSearch && matchesPlan;
   });
+
+  const handleSaveSmtp = async () => {
+    setIsSavingSmtp(true);
+    try {
+      // We use the firestore client directly here because it uses your authenticated session.
+      // The backend will then be able to read this config.
+      const configRef = firestoreDoc(db, 'config', 'mail');
+      await setDoc(configRef, {
+        ...smtpConfig,
+        port: parseInt(smtpConfig.port),
+        updatedAt: serverTimestamp()
+      });
+      toast.success('SMTP settings saved to system ledger');
+    } catch (error) {
+      console.error('Save SMTP Error:', error);
+      toast.error('Failed to save SMTP settings to Firestore');
+    } finally {
+      setIsSavingSmtp(false);
+    }
+  };
+
+  const handleTestSmtp = async () => {
+    if (!smtpConfig.user || !smtpConfig.pass) {
+      toast.error('User and Password are required for testing');
+      return;
+    }
+    setIsTestingSmtp(true);
+    try {
+      const response = await fetch('/api/admin/test-smtp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...smtpConfig,
+          port: parseInt(smtpConfig.port)
+        })
+      });
+      const result = await response.json();
+      if (result.success) {
+        toast.success('SMTP connection verified successfully');
+      } else {
+        toast.error(result.error || 'SMTP verification failed');
+      }
+    } catch (error) {
+      toast.error('Network error during SMTP test');
+    } finally {
+      setIsTestingSmtp(false);
+    }
+  };
 
   const chartData = [
     { name: 'Essential', value: stats.totalUsers - stats.intelligentUsers },
@@ -646,6 +725,136 @@ export default function AdminView() {
              >
                 View Full Archive
              </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* SMTP Infrastructure Management */}
+      <Card className="bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 shadow-sm rounded-[3rem] overflow-hidden">
+        <CardHeader className="p-10 border-b border-zinc-50 dark:border-zinc-900 bg-zinc-50/30 dark:bg-zinc-900/10">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                <Mail className="h-6 w-6" />
+              </div>
+              <div>
+                <CardTitle className="text-2xl font-black uppercase italic tracking-tighter">Email Infrastructure</CardTitle>
+                <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">SMTP Server & Notification Credentials</CardDescription>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="outline" 
+                onClick={handleTestSmtp} 
+                disabled={isTestingSmtp}
+                className="h-12 px-6 rounded-2xl border-zinc-200 dark:border-zinc-800 font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-all"
+              >
+                {isTestingSmtp ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4 text-emerald-500" />}
+                Test Connection
+              </Button>
+              <Button 
+                onClick={handleSaveSmtp} 
+                disabled={isSavingSmtp}
+                className="h-12 px-8 rounded-2xl bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600 text-white font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-indigo-500/20 transition-all"
+              >
+                {isSavingSmtp ? <RefreshCcw className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+                Save Config
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-10">
+          <div className="grid gap-10 md:grid-cols-2">
+            <div className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">SMTP Host Connection</label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="col-span-2">
+                    <Input 
+                      placeholder="SMTP HOST (e.g. smtp.gmail.com)" 
+                      value={smtpConfig.host}
+                      onChange={(e) => setSmtpConfig({ ...smtpConfig, host: e.target.value })}
+                      className="h-14 bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold px-6"
+                    />
+                  </div>
+                  <div className="col-span-1">
+                    <Input 
+                      type="number"
+                      placeholder="PORT" 
+                      value={smtpConfig.port}
+                      onChange={(e) => setSmtpConfig({ ...smtpConfig, port: e.target.value })}
+                      className="h-14 bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold px-6"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Secure Protocol</label>
+                <div 
+                  onClick={() => setSmtpConfig({ ...smtpConfig, secure: !smtpConfig.secure })}
+                  className="h-14 flex items-center justify-between px-6 bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl cursor-pointer hover:bg-zinc-100 transition-colors"
+                >
+                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-600">Use SSL (Port 465)</span>
+                  <div className={cn(
+                    "h-6 w-12 rounded-full p-1 transition-colors duration-300",
+                    smtpConfig.secure ? "bg-indigo-500" : "bg-zinc-300 dark:bg-zinc-700"
+                  )}>
+                    <div className={cn(
+                      "h-4 w-4 bg-white rounded-full transition-transform duration-300",
+                      smtpConfig.secure ? "translate-x-6" : "translate-x-0"
+                    )} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 rounded-3xl bg-amber-50 dark:bg-amber-900/10 border border-amber-100 dark:border-amber-900/20 flex gap-4">
+                <AlertCircle className="h-6 w-6 text-amber-500 shrink-0" />
+                <div className="space-y-1">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Spark Plan Warning</p>
+                  <p className="text-[9px] font-bold text-amber-600/70 leading-relaxed">
+                    By storing SMTP credentials in Firestore, your application can send notifications even on the free Firebase plan. Ensure your Firebase Security Rules protect the "config" collection.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-8">
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Authentication Credentials</label>
+                <div className="space-y-4">
+                  <div className="relative">
+                    <Users className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                    <Input 
+                      placeholder="SMTP USERNAME (EMAIL)" 
+                      value={smtpConfig.user}
+                      onChange={(e) => setSmtpConfig({ ...smtpConfig, user: e.target.value })}
+                      className="h-14 pl-16 bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Lock className="absolute left-6 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
+                    <Input 
+                      type="password"
+                      placeholder="SMTP PASSWORD / APP PASSWORD" 
+                      value={smtpConfig.pass}
+                      onChange={(e) => setSmtpConfig({ ...smtpConfig, pass: e.target.value })}
+                      className="h-14 pl-16 bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400">Branding (From Address)</label>
+                <Input 
+                  placeholder='SpendWise AI <notifications@domain.com>' 
+                  value={smtpConfig.from}
+                  onChange={(e) => setSmtpConfig({ ...smtpConfig, from: e.target.value })}
+                  className="h-14 bg-zinc-50 dark:bg-zinc-900 border-zinc-100 dark:border-zinc-800 rounded-2xl font-bold px-6"
+                />
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
