@@ -21,6 +21,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import debounce from 'lodash/debounce';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { cn, formatInputText } from '../lib/utils';
+import { notifyTransaction } from '../lib/notifications';
 
 interface ExpensesViewProps {
   data: {
@@ -180,6 +181,11 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
           createdAt: new Date().toISOString()
         });
         toast.success('Expense added successfully');
+        
+        // Send email notification for new transactions
+        if (user.email) {
+          notifyTransaction(user.email, expenseData);
+        }
       }
       setIsDialogOpen(false);
     } catch (error) {

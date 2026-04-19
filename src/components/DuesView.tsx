@@ -23,6 +23,7 @@ import debounce from 'lodash/debounce';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { expandRecurringItems } from '../lib/utils/recurringUtils';
 import { cn, formatInputText } from '../lib/utils';
+import { notifyUpcomingReminder } from '../lib/notifications';
 
 interface DuesViewProps {
   data: {
@@ -201,6 +202,11 @@ export default function DuesView({ data }: DuesViewProps) {
         };
         await addDoc(collection(db, 'dues'), dueData);
         toast.success('New entry registered');
+
+        // Send notification for new dues
+        if (user.email) {
+          notifyUpcomingReminder(user.email, dueData.description, dueData.amount, dueData.currency, dueData.dueDate);
+        }
       }
       setIsDialogOpen(false);
     } catch (error) {

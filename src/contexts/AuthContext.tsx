@@ -3,6 +3,8 @@ import { auth, googleProvider, signInWithPopup, signOut, db, doc, getDoc, setDoc
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { UserProfile } from '../types';
 
+import { notifyWelcome } from '../lib/notifications';
+
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
@@ -100,6 +102,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           await setDoc(userDocRef, newProfile);
           setUserProfile(newProfile);
+          // Send welcome email
+          if (newProfile.email) {
+            notifyWelcome(newProfile.email, newProfile.displayName);
+          }
         }
       } else {
         setUserProfile(null);

@@ -82,6 +82,8 @@ import {
 } from "./components/ui/dropdown-menu";
 import { User, Settings, Globe, Moon, Sun } from "lucide-react";
 
+import NotificationManager from './components/NotificationManager';
+
 function AppContent() {
   const { user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen, isAdmin } = useAuth();
   const { preferredCurrency, setPreferredCurrency } = useCurrency();
@@ -468,6 +470,7 @@ function AppContent() {
         </main>
       </div>
       <FloatingChat data={financialData} />
+      <NotificationManager data={financialData} />
       <AnimatePresence>
         {showTutorial && (
           <Tutorial 
