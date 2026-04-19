@@ -469,7 +469,7 @@ export default function LandingPage() {
           <div className="space-y-6">
             <div className="flex items-center gap-2.5">
               <Logo className="h-8 w-8" />
-              <span className="text-lg font-black tracking-tighter uppercase italic">SpendWise</span>
+              <span className="text-lg font-black tracking-tighter uppercase italic">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
             </div>
             <p className="max-w-xs text-sm font-medium text-zinc-500 leading-relaxed">
               Redefining financial management with design-driven AI solutions.

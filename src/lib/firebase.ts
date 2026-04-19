@@ -13,6 +13,7 @@ import {
   query, 
   where, 
   orderBy,
+  limit,
   onSnapshot,
   getDocFromServer
 } from 'firebase/firestore';
@@ -125,6 +126,7 @@ export {
   query, 
   where, 
   orderBy,
+  limit,
   onSnapshot,
   signInWithPopup,
   signOut,

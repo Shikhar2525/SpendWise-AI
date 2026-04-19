@@ -69,22 +69,22 @@ export default function PlansView() {
   return (
     <div className="space-y-10 pb-20">
       {/* Current Plan Overview */}
-      <div className="relative overflow-hidden rounded-[32px] bg-zinc-900 dark:bg-black p-8 text-white shadow-2xl border border-white/5">
-        <div className="absolute inset-0 opacity-20 pointer-events-none">
-           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(79,70,229,1),transparent)]" />
+      <div className="relative overflow-hidden rounded-[32px] bg-white dark:bg-zinc-950 p-8 border border-zinc-200 dark:border-zinc-800 shadow-sm transition-all duration-300">
+        <div className="absolute inset-0 opacity-10 dark:opacity-20 pointer-events-none">
+           <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(79,70,229,0.4),transparent)] dark:bg-[radial-gradient(circle_at_50%_120%,rgba(79,70,229,1),transparent)]" />
         </div>
         
         <div className="relative z-10 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-8">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/10">
-              <ShieldCheck className="h-3 w-3 text-indigo-400" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100 italic">Membership Status</span>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20">
+              <ShieldCheck className="h-3 w-3 text-indigo-600 dark:text-indigo-400" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 dark:text-indigo-400 italic">Membership Status</span>
             </div>
-            <h3 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter leading-none">
-              Current Plan: <span className="text-indigo-400">{userProfile?.plan}</span>
+            <h3 className="text-3xl md:text-4xl font-black italic uppercase tracking-tighter leading-none text-zinc-900 dark:text-white">
+              Current Plan: <span className="text-indigo-600 dark:text-indigo-400">{userProfile?.plan}</span>
             </h3>
             {userProfile?.plan !== 'Essential' && daysLeft !== null && (
-              <div className="flex items-center gap-2 text-zinc-400">
+              <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400">
                 <Timer className="h-4 w-4" />
                 <span className="text-xs font-bold uppercase tracking-widest">
                   {daysLeft} days remaining in your subscription
@@ -99,12 +99,12 @@ export default function PlansView() {
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                 placeholder="ENTER COUPON CODE"
-                className="w-full h-14 rounded-2xl bg-black/40 dark:bg-zinc-900/40 border border-white/10 pl-6 pr-36 text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-zinc-600 focus:bg-black/60"
+                className="w-full h-14 rounded-2xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 pl-6 pr-36 text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-zinc-400 dark:placeholder:text-zinc-600 text-zinc-900 dark:text-white"
               />
               <button 
                 onClick={handleRedeem}
                 disabled={isRedeeming || !couponCode}
-                className="absolute right-2 top-2 h-10 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/5 disabled:text-zinc-600 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-lg z-20 active:scale-95"
+                className="absolute right-2 top-2 h-10 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-100 dark:disabled:bg-zinc-800 disabled:text-zinc-400 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-lg z-20 active:scale-95"
               >
                 {isRedeeming ? '...' : 'Apply'}
               </button>

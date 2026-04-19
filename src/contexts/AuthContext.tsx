@@ -8,6 +8,7 @@ interface AuthContextType {
   userProfile: UserProfile | null;
   loading: boolean;
   isConnected: boolean;
+  isAdmin: boolean;
   signIn: () => Promise<void>;
   logout: () => Promise<void>;
   markTutorialSeen: () => Promise<void>;
@@ -22,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [userProfile, setUserProfile] = React.useState<UserProfile | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [isConnected, setIsConnected] = React.useState(true);
+  const isAdmin = user?.email === 'shikhar.mandloi@gmail.com';
 
   React.useEffect(() => {
     const checkConnection = async () => {
@@ -64,6 +66,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             updated = true;
           }
 
+          if (isAdmin && profile.role !== 'admin') {
+            updatedProfile.role = 'admin';
+            updated = true;
+          }
+
           // Check for plan expiration
           if (profile.plan !== 'Essential' && profile.planExpiresAt) {
             if (new Date(profile.planExpiresAt) < new Date()) {
@@ -88,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             preferredCurrency: 'USD',
             hasSeenTutorial: false,
             plan: 'Essential',
+            role: isAdmin ? 'admin' : 'user',
             createdAt: new Date().toISOString(),
           };
           await setDoc(userDocRef, newProfile);
@@ -159,7 +167,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen, updatePlan, redeemCoupon }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, isConnected, isAdmin, signIn, logout, markTutorialSeen, updatePlan, redeemCoupon }}>
       {children}
     </AuthContext.Provider>
   );

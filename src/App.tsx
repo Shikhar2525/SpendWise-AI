@@ -27,7 +27,8 @@ import {
   AlertTriangle,
   PiggyBank,
   Sparkles,
-  ShieldCheck
+  ShieldCheck,
+  Clock
 } from 'lucide-react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './components/ui/card';
@@ -43,13 +44,14 @@ import SalariesView from './components/SalariesView';
 import BudgetsView from './components/BudgetsView';
 import CalendarView from './components/CalendarView';
 import AIInsights from './components/AIInsights';
+import AdminView from './components/AdminView';
 import FloatingChat from './components/FloatingChat';
 import SavingsView from './components/SavingsView';
 import PlansView from './components/PlansView';
 import { PlanGate } from './components/PlanGate';
 import LandingPage from './components/LandingPage';
 import { Logo } from './components/Logo';
-import { Toaster } from 'sonner';
+import { Toaster, toast } from 'sonner';
 import { MonthFilter } from './components/MonthFilter';
 import { getMonthSuggestions } from './lib/utils/monthUtils';
 import { FinancialPeriodProvider, useFinancialPeriod } from './contexts/FinancialPeriodContext';
@@ -81,7 +83,7 @@ import {
 import { User, Settings, Globe, Moon, Sun } from "lucide-react";
 
 function AppContent() {
-  const { user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen } = useAuth();
+  const { user, userProfile, loading, isConnected, signIn, logout, markTutorialSeen, isAdmin } = useAuth();
   const { preferredCurrency, setPreferredCurrency } = useCurrency();
   const { selectedMonth, setSelectedMonth } = useFinancialPeriod();
   const financialData = useFinancialData();
@@ -305,7 +307,7 @@ function AppContent() {
             <div className="flex items-center gap-2 lg:hidden">
               <Logo className="h-7 w-7" />
               <div className="flex flex-col">
-                <span className="text-lg font-black tracking-tighter uppercase italic dark:text-white leading-none">SpendWise</span>
+                <span className="text-lg font-black tracking-tighter uppercase italic dark:text-white leading-none">SpendWise <span className="text-indigo-600 dark:text-indigo-400">AI</span></span>
                 <Badge className="w-fit h-3.5 px-1.5 py-0 text-[7px] font-black uppercase tracking-[0.2em] bg-indigo-600 text-white border-none rounded-md scale-[0.8] origin-left mt-0.5">
                   {userProfile?.plan || 'Essential'}
                 </Badge>
@@ -399,7 +401,7 @@ function AppContent() {
               <div>
                 <div className="flex items-center gap-3 mb-2">
                    <h2 className="text-4xl font-black italic tracking-tighter text-zinc-900 dark:text-white uppercase leading-none">
-                     {navItems.find(i => i.id === activeTab)?.label || (activeTab === 'plans' ? 'Subscription' : '')}
+                     {navItems.find(i => i.id === activeTab)?.label || (activeTab === 'plans' ? 'Subscription' : activeTab === 'admin' ? 'System Admin' : '')}
                    </h2>
                 </div>
                 <p className="text-sm font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-widest">
@@ -408,12 +410,29 @@ function AppContent() {
               </div>
               
               <div id="filter-container">
-                {activeTab !== 'calendar' && activeTab !== 'insights' && activeTab !== 'plans' && (
+                {activeTab !== 'calendar' && activeTab !== 'insights' && activeTab !== 'plans' && activeTab !== 'admin' && (
                   <MonthFilter 
                     selectedMonth={selectedMonth} 
                     onMonthChange={setSelectedMonth} 
                     suggestions={monthSuggestions} 
                   />
+                )}
+                
+                {activeTab === 'admin' && (
+                  <div className="flex items-center gap-3">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => toast.info("Audit log access restricted to full system view.")}
+                      className="rounded-2xl h-10 border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 font-black text-[10px] tracking-widest uppercase italic group"
+                    >
+                      <Clock className="h-4 w-4 mr-2 text-zinc-400 group-hover:text-indigo-500 transition-colors" />
+                      Activity Logs
+                    </Button>
+                    <div className="flex items-center gap-2 px-6 py-2 rounded-2xl bg-indigo-500 text-white shadow-xl shadow-indigo-500/20">
+                      <ShieldCheck className="h-4 w-4" />
+                      <span className="text-[10px] font-black uppercase tracking-widest">Admin Access Granted</span>
+                    </div>
+                  </div>
                 )}
               </div>
             </div>
@@ -439,6 +458,9 @@ function AppContent() {
                   </PlanGate>
                 } />
                 <Route path="/plans" element={<PlansView />} />
+                <Route path="/admin" element={
+                  isAdmin ? <AdminView /> : <Navigate to="/dashboard" replace />
+                } />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
             </div>

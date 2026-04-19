@@ -1,4 +1,5 @@
 export type PlanType = 'Essential' | 'Intelligent' | 'Architect';
+export type UserRole = 'admin' | 'user';
 
 export interface UserProfile {
   uid: string;
@@ -10,6 +11,7 @@ export interface UserProfile {
   hasSeenTutorial: boolean;
   plan: PlanType;
   planExpiresAt?: string | null;
+  role?: UserRole;
 }
 
 export interface Expense {
