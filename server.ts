@@ -86,9 +86,14 @@ async function startServer() {
     next();
   });
 
-  // Health check
-  app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', environment: process.env.NODE_ENV });
+  // Health check - works for GET and POST
+  app.all('/api/health', (req, res) => {
+    res.json({ 
+      status: 'ok', 
+      environment: process.env.NODE_ENV,
+      timestamp: new Date().toISOString(),
+      method: req.method
+    });
   });
 
   app.post('/api/admin/test-smtp', async (req, res) => {

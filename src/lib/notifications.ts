@@ -30,6 +30,13 @@ export async function sendNotification({ to, subject, templateName, data }: Noti
     const contentType = response.headers.get('content-type');
     if (!contentType || !contentType.includes('application/json')) {
       const text = await response.text();
+      const isHtml = text.trim().toLowerCase().startsWith('<!doctype html');
+      
+      if (isHtml) {
+        console.error('SERVER ARCHITECTURE ERROR: Your request hit a static host instead of the API server.');
+        throw new Error('This URL is for static files only. Please use the AI Studio Shared App URL to enable notifications.');
+      }
+
       console.error('Expected JSON but received:', text);
       throw new Error('Received non-JSON response from notification server');
     }
