@@ -80,16 +80,51 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
+  const allowedOrigins = [
+    'https://spendwise-ai-83b2d.web.app',
+    'https://spendwise-ai-83b2d.firebaseapp.com',
+    'http://localhost:3000',
+    'https://ais-pre-epln74gvage6ffz4lxm6ug-477197325075.asia-east1.run.app'
+  ];
+
+  // Primary CORS configuration
   app.use(cors({
-    origin: '*', // Allow all for simplicity in this dev environment
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      // Allow specific Firebase origins or any run.app origin
+      if (allowedOrigins.indexOf(origin) !== -1 || origin.includes('run.app') || origin.includes('web.app') || origin.includes('firebaseapp.com')) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Still allow but we'll see it in logs
+      }
+    },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true
   }));
+
+  // Manual header fallback for extra reliability
+  app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (origin) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+      res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+      res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+      res.setHeader('Access-Control-Allow-Credentials', 'true');
+    }
+    if (req.method === 'OPTIONS') {
+      return res.status(200).end();
+    }
+    next();
+  });
 
   app.use(express.json());
 
   app.use((req, res, next) => {
-    console.log(`${new Date().toISOString()} | ${req.method} ${req.url}`);
+    console.log(`${new Date().toISOString()} | ${req.method} ${req.url} | Origin: ${req.headers.origin || 'none'}`);
+    if (req.method === 'OPTIONS') {
+      console.log('--- PREFLIGHT REQUEST ---');
+    }
     next();
   });
 
