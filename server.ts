@@ -75,6 +75,12 @@ async function startServer() {
 
   app.use(express.json());
 
+  // Log all requests
+  app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+  });
+
   app.post('/api/admin/test-smtp', async (req, res) => {
     const { host, port, secure, user, pass } = req.body;
     
@@ -240,6 +246,11 @@ async function startServer() {
       console.error('Email sending error:', error);
       res.status(500).json({ success: false, error: 'Failed to send email' });
     }
+  });
+
+  // Handle 404 for API routes specifically
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: `API route ${req.method} ${req.url} not found` });
   });
 
   // Vite middleware setup

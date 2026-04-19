@@ -20,7 +20,16 @@ export async function sendNotification({ to, subject, templateName, data }: Noti
     });
 
     if (!response.ok) {
-      throw new Error('Failed to send notification');
+      const errorText = await response.text();
+      console.error('Notification API Error Response:', errorText);
+      throw new Error(`Failed to send notification: ${response.status} ${response.statusText}`);
+    }
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      const text = await response.text();
+      console.error('Expected JSON but received:', text);
+      throw new Error('Received non-JSON response from notification server');
     }
 
     return await response.json();
