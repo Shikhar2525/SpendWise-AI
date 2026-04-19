@@ -69,8 +69,8 @@ export default function PlansView() {
   return (
     <div className="space-y-10 pb-20">
       {/* Current Plan Overview */}
-      <div className="relative overflow-hidden rounded-[32px] bg-zinc-900 p-8 text-white shadow-2xl">
-        <div className="absolute inset-0 opacity-20">
+      <div className="relative overflow-hidden rounded-[32px] bg-zinc-900 dark:bg-black p-8 text-white shadow-2xl border border-white/5">
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_120%,rgba(79,70,229,1),transparent)]" />
         </div>
         
@@ -94,17 +94,17 @@ export default function PlansView() {
           </div>
           
           <div className="flex flex-col sm:flex-row gap-4 w-full lg:w-auto">
-            <div className="flex-1 min-w-[280px] sm:min-w-[340px] relative">
+            <div className="flex-1 min-w-[280px] sm:min-w-[340px] relative transition-transform hover:scale-[1.01]">
               <input 
                 value={couponCode}
                 onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                 placeholder="ENTER COUPON CODE"
-                className="w-full h-14 rounded-2xl bg-white/5 border border-white/10 pl-6 pr-36 text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-zinc-600"
+                className="w-full h-14 rounded-2xl bg-black/40 dark:bg-zinc-900/40 border border-white/10 pl-6 pr-36 text-sm font-black uppercase tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all placeholder:text-zinc-600 focus:bg-black/60"
               />
               <button 
                 onClick={handleRedeem}
                 disabled={isRedeeming || !couponCode}
-                className="absolute right-2 top-2 h-10 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-zinc-800 disabled:text-zinc-500 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-lg z-20"
+                className="absolute right-2 top-2 h-10 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:bg-white/5 disabled:text-zinc-600 text-white text-[10px] font-black uppercase tracking-widest transition-all shadow-lg z-20 active:scale-95"
               >
                 {isRedeeming ? '...' : 'Apply'}
               </button>
@@ -124,26 +124,26 @@ export default function PlansView() {
             className="relative"
           >
             {plan.popular && (
-              <div className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-xl z-20 border-4 border-white dark:border-zinc-950">
+              <div className="absolute top-0 right-10 -translate-y-1/2 bg-indigo-600 text-white px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest shadow-xl z-20 border-4 border-white dark:border-black">
                 Most Intelligent
               </div>
             )}
             
-            <Card className={`relative h-full flex flex-col rounded-[32px] border transition-all duration-500 overflow-hidden ${
+            <Card className={`relative h-full flex flex-col rounded-[32px] border transition-all duration-500 overflow-hidden bg-white dark:bg-black ${
               userProfile?.plan === plan.id 
-                ? 'ring-4 ring-indigo-500/30 ring-offset-4 dark:ring-offset-zinc-950 border-indigo-500 shadow-2xl' 
-                : 'border-zinc-200 dark:border-zinc-800 hover:border-indigo-400'
+                ? 'ring-4 ring-indigo-500/30 ring-offset-4 dark:ring-offset-black border-indigo-500 shadow-2xl scale-[1.02]' 
+                : 'border-zinc-200 dark:border-white/10 hover:border-indigo-400'
             }`}>
               <CardHeader className="p-8 pb-4">
                 <div className="flex items-center justify-between mb-2">
-                   <h3 className="text-xs font-black uppercase tracking-widest opacity-60 italic">{plan.name}</h3>
+                   <h3 className="text-xs font-black uppercase tracking-widest opacity-60 italic text-zinc-900 dark:text-white">{plan.name}</h3>
                    {userProfile?.plan === plan.id && (
-                     <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black px-2 uppercase">Active</Badge>
+                     <Badge className="bg-emerald-500 text-white border-none text-[8px] font-black px-2 uppercase shadow-lg shadow-emerald-500/20">Active</Badge>
                    )}
                 </div>
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black italic tracking-tighter">{plan.price}</span>
-                  <span className="text-xs font-bold opacity-40 uppercase tracking-widest">{plan.period}</span>
+                  <span className="text-4xl font-black italic tracking-tighter text-zinc-900 dark:text-white">{plan.price}</span>
+                  <span className="text-xs font-bold opacity-40 uppercase tracking-widest text-zinc-500 dark:text-zinc-400">{plan.period}</span>
                 </div>
                 {plan.id !== 'Essential' && (
                   <p className="text-[10px] font-black text-indigo-500 uppercase tracking-widest mt-1">Or {plan.yearlyPrice} / Year</p>
