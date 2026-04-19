@@ -4,11 +4,17 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
+import fs from 'fs';
 import admin from 'firebase-admin';
 import { getFirestore, FieldValue } from 'firebase-admin/firestore';
-import firebaseConfig from './firebase-applet-config.json' with { type: 'json' };
+
+const firebaseConfig = JSON.parse(fs.readFileSync(new URL('./firebase-applet-config.json', import.meta.url), 'utf8'));
 
 dotenv.config();
+
+console.log('--- SERVER STARTUP ---');
+console.log('Project ID:', firebaseConfig.projectId);
+console.log('NODE_ENV:', process.env.NODE_ENV);
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -75,10 +81,14 @@ async function startServer() {
 
   app.use(express.json());
 
-  // Log all requests
   app.use((req, res, next) => {
-    console.log(`${req.method} ${req.url}`);
+    console.log(`${new Date().toISOString()} | ${req.method} ${req.url}`);
     next();
+  });
+
+  // Health check
+  app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', environment: process.env.NODE_ENV });
   });
 
   app.post('/api/admin/test-smtp', async (req, res) => {
@@ -261,9 +271,14 @@ async function startServer() {
     });
     app.use(vite.middlewares);
   } else {
-    const distPath = path.join(process.cwd(), 'dist');
+    const distPath = fileURLToPath(new URL('./dist', import.meta.url));
+    console.log('Serving static files from:', distPath);
     app.use(express.static(distPath));
     app.get('*', (req, res) => {
+      // Correctly handle SPA routing, but only for GET requests
+      if (req.url.startsWith('/api/')) {
+        return res.status(404).json({ error: 'API route not found' });
+      }
       res.sendFile(path.join(distPath, 'index.html'));
     });
   }

@@ -11,7 +11,9 @@ interface NotificationData {
 
 export async function sendNotification({ to, subject, templateName, data }: NotificationData) {
   try {
-    const response = await fetch('/api/notify', {
+    const apiPath = '/api/notify';
+    console.log(`Notification request to: ${window.location.origin}${apiPath}`);
+    const response = await fetch(apiPath, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
