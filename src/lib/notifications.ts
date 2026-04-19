@@ -11,9 +11,17 @@ interface NotificationData {
 
 export async function sendNotification({ to, subject, templateName, data }: NotificationData) {
   try {
+    // If we are on Firebase Hosting (static), we need to call the AI Studio backend URL directly.
+    const isStaticHost = window.location.hostname.includes('firebaseapp.com') || 
+                        window.location.hostname.includes('web.app');
+    
+    // This is your living backend URL in AI Studio
+    const BACKEND_URL = 'https://ais-pre-epln74gvage6ffz4lxm6ug-477197325075.asia-east1.run.app';
     const apiPath = '/api/notify';
-    console.log(`Notification request to: ${window.location.origin}${apiPath}`);
-    const response = await fetch(apiPath, {
+    const fullUrl = isStaticHost ? `${BACKEND_URL}${apiPath}` : apiPath;
+
+    console.log(`Notification request to: ${fullUrl}`);
+    const response = await fetch(fullUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -209,7 +209,13 @@ export default function AdminView() {
     }
     setIsTestingSmtp(true);
     try {
-      const response = await fetch('/api/admin/test-smtp', {
+      const isStaticHost = window.location.hostname.includes('firebaseapp.com') || 
+                          window.location.hostname.includes('web.app');
+      const BACKEND_URL = 'https://ais-pre-epln74gvage6ffz4lxm6ug-477197325075.asia-east1.run.app';
+      const apiPath = '/api/admin/test-smtp';
+      const fullUrl = isStaticHost ? `${BACKEND_URL}${apiPath}` : apiPath;
+
+      const response = await fetch(fullUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

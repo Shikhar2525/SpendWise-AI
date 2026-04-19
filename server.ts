@@ -1,4 +1,5 @@
 import express from 'express';
+import cors from 'cors';
 import { createServer as createViteServer } from 'vite';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -78,6 +79,12 @@ async function getSMTPConfig() {
 async function startServer() {
   const app = express();
   const PORT = 3000;
+
+  app.use(cors({
+    origin: '*', // Allow all for simplicity in this dev environment
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+  }));
 
   app.use(express.json());
 
