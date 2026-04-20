@@ -1,8 +1,12 @@
-
+<p align="center">
+  <img src="public/logo.svg" width="120" height="120" alt="SpendWise AI Logo" />
+</p>
 
 # 🛡️ SpendWise AI
 
 **Smart Monthly Expense Planner & Financial Intelligence Platform**
+
+[**Live Demo**](https://spendwise-ai-83b2d.web.app/)
 
 SpendWise AI is a comprehensive full-stack application designed to help users track expenses, manage budgets, and achieve financial goals through an intuitive, AI-enhanced interface. Developed using modern web technologies, it provides real-time insights and automated financial planning.
 
@@ -80,7 +84,8 @@ npm run dev
 ## 👨‍💻 Developer
 
 **Shikhar Mandloi**  
-*Senior Software Engineer*
+*Senior Software Engineer*  
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat-square&logo=linkedin)](https://www.linkedin.com/in/shikhar-mandloi-8657b6182/)
 
 ---
 
