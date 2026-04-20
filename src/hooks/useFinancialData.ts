@@ -67,5 +67,13 @@ export function useFinancialData() {
     };
   }, [user]);
 
-  return { expenses, dues, salaries, savings, budgets, goals, loading };
+  return React.useMemo(() => ({ 
+    expenses, 
+    dues, 
+    salaries, 
+    savings, 
+    budgets, 
+    goals, 
+    loading 
+  }), [expenses, dues, salaries, savings, budgets, goals, loading]);
 }

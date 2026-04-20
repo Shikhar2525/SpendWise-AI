@@ -14,13 +14,18 @@ export function FinancialPeriodProvider({ children }: { children: React.ReactNod
     return saved || format(new Date(), 'yyyy-MM');
   });
 
-  const setSelectedMonth = (month: string) => {
+  const setSelectedMonth = React.useCallback((month: string) => {
     setSelectedMonthState(month);
     localStorage.setItem('spendwise_selected_month', month);
-  };
+  }, []);
+
+  const contextValue = React.useMemo(() => ({ 
+    selectedMonth, 
+    setSelectedMonth 
+  }), [selectedMonth, setSelectedMonth]);
 
   return (
-    <FinancialPeriodContext.Provider value={{ selectedMonth, setSelectedMonth }}>
+    <FinancialPeriodContext.Provider value={contextValue}>
       {children}
     </FinancialPeriodContext.Provider>
   );

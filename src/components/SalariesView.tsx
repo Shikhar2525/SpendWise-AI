@@ -161,7 +161,15 @@ export default function SalariesView({ data }: SalariesViewProps) {
   };
 
   const filteredSalaries = expandRecurringItems(salaries, monthDate)
-    .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+    .sort((a, b) => {
+      const dateA = parseISO(a.date).getTime();
+      const dateB = parseISO(b.date).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+
+      const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return createdB - createdA;
+    });
 
   return (
     <div className="space-y-6">

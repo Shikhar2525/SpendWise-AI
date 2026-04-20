@@ -110,23 +110,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return unsubscribe;
   }, []);
 
-  const signIn = async () => {
+  const signIn = React.useCallback(async () => {
     try {
       await signInWithPopup(auth, googleProvider);
     } catch (error) {
       console.error('Sign in error:', error);
     }
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = React.useCallback(async () => {
     try {
       await signOut(auth);
     } catch (error) {
       console.error('Logout error:', error);
     }
-  };
+  }, []);
 
-  const markTutorialSeen = async () => {
+  const markTutorialSeen = React.useCallback(async () => {
     if (!user || !userProfile) return;
     try {
       const userDocRef = doc(db, 'users', user.uid);
@@ -135,9 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error marking tutorial as seen:', error);
     }
-  };
+  }, [user, userProfile]);
 
-  const updatePlan = async (plan: 'Essential' | 'Intelligent' | 'Architect', months?: number) => {
+  const updatePlan = React.useCallback(async (plan: 'Essential' | 'Intelligent' | 'Architect', months?: number) => {
     if (!user || !userProfile) return;
     try {
       const userDocRef = doc(db, 'users', user.uid);
@@ -153,9 +153,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error updating plan:', error);
     }
-  };
+  }, [user, userProfile]);
 
-  const redeemCoupon = async (code: string) => {
+  const redeemCoupon = React.useCallback(async (code: string) => {
     if (!user || !userProfile) return { success: false, message: 'Not logged in' };
     
     if (code === 'SPENDWISENEW100') {
@@ -164,10 +164,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
     
     return { success: false, message: 'Invalid coupon code' };
-  };
+  }, [user, userProfile, updatePlan]);
+
+  const contextValue = React.useMemo(() => ({ 
+    user, 
+    userProfile, 
+    loading, 
+    isConnected, 
+    isAdmin, 
+    signIn, 
+    logout, 
+    markTutorialSeen, 
+    updatePlan, 
+    redeemCoupon 
+  }), [user, userProfile, loading, isConnected, isAdmin, logout, markTutorialSeen, updatePlan, redeemCoupon]);
 
   return (
-    <AuthContext.Provider value={{ user, userProfile, loading, isConnected, isAdmin, signIn, logout, markTutorialSeen, updatePlan, redeemCoupon }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

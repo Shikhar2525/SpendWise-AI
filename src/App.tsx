@@ -80,6 +80,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./components/ui/dropdown-menu";
+import { NotificationsPopover } from './components/NotificationsPopover';
 import { User, Settings, Globe, Moon, Sun } from "lucide-react";
 
 function AppContent() {
@@ -316,37 +317,39 @@ function AppContent() {
           </div>
 
           <div className="flex items-center gap-4">
+            <NotificationsPopover />
              {/* Profile Dropdown Section in Top Right */}
-             <DropdownMenu>
-               <DropdownMenuTrigger className="flex items-center gap-4 hover:bg-zinc-50 dark:hover:bg-zinc-900 p-1 rounded-2xl transition-all outline-none group">
-                  <div className="hidden sm:flex flex-col items-end text-right">
-                    <p className="text-[10px] font-black uppercase tracking-tight text-zinc-900 dark:text-white leading-none">{userProfile?.displayName || 'Active User'}</p>
-                    <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 uppercase tracking-tighter mt-1">{userProfile?.email}</p>
-                  </div>
-                  <div className="h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 shadow-sm flex items-center justify-center overflow-hidden shrink-0 group-hover:scale-105 transition-transform">
-                    {userProfile?.photoURL ? (
-                      <img 
-                        src={userProfile.photoURL} 
-                        alt={userProfile.displayName} 
-                        className="h-full w-full object-cover"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                        {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+              <DropdownMenu>
+                <DropdownMenuTrigger className="relative h-10 w-10 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 shadow-sm flex items-center justify-center overflow-hidden shrink-0 hover:scale-105 transition-all outline-none">
+                  {userProfile?.photoURL ? (
+                    <img 
+                      src={userProfile.photoURL} 
+                      alt={userProfile.displayName} 
+                      className="h-full w-full object-cover"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="text-indigo-600 dark:text-indigo-400 font-bold text-sm">
+                      {userProfile?.displayName ? userProfile.displayName.charAt(0).toUpperCase() : 'U'}
+                    </div>
+                  )}
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-64 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-2xl p-2 shadow-2xl">
+                  <DropdownMenuGroup>
+                    <DropdownMenuLabel className="px-3 py-4">
+                      <div className="flex flex-col">
+                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-900 dark:text-white leading-none mb-1">{userProfile?.displayName || 'Active User'}</p>
+                        <p className="text-[9px] font-medium text-zinc-400 dark:text-zinc-500 truncate">{userProfile?.email}</p>
+                        <div className="mt-3">
+                          <Badge className={`h-4 px-1.5 py-0 text-[8px] font-black uppercase tracking-[0.2em] border-none rounded-md ${
+                            userProfile?.plan === 'Essential' ? 'bg-zinc-100 dark:bg-zinc-900 text-zinc-500' : 'bg-indigo-600 text-white'
+                          }`}>
+                            {userProfile?.plan || 'Essential'} Plan
+                          </Badge>
+                        </div>
                       </div>
-                    )}
-                  </div>
-               </DropdownMenuTrigger>
-               <DropdownMenuContent align="end" className="w-64 bg-white dark:bg-zinc-950 border-zinc-200 dark:border-zinc-800 rounded-2xl p-2 shadow-2xl">
-                 <DropdownMenuGroup>
-                   <DropdownMenuLabel className="px-3 py-4">
-                      <div className="flex flex-col space-y-1">
-                        <p className="text-[11px] font-black uppercase tracking-widest text-zinc-900 dark:text-white">Account Settings</p>
-                        <p className="text-[9px] text-zinc-400 dark:text-zinc-500 truncate">{userProfile?.email}</p>
-                      </div>
-                   </DropdownMenuLabel>
-                 </DropdownMenuGroup>
+                    </DropdownMenuLabel>
+                  </DropdownMenuGroup>
                  <DropdownMenuSeparator className="bg-zinc-100 dark:bg-zinc-800" />
                  <DropdownMenuGroup className="p-2 space-y-1">
                     <div className="px-1 py-2">

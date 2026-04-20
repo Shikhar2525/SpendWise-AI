@@ -73,7 +73,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
 
   const preferredCurrency = CURRENCIES.find(c => c.code === preferredCode) || CURRENCIES[0];
 
-  const setPreferredCurrency = async (code: string) => {
+  const setPreferredCurrency = React.useCallback(async (code: string) => {
     if (!user) return;
     try {
       await updateDoc(doc(db, 'users', user.uid), {
@@ -83,9 +83,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Error updating preferred currency:', error);
     }
-  };
+  }, [user]);
 
-  const convert = (amount: number, from: string, to: string) => {
+  const convert = React.useCallback((amount: number, from: string, to: string) => {
     if (from === to) return amount;
     
     // Get rates (prefer live, fallback to static)
@@ -101,9 +101,9 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
     // Convert to USD first (base), then to target
     const inUSD = amount / fromRate;
     return inUSD * toRate;
-  };
+  }, [liveRates]);
 
-  const formatAmount = (amount: number, code?: string) => {
+  const formatAmount = React.useCallback((amount: number, code?: string) => {
     const targetCode = code || preferredCode;
     const currency = CURRENCIES.find(c => c.code === targetCode) || preferredCurrency;
     
@@ -112,10 +112,18 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
       currency: targetCode,
       currencyDisplay: 'symbol'
     }).format(amount);
-  };
+  }, [preferredCode, preferredCurrency]);
+
+  const contextValue = React.useMemo(() => ({
+    preferredCurrency,
+    setPreferredCurrency,
+    convert,
+    formatAmount,
+    liveRates
+  }), [preferredCurrency, setPreferredCurrency, convert, formatAmount, liveRates]);
 
   return (
-    <CurrencyContext.Provider value={{ preferredCurrency, setPreferredCurrency, convert, formatAmount, liveRates }}>
+    <CurrencyContext.Provider value={contextValue}>
       {children}
     </CurrencyContext.Provider>
   );

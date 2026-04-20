@@ -205,7 +205,15 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
       const matchesMonth = isSameMonth(parseISO(e.date), monthDate);
       return matchesSearch && matchesMonth;
     })
-    .sort((a, b) => parseISO(b.date).getTime() - parseISO(a.date).getTime());
+    .sort((a, b) => {
+      const dateA = parseISO(a.date).getTime();
+      const dateB = parseISO(b.date).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+      
+      const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return createdB - createdA;
+    });
 
   return (
     <div className="space-y-6">

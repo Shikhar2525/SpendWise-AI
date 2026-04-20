@@ -293,7 +293,15 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   };
 
   const filteredSavings = expandRecurringItems(savings, monthDate)
-    .sort((a, b) => parseISO(b.startDate).getTime() - parseISO(a.startDate).getTime());
+    .sort((a, b) => {
+      const dateA = parseISO(a.startDate).getTime();
+      const dateB = parseISO(b.startDate).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+
+      const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return createdB - createdA;
+    });
 
   return (
     <div className="space-y-6">
@@ -583,19 +591,19 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
               <Table>
                 <TableHeader>
                   <TableRow className="bg-zinc-50/50 dark:bg-zinc-900/50 hover:bg-zinc-50 dark:hover:bg-zinc-900/50 border-b dark:border-zinc-800">
-                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest pl-6">Start Date</TableHead>
+                    <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Start Date</TableHead>
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Description</TableHead>
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Category</TableHead>
                     <TableHead className="font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Status</TableHead>
                     <TableHead className="text-right font-bold text-zinc-500 dark:text-zinc-400 text-[10px] uppercase tracking-widest">Amount</TableHead>
-                    <TableHead className="w-[100px] pr-6"></TableHead>
+                    <TableHead className="w-[100px]"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredSavings.length > 0 ? (
                     filteredSavings.map((saving) => (
                       <TableRow key={saving.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
-                        <TableCell className="font-bold text-zinc-900 dark:text-zinc-100 pl-6">
+                        <TableCell className="font-bold text-zinc-900 dark:text-zinc-100">
                           {format(parseISO(saving.startDate), 'MMM dd, yyyy')}
                         </TableCell>
                         <TableCell className="text-zinc-600 dark:text-zinc-400 font-medium tracking-tight whitespace-nowrap">
@@ -620,7 +628,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                         <TableCell className="text-right font-black italic tracking-tighter text-indigo-600 dark:text-indigo-400 text-lg">
                           {formatAmount(saving.amount, saving.currency)}
                         </TableCell>
-                        <TableCell className="pr-6">
+                        <TableCell>
                           <div className="flex justify-end gap-1 opacity-10 sm:opacity-0 group-hover:opacity-100 transition-opacity">
                             <Button 
                               variant="ghost" 

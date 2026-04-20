@@ -307,8 +307,20 @@ export default function DuesView({ data }: DuesViewProps) {
 
   const sortedDues = expandRecurringItems(dues, monthDate)
     .sort((a, b) => {
+      // Group by payment status (Unpaid first)
       if (a.isPaid !== b.isPaid) return a.isPaid ? 1 : -1;
-      return parseISO(a.dueDate).getTime() - parseISO(b.dueDate).getTime();
+      
+      // Secondary: Due date (most recent first if that's what "last entry on top" means)
+      // Actually, for dues, people usually want closest date. 
+      // But user said "last entry on top", so we'll use date descending
+      const dateA = parseISO(a.dueDate).getTime();
+      const dateB = parseISO(b.dueDate).getTime();
+      if (dateA !== dateB) return dateB - dateA;
+
+      // Tie-breaker: Creation date
+      const createdA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return createdB - createdA;
     });
 
   return (
