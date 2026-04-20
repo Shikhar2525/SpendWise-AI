@@ -20,12 +20,7 @@ service cloud.firestore {
 
     function isAdmin() {
       return isAuthenticated() &&
-        ((request.auth.token.email == "shikhar.mandloi@gmail.com" || request.auth.token.email == "spendwiseai35@gmail.com") && request.auth.token.email_verified == true);
-    }
-
-    // Protection for System Config
-    match /config/{id} {
-      allow read, write: if isAdmin();
+        (request.auth.token.email == "shikhar.mandloi@gmail.com" && request.auth.token.email_verified == true);
     }
 
     // Rules for each collection
