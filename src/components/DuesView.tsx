@@ -16,6 +16,7 @@ import { Trash2, Edit, Plus, CheckCircle2, Circle, CalendarClock, Sparkles, Cale
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { ConfirmDialog } from './ui/confirm-dialog';
+import { Pagination } from './ui/pagination';
 import { suggestCategory } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import { useCallback } from 'react';
@@ -31,6 +32,8 @@ interface DuesViewProps {
   };
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function DuesView({ data }: DuesViewProps) {
   const { user } = useAuth();
   const { preferredCurrency, formatAmount } = useCurrency();
@@ -42,6 +45,7 @@ export default function DuesView({ data }: DuesViewProps) {
   const [editMode, setEditMode] = useState<'all' | 'single'>('all');
   const [isAutoAssigning, setIsAutoAssigning] = useState(false);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const monthDate = parseISO(`${selectedMonth}-01`);
   const [formData, setFormData] = useState({
@@ -133,6 +137,10 @@ export default function DuesView({ data }: DuesViewProps) {
     });
     setIsDialogOpen(true);
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMonth]);
 
   const handleSaveDue = async () => {
     if (!user) return;
@@ -322,6 +330,12 @@ export default function DuesView({ data }: DuesViewProps) {
       const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return createdB - createdA;
     });
+
+  const totalPages = Math.ceil(sortedDues.length / ITEMS_PER_PAGE);
+  const paginatedDues = sortedDues.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="space-y-6">
@@ -560,7 +574,7 @@ export default function DuesView({ data }: DuesViewProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sortedDues.map((due) => (
+                  {paginatedDues.map((due) => (
                     <TableRow key={due.id} className={cn("hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group", due.isPaid && "opacity-50 grayscale-[0.5]")}>
                       <TableCell>
                         <button onClick={() => handleTogglePaid(due)} className="text-zinc-400 dark:text-zinc-600 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
@@ -628,6 +642,15 @@ export default function DuesView({ data }: DuesViewProps) {
                   ))}
                 </TableBody>
               </Table>
+              {totalPages > 1 && (
+                <div className="border-t border-zinc-100 dark:border-zinc-800 px-6">
+                  <Pagination 
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         ) : (

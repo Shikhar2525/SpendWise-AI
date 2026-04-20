@@ -16,11 +16,14 @@ import { Trash2, Edit, Plus, Search, Download, Sparkles, CheckCircle2, Calendar,
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { ConfirmDialog } from './ui/confirm-dialog';
+import { Pagination } from './ui/pagination';
 import { suggestCategory } from '../services/geminiService';
 import { motion, AnimatePresence } from 'motion/react';
 import debounce from 'lodash/debounce';
 import { useFinancialPeriod } from '../contexts/FinancialPeriodContext';
 import { cn, formatInputText } from '../lib/utils';
+
+const ITEMS_PER_PAGE = 10;
 
 interface ExpensesViewProps {
   data: {
@@ -38,6 +41,7 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAutoAssigning, setIsAutoAssigning] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const [formData, setFormData] = useState({
     amount: '',
     currency: preferredCurrency.code,
@@ -153,6 +157,11 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
     }
   };
 
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedMonth]);
+
   const handleSaveExpense = async () => {
     if (!user) return;
     if (!formData.amount || !formData.description) {
@@ -214,6 +223,12 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
       const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return createdB - createdA;
     });
+
+  const totalPages = Math.ceil(filteredExpenses.length / ITEMS_PER_PAGE);
+  const paginatedExpenses = filteredExpenses.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="space-y-6">
@@ -382,8 +397,8 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredExpenses.length > 0 ? (
-                filteredExpenses.map((expense) => (
+              {paginatedExpenses.length > 0 ? (
+                paginatedExpenses.map((expense) => (
                   <TableRow key={expense.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
                     <TableCell className="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                       {format(parseISO(expense.date), 'MMM dd, yyyy')}
@@ -433,6 +448,15 @@ export default function ExpensesView({ data }: ExpensesViewProps) {
               )}
             </TableBody>
           </Table>
+          {totalPages > 1 && (
+            <div className="border-t border-zinc-100 dark:border-zinc-800 px-6">
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 

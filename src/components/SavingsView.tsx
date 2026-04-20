@@ -9,6 +9,7 @@ import { Trash2, Edit, Plus, PiggyBank, TrendingUp, CalendarClock, Target, Calen
 import { toast } from 'sonner';
 import { Badge } from './ui/badge';
 import { ConfirmDialog } from './ui/confirm-dialog';
+import { Pagination } from './ui/pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress, ProgressTrack, ProgressIndicator } from './ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
@@ -32,6 +33,7 @@ interface SavingsViewProps {
 }
 
 const SAVING_TYPES = ['RD', 'Capital Injection', 'FD', 'Mutual Fund', 'Stocks', 'Crypto', 'Gold', 'Provident Fund', 'Other'];
+const ITEMS_PER_PAGE = 10;
 
 export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   const { user } = useAuth();
@@ -40,6 +42,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   const { savings, goals } = data;
   
   const [activeTab, setActiveTab] = useState(activeSubTab || 'entries');
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     if (activeSubTab) {
@@ -87,6 +90,10 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
       setGoalFormData(prev => ({ ...prev, currency: preferredCurrency.code }));
     }
   }, [preferredCurrency, editingSaving, editingGoal]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMonth, activeTab]);
 
   // Savings Handlers
   const openAddSavingDialog = () => {
@@ -302,6 +309,12 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
       const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return createdB - createdA;
     });
+
+  const totalPages = Math.ceil(filteredSavings.length / ITEMS_PER_PAGE);
+  const paginatedSavings = filteredSavings.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="space-y-6">
@@ -600,8 +613,8 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredSavings.length > 0 ? (
-                    filteredSavings.map((saving) => (
+                  {paginatedSavings.length > 0 ? (
+                    paginatedSavings.map((saving) => (
                       <TableRow key={saving.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
                         <TableCell className="font-bold text-zinc-900 dark:text-zinc-100">
                           {format(parseISO(saving.startDate), 'MMM dd, yyyy')}
@@ -662,6 +675,15 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                   )}
                 </TableBody>
               </Table>
+              {totalPages > 1 && (
+                <div className="border-t border-zinc-100 dark:border-zinc-800 px-6">
+                  <Pagination 
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={setCurrentPage}
+                  />
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>

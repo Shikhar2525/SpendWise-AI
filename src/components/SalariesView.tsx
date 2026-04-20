@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Progress, ProgressIndicator, ProgressTrack } from './ui/progress';
+import { Pagination } from './ui/pagination';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -28,6 +29,8 @@ interface SalariesViewProps {
   };
 }
 
+const ITEMS_PER_PAGE = 10;
+
 export default function SalariesView({ data }: SalariesViewProps) {
   const { user } = useAuth();
   const { preferredCurrency, formatAmount } = useCurrency();
@@ -37,6 +40,7 @@ export default function SalariesView({ data }: SalariesViewProps) {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingSalary, setEditingSalary] = useState<Salary | null>(null);
   const [editMode, setEditMode] = useState<'all' | 'single'>('all');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const monthDate = parseISO(`${selectedMonth}-01`);
   const [formData, setFormData] = useState({
@@ -83,6 +87,10 @@ export default function SalariesView({ data }: SalariesViewProps) {
     });
     setIsDialogOpen(true);
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedMonth]);
 
   const handleSaveSalary = async () => {
     if (!user) return;
@@ -170,6 +178,12 @@ export default function SalariesView({ data }: SalariesViewProps) {
       const createdB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return createdB - createdA;
     });
+
+  const totalPages = Math.ceil(filteredSalaries.length / ITEMS_PER_PAGE);
+  const paginatedSalaries = filteredSalaries.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="space-y-6">
@@ -336,8 +350,8 @@ export default function SalariesView({ data }: SalariesViewProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredSalaries.length > 0 ? (
-                filteredSalaries.map((salary) => (
+              {paginatedSalaries.length > 0 ? (
+                paginatedSalaries.map((salary) => (
                   <TableRow key={salary.id} className="hover:bg-zinc-50/50 dark:hover:bg-zinc-900/20 transition-colors border-b dark:border-zinc-900/50 group">
                     <TableCell className="font-bold text-zinc-900 dark:text-zinc-100 tracking-tight">
                       {format(parseISO(salary.date), 'MMM dd, yyyy')}
@@ -393,6 +407,15 @@ export default function SalariesView({ data }: SalariesViewProps) {
               )}
             </TableBody>
           </Table>
+          {totalPages > 1 && (
+            <div className="border-t border-zinc-100 dark:border-zinc-800 px-6">
+              <Pagination 
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </CardContent>
       </Card>
 
