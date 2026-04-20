@@ -42,6 +42,15 @@ interface FloatingChatProps {
   };
 }
 
+const INTRO_MESSAGE = "Hello! I'm your AI finance assistant. How can I help you manage your money today?";
+
+const STARTER_PROMPTS = [
+  { label: "📊 Create a Budget Plan", prompt: "I want to create a comprehensive budget plan for this month. Help me set up my income and spending limits." },
+  { label: "🧐 Analyze Spending", prompt: "Can you analyze my recent spending patterns and suggest where I can cut back?" },
+  { label: "🎯 Set Savings Goal", prompt: "I want to set a new savings goal. Can you help me figure out a timeline?" },
+  { label: "🧾 Check Dues", prompt: "What are my upcoming bills and dues for this month?" }
+];
+
 export default function FloatingChat({ data }: FloatingChatProps) {
   const { user } = useAuth();
   const { preferredCurrency, liveRates } = useCurrency();
@@ -236,8 +245,6 @@ export default function FloatingChat({ data }: FloatingChatProps) {
     await addDoc(collection(db, 'chats'), aiMessage);
     setIsTyping(false);
   };
-
-    const INTRO_MESSAGE = "Hello! I'm your AI finance assistant. How can I help you manage your money today?";
 
   const scrollToBottom = () => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -454,7 +461,7 @@ export default function FloatingChat({ data }: FloatingChatProps) {
                                   ? "bg-zinc-900 dark:bg-white text-white dark:text-black rounded-tr-none shadow-xl" 
                                   : "bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 text-zinc-900 dark:text-zinc-100 rounded-tl-none shadow-sm"
                               )}>
-                                <div className="prose prose-sm dark:prose-invert max-w-none">
+                                <div className="prose prose-sm dark:prose-invert max-w-none text-left">
                                   <ReactMarkdown>{msg.content}</ReactMarkdown>
                                 </div>
                                 {msg.error && <p className="text-[10px] text-rose-500 mt-2 font-black uppercase tracking-widest">Network Error.</p>}
@@ -464,6 +471,60 @@ export default function FloatingChat({ data }: FloatingChatProps) {
                               </div>
                             </motion.div>
                           ))}
+
+                          {/* Starter Prompts */}
+                          {messages.length === 1 && !isTyping && (
+                            <motion.div 
+                              initial={{ opacity: 0, scale: 0.9 }}
+                              animate={{ opacity: 1, scale: 1 }}
+                              className="grid grid-cols-1 gap-2 pt-4"
+                            >
+                              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 mb-2 ml-1">Suggested Actions</p>
+                              {STARTER_PROMPTS.map((sp, i) => (
+                                <Button
+                                  key={i}
+                                  variant="outline"
+                                  className="justify-start h-auto py-3 px-4 rounded-2xl border-zinc-200 dark:border-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-400 hover:bg-zinc-100 dark:hover:bg-zinc-900 hover:text-zinc-900 dark:hover:text-white transition-all text-left group"
+                                  onClick={() => {
+                                    const text = sp.prompt;
+                                    setInput('');
+                                    if (!user || isTyping) return;
+                                    
+                                    const fireRequest = async () => {
+                                      const userMessage: Message = { 
+                                        role: 'user', 
+                                        content: text, 
+                                        uid: user.uid, 
+                                        createdAt: new Date().toISOString() 
+                                      };
+                                      setMessages(prev => [...prev, userMessage]);
+                                      setIsTyping(true);
+                                      try {
+                                        await addDoc(collection(db, 'chats'), userMessage);
+                                        const geminiResponse = await chatWithFinanceAI(
+                                          text, 
+                                          preferredCurrency.code, 
+                                          data, 
+                                          messages.map(m => ({ role: m.role, content: m.content })),
+                                          liveRates
+                                        );
+                                        processGeminiResponse(geminiResponse);
+                                      } catch (error) {
+                                        toast.error('Intelligence link failed.');
+                                        setMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, error: true } : m));
+                                      } finally {
+                                        setIsTyping(false);
+                                      }
+                                    };
+                                    fireRequest();
+                                  }}
+                                >
+                                  {sp.label}
+                                  <Zap className="ml-auto h-3 w-3 opacity-0 group-hover:opacity-100 text-indigo-500 transition-all translate-x-2 group-hover:translate-x-0" />
+                                </Button>
+                              ))}
+                            </motion.div>
+                          )}
                           {isTyping && (
                             <div className="flex items-center gap-2 px-6 py-4 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-2xl w-fit shadow-lg">
                               <motion.div animate={{ scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 1 }} className="h-1.5 w-1.5 rounded-full bg-indigo-500" />

@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/logo.svg" width="120" height="120" alt="SpendWise AI Logo" />
+</p>
+
 # 🛡️ SpendWise AI
 
 **Smart Monthly Expense Planner & Financial Intelligence Platform**

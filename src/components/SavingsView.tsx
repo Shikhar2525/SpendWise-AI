@@ -12,7 +12,7 @@ import { ConfirmDialog } from './ui/confirm-dialog';
 import { Pagination } from './ui/pagination';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
 import { Progress, ProgressTrack, ProgressIndicator } from './ui/progress';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from './ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogDescription } from './ui/dialog';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -52,6 +52,7 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
   
   // Confirmation state
   const [deleteConfirmInfo, setDeleteConfirmInfo] = useState<{ id: string, type: 'saving' | 'goal' } | null>(null);
+  const [deleteChoiceId, setDeleteChoiceId] = useState<string | null>(null);
 
   // Savings State
   const [isSavingDialogOpen, setIsSavingDialogOpen] = useState(false);
@@ -197,10 +198,25 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
     if (!deleteConfirmInfo || deleteConfirmInfo.type !== 'saving') return;
     try {
       await deleteDoc(doc(db, 'savings', deleteConfirmInfo.id));
-      toast.success('Savings entry deleted');
+      toast.success('Savings series deleted');
       setDeleteConfirmInfo(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'savings');
+    }
+  };
+
+  const handleDeleteThisMonthOnly = async (saving: Saving) => {
+    if (!user) return;
+    try {
+      const updatedExcluded = [...(saving.excludedDates || []), saving.startDate];
+      await updateDoc(doc(db, 'savings', saving.id), {
+        excludedDates: updatedExcluded,
+        updatedAt: new Date().toISOString()
+      });
+      toast.success('Instance removed for this month');
+      setDeleteChoiceId(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'savings');
     }
   };
 
@@ -655,7 +671,13 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
                               variant="ghost" 
                               size="icon" 
                               className="h-8 w-8 text-zinc-400 hover:text-rose-600"
-                              onClick={() => setDeleteConfirmInfo({ id: saving.id, type: 'saving' })}
+                              onClick={() => {
+                                if (saving.isRecurring) {
+                                  setDeleteChoiceId(saving.id);
+                                } else {
+                                  setDeleteConfirmInfo({ id: saving.id, type: 'saving' });
+                                }
+                              }}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -845,6 +867,66 @@ export default function SavingsView({ data, activeSubTab }: SavingsViewProps) {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Recurring Deletion Choice Dialog */}
+      <Dialog 
+        open={deleteChoiceId !== null} 
+        onOpenChange={(open) => !open && setDeleteChoiceId(null)}
+      >
+        <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-white dark:bg-zinc-950">
+          <DialogHeader className="p-8 pb-4 text-left">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4 border border-rose-100 dark:border-rose-500/20">
+              <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+            </div>
+            <DialogTitle className="text-2xl font-black italic uppercase tracking-tight">Revoke Recurring Flow</DialogTitle>
+            <DialogDescription className="text-zinc-500 font-medium">
+              This is a recurring savings record. How would you like to handle this deletion?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-8 pb-8 space-y-3">
+            <Button 
+              variant="destructive"
+              className="w-full h-16 justify-start px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white border-none hover:scale-[1.01] active:scale-[0.98] transition-all group"
+              onClick={() => {
+                if (deleteChoiceId) {
+                  setDeleteConfirmInfo({ id: deleteChoiceId, type: 'saving' });
+                  setDeleteChoiceId(null);
+                }
+              }}
+            >
+              <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center mr-4">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col items-start translate-y-0.5">
+                <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Total Purge</span>
+                <span className="text-xs font-bold italic uppercase tracking-tight opacity-90">Delete Whole Series</span>
+              </div>
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="w-full h-16 justify-start px-6 rounded-2xl border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:scale-[1.01] active:scale-[0.98] transition-all group"
+              onClick={() => {
+                const saving = savings.find(s => s.id === deleteChoiceId);
+                if (saving) handleDeleteThisMonthOnly(saving);
+              }}
+            >
+              <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mr-4 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors">
+                <CalendarClock className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+              </div>
+              <div className="flex flex-col items-start translate-y-0.5">
+                <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Strategic Exclusion</span>
+                <span className="text-xs font-bold italic uppercase tracking-tight opacity-70 text-zinc-500">Remove This Month Only</span>
+              </div>
+            </Button>
+          </div>
+          <DialogFooter className="bg-zinc-50 dark:bg-zinc-900 px-8 py-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-row items-center justify-center sm:justify-center">
+             <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white" onClick={() => setDeleteChoiceId(null)}>
+               Retain Records
+             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog 
         open={deleteConfirmInfo !== null}

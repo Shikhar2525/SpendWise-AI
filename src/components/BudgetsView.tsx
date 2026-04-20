@@ -43,6 +43,7 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
   const { budgets, expenses } = data;
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [deleteChoiceId, setDeleteChoiceId] = useState<string | null>(null);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
   const [recurringChoiceId, setRecurringChoiceId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
@@ -72,6 +73,9 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
       const start = b.startMonth || b.month;
       const end = b.endMonth;
       
+      // Check exclusion
+      if (b.excludedMonths?.includes(selectedMonth)) return false;
+
       if (b.isRecurring && !end) return selectedMonth >= start;
       if (!end) return start === selectedMonth;
       
@@ -198,10 +202,24 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
     if (!deleteConfirmId) return;
     try {
       await deleteDoc(doc(db, 'budgets', deleteConfirmId));
-      toast.success('Budget removed');
+      toast.success('Budget series removed');
       setDeleteConfirmId(null);
     } catch (error) {
       handleFirestoreError(error, OperationType.DELETE, 'budgets');
+    }
+  };
+
+  const handleDeleteThisMonthOnly = async (budget: Budget) => {
+    try {
+      const updatedExcluded = [...(budget.excludedMonths || []), selectedMonth];
+      await updateDoc(doc(db, 'budgets', budget.id), {
+        excludedMonths: updatedExcluded,
+        updatedAt: new Date().toISOString()
+      });
+      toast.success('Budget removed for this month only');
+      setDeleteChoiceId(null);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, 'budgets');
     }
   };
 
@@ -377,7 +395,13 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
                       variant="ghost" 
                       size="icon" 
                       className="h-10 w-10 rounded-xl bg-zinc-50 dark:bg-zinc-900 text-zinc-400 hover:text-rose-600 dark:hover:text-rose-400 transition-colors border border-zinc-100 dark:border-zinc-800"
-                      onClick={() => setDeleteConfirmId(budget.id)}
+                      onClick={() => {
+                        if (budget.isRecurring) {
+                          setDeleteChoiceId(budget.id);
+                        } else {
+                          setDeleteConfirmId(budget.id);
+                        }
+                      }}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -507,6 +531,66 @@ export default function BudgetsView({ data }: BudgetsViewProps) {
           <DialogFooter className="bg-zinc-50 dark:bg-zinc-900 px-8 py-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-row items-center justify-center sm:justify-center">
              <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white" onClick={() => setRecurringChoiceId(null)}>
                Dismiss
+             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Recurring Deletion Choice Dialog */}
+      <Dialog 
+        open={deleteChoiceId !== null} 
+        onOpenChange={(open) => !open && setDeleteChoiceId(null)}
+      >
+        <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden border-none shadow-2xl rounded-3xl bg-white dark:bg-zinc-950">
+          <DialogHeader className="p-8 pb-4 text-left">
+            <div className="h-12 w-12 rounded-2xl bg-rose-50 dark:bg-rose-500/10 flex items-center justify-center mb-4 border border-rose-100 dark:border-rose-500/20">
+              <Trash2 className="h-6 w-6 text-rose-600 dark:text-rose-400" />
+            </div>
+            <DialogTitle className="text-2xl font-black italic uppercase tracking-tight">Revoke Recurring Budget</DialogTitle>
+            <DialogDescription className="text-zinc-500 font-medium">
+              This is a recurring budget. How would you like to handle this deletion?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="px-8 pb-8 space-y-3">
+            <Button 
+              variant="destructive"
+              className="w-full h-16 justify-start px-6 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white border-none hover:scale-[1.01] active:scale-[0.98] transition-all group"
+              onClick={() => {
+                if (deleteChoiceId) {
+                  setDeleteConfirmId(deleteChoiceId);
+                  setDeleteChoiceId(null);
+                }
+              }}
+            >
+              <div className="h-10 w-10 rounded-xl bg-white/10 flex items-center justify-center mr-4">
+                <Trash2 className="h-5 w-5" />
+              </div>
+              <div className="flex flex-col items-start translate-y-0.5">
+                <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Total Purge</span>
+                <span className="text-xs font-bold italic uppercase tracking-tight opacity-90">Delete Whole Series</span>
+              </div>
+            </Button>
+            
+            <Button 
+              variant="outline"
+              className="w-full h-16 justify-start px-6 rounded-2xl border-zinc-200 dark:border-zinc-800 hover:bg-zinc-50 dark:hover:bg-zinc-900 hover:scale-[1.01] active:scale-[0.98] transition-all group"
+              onClick={() => {
+                const budget = budgets.find(b => b.id === deleteChoiceId);
+                if (budget) handleDeleteThisMonthOnly(budget);
+              }}
+            >
+              <div className="h-10 w-10 rounded-xl bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center mr-4 group-hover:bg-zinc-200 dark:group-hover:bg-zinc-700 transition-colors">
+                <CalendarCheck className="h-5 w-5 text-rose-600 dark:text-rose-400" />
+              </div>
+              <div className="flex flex-col items-start translate-y-0.5">
+                <span className="text-[10px] font-black uppercase tracking-widest leading-none mb-1">Strategic Exclusion</span>
+                <span className="text-xs font-bold italic uppercase tracking-tight opacity-70 text-zinc-500">Remove This Month Only</span>
+              </div>
+            </Button>
+          </div>
+          <DialogFooter className="bg-zinc-50 dark:bg-zinc-900 px-8 py-4 border-t border-zinc-100 dark:border-zinc-800 flex flex-row items-center justify-center sm:justify-center">
+             <Button variant="ghost" className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-zinc-900 dark:hover:text-white" onClick={() => setDeleteChoiceId(null)}>
+               Retain Records
              </Button>
           </DialogFooter>
         </DialogContent>

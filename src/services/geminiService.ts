@@ -161,6 +161,10 @@ export async function chatWithFinanceAI(
         2. Add new entries (Expenses, Salaries, Savings, Goals, Bills/Dues, Budgets).
         3. Edit existing entries.
         4. Provide advice on saving and budgeting based on real trends.
+        5. **Comprehensive Budget Planning**: When a user wants to "Create a Budget Plan", guide them through setting up their monthly income (Salary) and establishing realistic category-based limits (Budgets). 
+           - First, ask for their monthly income.
+           - Then, ask about their typical spending across categories (Housing, Food, etc.).
+           - Finally, use multiple tool calls to add the Salary and multiple Budget entries for the current month.
         
         Voice Commands & Transcription:
         - You may receive audio input. Listen carefully to the user's intent.

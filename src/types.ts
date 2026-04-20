@@ -79,6 +79,7 @@ export interface Budget {
   startMonth?: string; // YYYY-MM
   endMonth?: string;   // YYYY-MM
   isRecurring?: boolean;
+  excludedMonths?: string[]; // Months (YYYY-MM) to exclude from recurrence
 }
 
 export interface Goal {
