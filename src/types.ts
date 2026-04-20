@@ -75,7 +75,9 @@ export interface Budget {
   category: string;
   limit: number;
   currency: string;
-  month: string; // YYYY-MM
+  month: string; // Backwards compatibility: becomes the startMonth if startMonth is missing
+  startMonth?: string; // YYYY-MM
+  endMonth?: string;   // YYYY-MM
   isRecurring?: boolean;
 }
 

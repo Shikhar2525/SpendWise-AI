@@ -503,102 +503,95 @@ export default function Dashboard({ data, setActiveTab, setActiveSubTab }: Dashb
       </div>
 
       {/* AI Financial Insights Section */}
-      <Card className="border border-zinc-100 dark:border-zinc-800 shadow-2xl bg-white dark:bg-zinc-900 text-zinc-900 dark:text-zinc-50 overflow-hidden mt-12 relative group rounded-[2.5rem]">
+      <Card className="border border-zinc-100 dark:border-zinc-800 shadow-2xl bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 overflow-hidden mt-12 relative group rounded-[2.5rem]">
         <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 via-transparent to-purple-500/5 opacity-30 pointer-events-none" />
         
-        <CardHeader className="pb-8 relative z-10 border-b border-zinc-50 dark:border-zinc-800">
+        <CardHeader className="pb-8 relative z-10 border-b border-zinc-50 dark:border-zinc-900/50">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-2xl bg-zinc-50 dark:bg-zinc-800 border border-zinc-100 dark:border-zinc-700 flex items-center justify-center shadow-sm flex-shrink-0">
-                <Bot className="h-7 w-7 text-indigo-500 dark:text-indigo-400" />
+              <div className="h-12 w-12 rounded-2xl bg-indigo-50 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 flex items-center justify-center shadow-sm flex-shrink-0">
+                <Bot className="h-7 w-7 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
-                <CardTitle className="text-xl font-black tracking-tight italic uppercase">Decision Intelligence</CardTitle>
-                <CardDescription className="text-zinc-400 dark:text-zinc-500 text-[10px] font-bold tracking-widest mt-1">Real-time Financial Modeling</CardDescription>
+                <CardTitle className="text-xl font-black tracking-tight italic uppercase">AI Financial Assistant</CardTitle>
+                <CardDescription className="text-zinc-500 dark:text-zinc-400 text-[10px] font-bold tracking-widest mt-1">Smart health check for {format(monthDate, 'MMMM yyyy')}</CardDescription>
               </div>
-            </div>
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20">
-               <div className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
-               <span className="text-[9px] font-black uppercase tracking-widest">Active Insight</span>
             </div>
           </div>
         </CardHeader>
         <CardContent className="relative z-10 pt-10">
-          <div className="grid gap-12 md:grid-cols-4">
-            <div className="space-y-4">
+          <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+            <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-500/20">
+                <div className="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                   <TrendingUp className="h-4 w-4" />
                 </div>
-                <h4 className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">Outlook</h4>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Current Outlook</h4>
               </div>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-bold italic uppercase">
+              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-bold italic uppercase">
                 {currentMonthStats.totalExpenses > currentMonthStats.totalIncome * 0.7 
-                  ? "Caution: High spending. Consider reducing costs."
-                  : "Spending is healthy. You're doing great this month."}
+                  ? "Spending is on the higher side. Consider watching your non-essentials."
+                  : "Your spending path looks stable. Keep maintaining this pace."}
               </p>
             </div>
             
-            <div className="space-y-4">
+            <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-100 dark:border-purple-500/20">
+                <div className="p-2 rounded-xl bg-purple-50 dark:bg-purple-500/10 text-purple-600 dark:text-purple-400">
                   <PieChart className="h-4 w-4" />
                 </div>
-                <h4 className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">Categories</h4>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Main Focus</h4>
               </div>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-bold italic uppercase">
+              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-bold italic uppercase">
                 {categoryData.length > 0 
-                  ? `Most spending is in ${categoryData.sort((a,b) => b.value - a.value)[0].name}.`
-                  : "Analyzing your spending history for insights."}
+                  ? `${categoryData[0].name} takes the lead this month. Is this as planned?`
+                  : "No data yet to pinpoint your main spending category."}
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-100 dark:border-emerald-500/20">
+                <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   <Wallet className="h-4 w-4" />
                 </div>
-                <h4 className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">Savings</h4>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Savings Status</h4>
               </div>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-bold italic uppercase">
+              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-bold italic uppercase">
                 {currentMonthStats.balance > 0 
-                  ? `You have ${formatAmount(currentMonthStats.balance)} left. Great for savings!`
-                  : "Budget is tight. Look for ways to save more."}
+                  ? `You've reserved ${formatAmount(currentMonthStats.balance)} so far. Good job!`
+                  : "Balance is tight. Every small saving counts right now."}
               </p>
             </div>
 
-            <div className="space-y-4">
+            <div className="p-6 rounded-3xl bg-zinc-50 dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 space-y-4">
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-100 dark:border-amber-500/20">
+                <div className="p-2 rounded-xl bg-amber-50 dark:bg-amber-500/10 text-amber-600 dark:text-amber-400">
                   <Sparkles className="h-4 w-4" />
                 </div>
-                <h4 className="text-[10px] font-bold tracking-widest text-zinc-400 dark:text-zinc-500 uppercase">Strategic Insight</h4>
+                <h4 className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">Quick Tip</h4>
               </div>
-              <p className="text-xs text-zinc-600 dark:text-zinc-400 leading-relaxed font-bold italic uppercase">
+              <p className="text-xs text-zinc-700 dark:text-zinc-300 leading-relaxed font-bold italic uppercase">
                 {currentMonthStats.balance > currentMonthStats.totalIncome * 0.3 
-                   ? "You are maintaining high liquidity. Strategic investments recommended."
-                   : "Focus on consolidating small wins to build momentum."}
+                   ? "Strong surplus detected. Consider moving some to your high-yield goals."
+                   : "Try setting a daily limit to help stretch your remaining balance."}
               </p>
             </div>
           </div>
           
-          <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 py-8 border-t border-zinc-50 dark:border-zinc-800">
-            <div className="flex items-center gap-6">
-               <div className="flex items-center gap-3">
-                 <div className="h-10 w-10 flex items-center justify-center p-2 rounded-full border border-zinc-100 dark:border-zinc-800">
-                    <Logo className="h-6 w-6 grayscale opacity-30 dark:opacity-50" />
-                 </div>
-                 <div>
-                   <p className="text-[9px] font-bold uppercase tracking-widest text-zinc-400">Processing Node</p>
-                   <p className="text-[10px] font-bold text-indigo-500 dark:text-indigo-400">Region: Asia-East</p>
-                 </div>
-               </div>
+          <div className="mt-12 flex flex-col sm:flex-row items-center justify-between gap-6 p-8 rounded-3xl bg-zinc-900 dark:bg-white text-white dark:text-zinc-900 shadow-2xl">
+            <div className="flex items-center gap-4">
+              <Logo className="h-8 w-8" />
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] opacity-60">Ready for deeper analysis?</p>
+                <p className="text-sm font-black italic uppercase">Unlock exhaustive financial intelligence</p>
+              </div>
             </div>
             <Button 
               onClick={() => setActiveTab('insights')}
-              className="bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-zinc-800 dark:hover:bg-zinc-100 rounded-2xl px-12 h-14 text-[10px] font-bold tracking-widest shadow-xl uppercase italic"
+              className="bg-white dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-2xl px-10 h-14 text-[10px] font-black tracking-widest shadow-xl uppercase italic group"
             >
-              Analyze Strategic Depth
+              Analyze Deep Strategic Depth
+              <ArrowUpRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1 group-hover:-translate-y-1" />
             </Button>
           </div>
         </CardContent>
